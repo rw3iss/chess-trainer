@@ -106,6 +106,7 @@ Strength truth table (`resolveStrength`):
   `identifyLine(uci: Uci[], startFen?) => OpeningEntry | undefined` (deepest named opening along the line),
   `continuations(fen) => Continuation[]`, `openingsThrough(fen) => OpeningEntry[]`.
 - `openingId(uci: Uci[]) => string` (stable short hash), `splitName(name) => { family, variation? }`.
+- `OpeningIndex.notesChunk(fenOrEpd) => string | undefined` — ECO letter of the notes file for a position (smallest ECO letter of openings through it); `notesChunkOf(openings) => string`.
 
 ## protocol (`src/protocol/`)
 

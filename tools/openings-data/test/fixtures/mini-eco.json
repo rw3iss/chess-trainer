@@ -1,0 +1,28 @@
+{
+	"rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2": {
+		"src": "eco_tsv",
+		"eco": "C40",
+		"moves": "1. e4 e5 2. Nf3",
+		"name": "King's Knight Opening",
+		"aliases": { "scid": "Open Game: 2.Nf3", "ct": "King's Knight Opening" }
+	},
+	"rnbqkbnr/pppp1ppp/8/4p3/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq - 1 2": {
+		"src": "scid",
+		"eco": "C25",
+		"moves": "1. e4 e5 2. Nc3",
+		"name": "Vienna Game",
+		"aliases": { "kent-eco": "Vienna game" }
+	},
+	"rnbqkbnr/pppp1ppp/8/4p3/4P3/2N5/PPPP1PPP/R1BQKBNR w KQkq - 0 3": {
+		"src": "interpolated",
+		"eco": "C25",
+		"moves": "1. e4 e5 2. Nc3 Nc6",
+		"name": "Vienna Game (i)"
+	},
+	"bogus": {
+		"src": "scid",
+		"eco": "A00",
+		"moves": "1. e4 e5 2. Ke3",
+		"name": "Illegal line"
+	}
+}

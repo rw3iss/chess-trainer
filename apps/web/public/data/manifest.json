@@ -1,0 +1,27 @@
+{
+	"version": 1,
+	"generatedAt": "2026-10-13T02:07:06.632Z",
+	"counts": {
+		"openings": 12322,
+		"positions": 15864,
+		"notes": 1812,
+		"withPopularity": 553
+	},
+	"files": {
+		"openings": "openings.v1.938a8936.json",
+		"graph": "graph.v1.e71fbd9f.json",
+		"notes": {
+			"A": "notes.v1.A.da09518b.json",
+			"B": "notes.v1.B.d27abac0.json",
+			"C": "notes.v1.C.4abe7bea.json",
+			"D": "notes.v1.D.5a104cbd.json",
+			"E": "notes.v1.E.b217243b.json"
+		}
+	},
+	"attribution": [
+		"Opening names and lines: lichess-org/chess-openings (CC0 1.0) — https://github.com/lichess-org/chess-openings",
+		"Additional names and aliases: JeffML/eco.json (MIT) — https://github.com/JeffML/eco.json",
+		"Opening notes: Wikibooks, Chess Opening Theory (CC BY-SA 4.0) — https://en.wikibooks.org/wiki/Chess_Opening_Theory",
+		"Popularity statistics: Lichess Opening Explorer — https://lichess.org/analysis#explorer"
+	]
+}

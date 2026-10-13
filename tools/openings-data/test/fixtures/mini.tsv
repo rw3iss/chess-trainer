@@ -1,0 +1,12 @@
+eco	name	pgn
+C20	King's Pawn Game	1. e4 e5
+C40	King's Knight Opening	1. e4 e5 2. Nf3
+C60	Ruy Lopez	1. e4 e5 2. Nf3 Nc6 3. Bb5
+C65	Ruy Lopez: Berlin Defense	1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6
+C67	Ruy Lopez: Berlin Defense, Rio Gambit Accepted	1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Nxe4
+B20	Sicilian Defense	1. e4 c5
+B21	Sicilian Defense: Smith-Morra Gambit	1. e4 c5 2. d4 cxd4 3. c3
+D06	Queen's Gambit	1. d4 d5 2. c4
+D30	Queen's Gambit Declined	1. d4 d5 2. c4 e6
+D02	Queen's Pawn Game: Zukertort Variation	1. d4 d5 2. Nf3
+A06	Zukertort Opening: Queen's Gambit Invitation	1. Nf3 d5 2. d4
