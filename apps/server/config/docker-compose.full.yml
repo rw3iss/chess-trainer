@@ -1,56 +1,73 @@
+# Full stack in Docker. Default: api only (SQLite volume, in-memory cache).
+# Add profiles for Postgres / Redis:
+#   docker compose -f config/docker-compose.full.yml up -d --build
+#   docker compose -f config/docker-compose.full.yml --profile postgres --profile redis up -d --build
+# With the postgres profile set DB_TYPE=postgres; with redis set REDIS_HOST=redis (env or .env next to this file).
 services:
-    api:
-        build:
-            context: ..
-            dockerfile: config/Dockerfile
-        container_name: ${COMPOSE_PROJECT_NAME:-app}-api
-        restart: unless-stopped
-        environment:
-            NODE_ENV: production
-            PORT: 3000
-            DB_HOST: postgres
-            DB_PORT: 5432
-            DB_USER: ${DB_USER:-postgres}
-            DB_PASSWORD: ${DB_PASSWORD:-postgres}
-            DB_NAME: ${DB_NAME:-server}
-            REDIS_HOST: redis
-            REDIS_PORT: 6379
-        ports:
-            - '${PORT:-3000}:3000'
-        depends_on:
-            postgres:
-                condition: service_healthy
-            redis:
-                condition: service_healthy
+  api:
+    build:
+      context: ../../..
+      dockerfile: apps/server/config/Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME:-chess}-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      OWNER_USERNAME: ${OWNER_USERNAME:-}
+      OWNER_PASSWORD: ${OWNER_PASSWORD:-}
+      LICHESS_TOKEN: ${LICHESS_TOKEN:-}
+      DB_TYPE: ${DB_TYPE:-sqlite}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-chess}
+      REDIS_HOST: ${REDIS_HOST:-}
+      REDIS_PORT: 6379
+      ENGINE_STOCKFISH_PATH: ${ENGINE_STOCKFISH_PATH:-}
+      ENGINE_LC0_PATH: ${ENGINE_LC0_PATH:-}
+      LC0_WEIGHTS: ${LC0_WEIGHTS:-}
+      MAIA_WEIGHTS_DIR: ${MAIA_WEIGHTS_DIR:-}
+      ENGINE_KOMODO_PATH: ${ENGINE_KOMODO_PATH:-}
+      ENGINE_FAIRY_PATH: ${ENGINE_FAIRY_PATH:-}
+    ports:
+      - '${PORT:-3000}:3000'
+    volumes:
+      - apidata:/app/data
+      - ${ENGINES_DIR:-./engines}:/opt/engines:ro
 
-    postgres:
-        image: postgres:16-alpine
-        container_name: ${COMPOSE_PROJECT_NAME:-app}-postgres
-        restart: unless-stopped
-        environment:
-            POSTGRES_USER: ${DB_USER:-postgres}
-            POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-            POSTGRES_DB: ${DB_NAME:-server}
-        volumes:
-            - pgdata:/var/lib/postgresql/data
-        healthcheck:
-            test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-postgres}']
-            interval: 5s
-            timeout: 3s
-            retries: 10
+  postgres:
+    profiles: ['postgres']
+    image: postgres:16-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-chess}-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-chess}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-postgres}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
-    redis:
-        image: redis:7-alpine
-        container_name: ${COMPOSE_PROJECT_NAME:-app}-redis
-        restart: unless-stopped
-        volumes:
-            - redisdata:/data
-        healthcheck:
-            test: ['CMD', 'redis-cli', 'ping']
-            interval: 5s
-            timeout: 3s
-            retries: 10
+  redis:
+    profiles: ['redis']
+    image: redis:7-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-chess}-redis
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
 volumes:
-    pgdata:
-    redisdata:
+  apidata:
+  pgdata:
+  redisdata:

@@ -1,21 +1,24 @@
 # tests/
 
-Test suite run via Jest + `@vendidit/test-tools`.
+Plain Jest + ts-jest + supertest + socket.io-client.
 
 ```
 tests/
-├── framework/           # @vendidit/test-tools hooks (globalSetup, setupGlobals)
-├── specs/               # *.spec.ts — one file per concern
-│   └── smoke.spec.ts    # boots Nest, verifies success + error envelope shape
-└── README.md
+├── framework/setupGlobals.js   # baseline test env (SQLite :memory:, memory cache, fixed JWT secret, owner/owner-pass)
+├── helpers/app.ts              # bootApp(env), ownerToken, guestToken, connect, send (enveloped + ack), next (await event)
+├── fixtures/
+│   ├── fake-uci.js             # minimal UCI engine (executable) used by engine specs
+│   └── data/                   # tiny openings dataset (manifest + one hashed file)
+└── specs/
+    ├── smoke.spec.ts           # envelopes; full app boot: /health, /health/ready, dataset files, /docs, auth required
+    ├── auth.spec.ts            # login, refresh, guest, token types, validation
+    ├── sync.spec.ts            # LWW unit + CRUD, pagination, /sync, tombstones, per-user scoping
+    ├── explorer.spec.ts        # mapping, token header, cache, de-dup, errors, rate-limit queue (mocked fetch)
+    ├── uci-process.spec.ts     # UciProcess parsing/lifecycle + EnginePool against the fake engine
+    ├── engines.gateway.spec.ts # /engine: catalog, auth, quota, analyze/stop/play, disconnect cleanup
+    └── rooms.gateway.spec.ts   # /play with two clients: create/join/move/illegal/idempotent, chat, action, resign, draw, clock flag, reconnect, spectator
 ```
 
-Run:
+Run: `pnpm test`, `pnpm test:smoke`, `pnpm test:watch`.
 
-```bash
-pnpm test               # full suite
-pnpm test:smoke         # smoke only
-pnpm test:watch         # interactive
-```
-
-Config lives in `config/jest.config.js` (referenced from `package.json` scripts). Project name for the test-tools reporter is in `testtools.config.json` at project root.
+`bootApp(env)` sets env **before** importing `AppModule` (ConfigModule validates env at import). `@chess/core` is mapped to its TypeScript sources (see `config/jest.config.js`).

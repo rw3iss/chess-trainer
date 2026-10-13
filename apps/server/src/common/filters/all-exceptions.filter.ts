@@ -22,6 +22,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
 	private readonly logger = new Logger(AllExceptionsFilter.name);
 
 	catch(exception: unknown, host: ArgumentsHost): void {
+		// Gateways convert their own errors into WsAck; anything reaching here is logged only.
+		if (host.getType() !== 'http') {
+			this.logger.error(`ws error: ${(exception as Error)?.message ?? exception}`);
+			return;
+		}
 		const ctx = host.switchToHttp();
 		const response = ctx.getResponse<Response>();
 		const request = ctx.getRequest<Request>();

@@ -1,0 +1,7 @@
+{
+	"version": 1,
+	"generatedAt": "2026-10-12T00:00:00.000Z",
+	"counts": { "openings": 1, "positions": 1, "notes": 0, "withPopularity": 0 },
+	"files": { "openings": "openings.v1.0123abcd.json", "graph": "graph.v1.0123abcd.json", "notes": {} },
+	"attribution": ["test fixture"]
+}

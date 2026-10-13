@@ -4,11 +4,16 @@ import { envValidationSchema } from './env.validation';
 import appConfig from './loaders/app.config';
 import databaseConfig from './loaders/database.config';
 import redisConfig from './loaders/redis.config';
+import authConfig from './loaders/auth.config';
+import openingsConfig from './loaders/openings.config';
+import enginesConfig from './loaders/engines.config';
+import roomsConfig from './loaders/rooms.config';
 
 /**
  * Global config module.
  *
- * - Loads .env (or .env.<NODE_ENV>) without dotenv-cli — ConfigModule handles it.
+ * - Loads `.env` (apps/server) then the repo-root `.env` (where LICHESS_TOKEN lives).
+ *   Earlier files win; real environment variables beat both.
  * - Validates every known env var via the Joi schema; failing fast at boot is preferable
  *   to `undefined`-related runtime errors hours later.
  * - Exposes namespaced config via `configService.get('app.port')` etc.
@@ -21,7 +26,8 @@ import redisConfig from './loaders/redis.config';
 		NestConfigModule.forRoot({
 			isGlobal: true,
 			cache: true,
-			load: [appConfig, databaseConfig, redisConfig],
+			envFilePath: process.env.NODE_ENV === 'test' ? [] : ['.env', '../../.env'],
+			load: [appConfig, databaseConfig, redisConfig, authConfig, openingsConfig, enginesConfig, roomsConfig],
 			validationSchema: envValidationSchema,
 			validationOptions: {
 				allowUnknown: true,

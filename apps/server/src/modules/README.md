@@ -16,3 +16,5 @@ modules/
 ```
 
 Import the module into `src/app.module.ts`. Keep the import list there flat — features don't import each other transitively; if they share behavior, extract into `src/common/` or a cross-cutting module.
+
+Current modules: `auth`, `users`, `openings`, `games`, `engines`, `rooms`. Rules: see `../../BUILD.md` (module boundaries, thin gateways).

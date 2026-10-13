@@ -8,12 +8,16 @@ PM ?= pnpm
 
 COMPOSE_SERVICES := docker compose -f config/docker-compose.yml
 COMPOSE_FULL     := docker compose -f config/docker-compose.full.yml
+# Optional services to include: `make docker-services profiles="postgres redis"`
+profiles ?= postgres redis
+PROFILE_FLAGS    := $(foreach p,$(profiles),--profile $(p))
 
 .DEFAULT_GOAL := help
 
 # ── Native ────────────────────────────────────────────────────────────────
 .PHONY: dev
-dev: ## Run the app in watch mode (native; assumes docker-services is up)
+dev: ## Run the app in watch mode (native; SQLite + in-memory cache by default)
+	$(PM) --filter @chess/core build
 	$(PM) start:dev
 
 .PHONY: start
@@ -28,30 +32,31 @@ stop: ## Stop any foreground `make dev` (use Ctrl+C); this is a no-op placeholde
 restart: stop dev ## Restart the native dev server
 
 .PHONY: build
-build: ## Compile to dist/
+build: ## Build @chess/core, then compile the server to dist/
+	$(PM) --filter @chess/core build
 	$(PM) build
 
-# ── Docker: services only (postgres + redis, app runs native) ─────────────
+# ── Docker: optional services (app runs native) ───────────────────────────
 .PHONY: docker-services
-docker-services: ## Start postgres + redis in background (dev workflow)
-	$(COMPOSE_SERVICES) up -d
+docker-services: ## Start optional postgres/redis (profiles="postgres redis"); set DB_TYPE / REDIS_HOST in .env
+	$(COMPOSE_SERVICES) $(PROFILE_FLAGS) up -d
 
 .PHONY: docker-services-stop
-docker-services-stop: ## Stop postgres + redis (preserves volumes)
-	$(COMPOSE_SERVICES) down
+docker-services-stop: ## Stop optional services (preserves volumes)
+	$(COMPOSE_SERVICES) $(PROFILE_FLAGS) down
 
 .PHONY: docker-services-reset
-docker-services-reset: ## Stop + wipe volumes for postgres + redis
-	$(COMPOSE_SERVICES) down -v
+docker-services-reset: ## Stop + wipe volumes for optional services
+	$(COMPOSE_SERVICES) $(PROFILE_FLAGS) down -v
 
-# ── Docker: full stack (api + postgres + redis) ───────────────────────────
+# ── Docker: full stack ────────────────────────────────────────────────────
 .PHONY: docker-start
-docker-start: ## Start full stack in docker (api + postgres + redis)
-	$(COMPOSE_FULL) up -d --build
+docker-start: ## Start api in docker (SQLite). Add services: make docker-start profiles="postgres redis"
+	$(COMPOSE_FULL) $(if $(filter command line,$(origin profiles)),$(PROFILE_FLAGS),) up -d --build
 
 .PHONY: docker-stop
 docker-stop: ## Stop full stack (preserves volumes)
-	$(COMPOSE_FULL) down
+	$(COMPOSE_FULL) $(PROFILE_FLAGS) down
 
 .PHONY: docker-restart
 docker-restart: docker-stop docker-start ## Restart the full docker stack
@@ -92,6 +97,10 @@ migration-generate: ## Generate a new migration from entity diffs. Usage: make m
 	$(PM) migration:generate src/database/migrations/$(name)
 
 # ── Housekeeping ──────────────────────────────────────────────────────────
+.PHONY: db-reset
+db-reset: ## Delete the local SQLite database (data/)
+	rm -rf data
+
 .PHONY: clean
 clean: ## Remove dist/ and node_modules
 	rm -rf dist node_modules

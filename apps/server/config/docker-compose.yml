@@ -1,36 +1,43 @@
+# Optional backing services for native dev. The server runs fine without any
+# of them (SQLite + in-memory cache). Start only what you need:
+#   docker compose -f config/docker-compose.yml --profile postgres up -d
+#   docker compose -f config/docker-compose.yml --profile redis up -d
+# Then set DB_TYPE=postgres (+ DB_*) and/or REDIS_HOST=localhost in .env.
 services:
-    postgres:
-        image: postgres:16-alpine
-        container_name: ${COMPOSE_PROJECT_NAME:-app}-postgres
-        restart: unless-stopped
-        environment:
-            POSTGRES_USER: ${DB_USER:-postgres}
-            POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-            POSTGRES_DB: ${DB_NAME:-server}
-        ports:
-            - '${DB_PORT:-5432}:5432'
-        volumes:
-            - pgdata:/var/lib/postgresql/data
-        healthcheck:
-            test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-postgres}']
-            interval: 5s
-            timeout: 3s
-            retries: 10
+  postgres:
+    profiles: ['postgres']
+    image: postgres:16-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-chess}-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-chess}
+    ports:
+      - '${DB_PORT:-5432}:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-postgres}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
-    redis:
-        image: redis:7-alpine
-        container_name: ${COMPOSE_PROJECT_NAME:-app}-redis
-        restart: unless-stopped
-        ports:
-            - '${REDIS_PORT:-6379}:6379'
-        volumes:
-            - redisdata:/data
-        healthcheck:
-            test: ['CMD', 'redis-cli', 'ping']
-            interval: 5s
-            timeout: 3s
-            retries: 10
+  redis:
+    profiles: ['redis']
+    image: redis:7-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-chess}-redis
+    restart: unless-stopped
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
 volumes:
-    pgdata:
-    redisdata:
+  pgdata:
+  redisdata:
