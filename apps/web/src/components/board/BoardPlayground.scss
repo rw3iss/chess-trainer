@@ -1,0 +1,110 @@
+// BoardPlayground — dev harness (not routed).
+
+.board-playground {
+	display: grid;
+	grid-template-columns: minmax(280px, 640px) 300px;
+	gap: 28px;
+	align-items: start;
+	padding: 24px;
+	color: var(--color-text, #ece6da);
+	font: 13px/1.4 var(--font-sans, Inter, system-ui, sans-serif);
+
+	@media (max-width: 900px) {
+		grid-template-columns: 1fr;
+	}
+
+	&__stage {
+		display: grid;
+		grid-template-columns: 24px 1fr;
+		gap: 10px;
+	}
+
+	&__eval {
+		height: 100%;
+	}
+
+	&__board {
+		min-width: 0;
+	}
+
+	&__panel {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding: 16px;
+		border-radius: 10px;
+		background: var(--color-surface-1, #15161a);
+		border: 1px solid var(--color-border, rgb(255 255 255 / 0.08));
+
+		select,
+		button {
+			font: inherit;
+			color: inherit;
+			background: var(--color-surface-3, #25262c);
+			border: 1px solid var(--color-border-strong, rgb(255 255 255 / 0.16));
+			border-radius: 6px;
+			padding: 5px 8px;
+		}
+
+		button {
+			cursor: pointer;
+		}
+	}
+
+	&__field {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	&__label {
+		color: var(--color-text-muted, #9c968b);
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		min-width: 56px;
+	}
+
+	&__colors,
+	&__row {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		flex-wrap: wrap;
+	}
+
+	&__swatch {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		font-size: 10px;
+		color: var(--color-text-muted, #9c968b);
+
+		input {
+			width: 30px;
+			height: 24px;
+			padding: 0;
+			border: 0;
+			background: none;
+			cursor: pointer;
+		}
+	}
+
+	&__hint {
+		margin: 0;
+		color: var(--color-text-subtle, #6f6a62);
+		font-size: 12px;
+	}
+
+	&__minis {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 8px;
+	}
+
+	&__mini {
+		padding: 0 !important;
+		border: 0 !important;
+		background: none !important;
+	}
+}

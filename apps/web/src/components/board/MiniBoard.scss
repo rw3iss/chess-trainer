@@ -1,0 +1,35 @@
+// MiniBoard — static thumbnail board.
+
+.mini-board {
+	display: block;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 1 / 1;
+	border-radius: 3px;
+	overflow: hidden;
+	box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+
+	&__light {
+		fill: var(--board-light);
+	}
+
+	&__dark {
+		fill: var(--board-dark);
+	}
+
+	&__last {
+		fill: var(--board-hl-last);
+	}
+
+	&__piece--white {
+		--pc-body: var(--pc-white-body);
+		--pc-line: var(--pc-white-line);
+		--pc-accent: var(--pc-white-accent);
+	}
+
+	&__piece--black {
+		--pc-body: var(--pc-black-body);
+		--pc-line: var(--pc-black-line);
+		--pc-accent: var(--pc-black-accent);
+	}
+}
