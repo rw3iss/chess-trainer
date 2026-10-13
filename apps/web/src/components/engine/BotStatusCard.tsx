@@ -1,7 +1,7 @@
 // Bot game status for a session: engine · Elo · your colour, thinking state,
 // Takeback (when allowed), Bot settings and Detach (back to analysis).
 import type { JSX } from 'preact';
-import type { Session } from '@chess/core/game';
+import { activeResult, type Session } from '@chess/core/game';
 import { Badge, Button, Spinner } from '@/components/common';
 import { commands } from '@/services/commands';
 import { botActions, botError, engineEntry, isAtBotTip, isBotThinking } from '@/state';
@@ -24,7 +24,7 @@ export function BotStatusCard({ session, class: className }: BotStatusCardProps)
 	const canTakeback = botActions.takebackPlies(session) > 0;
 	let status: JSX.Element;
 	if (err) status = <span class="bot-status__state bot-status__state--error">{err}</span>;
-	else if (session.result) status = <span class="bot-status__state">Game over</span>;
+	else if (activeResult(session)) status = <span class="bot-status__state">Game over</span>;
 	else if (thinking)
 		status = (
 			<span class="bot-status__state bot-status__state--thinking">

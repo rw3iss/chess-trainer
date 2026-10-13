@@ -102,11 +102,31 @@ export function sessionMove(session: Session, uci: Uci, now: number = Date.now()
 	const fens = pathTo(res.tree, res.nodeId).map((n) => n.fen);
 	const detected = detectResult(fens[fens.length - 1]!, fens);
 	const next = bump(session, { tree: res.tree, cursor: res.nodeId, dirty: session.dirty || changed }, now);
-	// In analysis the result always reflects the current position; in games a manual result (resign, timeout) sticks.
-	const result = detected ?? (session.mode === 'analysis' ? undefined : session.result);
-	if (result) next.result = result;
-	else delete next.result;
+	// A rule result (mate, stalemate, …) belongs to the new node. A manual result (resign, timeout)
+	// sticks only while it is active; a move from an earlier position starts a new line and clears it.
+	const kept = session.mode !== 'analysis' ? activeResult(session) : undefined;
+	if (detected) {
+		next.result = detected;
+		next.resultNodeId = res.nodeId;
+	} else if (kept) {
+		next.result = kept;
+		next.resultNodeId = session.resultNodeId ?? session.cursor;
+	} else {
+		delete next.result;
+		delete next.resultNodeId;
+	}
 	return next;
+}
+
+/**
+ * The result that applies to the position on the board: only when the cursor is on the node where
+ * the game ended. Stepping back hides it, so play can continue from an earlier move.
+ */
+export function activeResult(session: Pick<Session, 'result' | 'resultNodeId' | 'cursor' | 'tree'>): GameResult | undefined {
+	if (!session.result) return undefined;
+	if (session.resultNodeId) return session.cursor === session.resultNodeId ? session.result : undefined;
+	const node = session.tree.nodes[session.cursor];
+	return node && node.children.length === 0 ? session.result : undefined;
 }
 
 export function sessionGoto(session: Session, nodeId: string): Session {
@@ -137,6 +157,16 @@ export function sessionToEnd(session: Session): Session {
 
 /** Shallow patch; bumps updatedAt + revision. */
 export function sessionUpdate(session: Session, patch: Partial<Session>, now: number = Date.now()): Session {
+	// A manual result (resign, timeout, draw) is tied to the position it was set on.
+	if ('result' in patch) {
+		if (patch.result && !patch.resultNodeId) patch = { ...patch, resultNodeId: patch.cursor ?? session.cursor };
+		if (!patch.result) {
+			const next = bump(session, patch, now);
+			delete next.result;
+			delete next.resultNodeId;
+			return next;
+		}
+	}
 	return bump(session, patch, now);
 }
 

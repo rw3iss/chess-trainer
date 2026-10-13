@@ -56,6 +56,12 @@ export interface Session {
 	clock?: ClockState;
 	playback: { speed: PlaybackSpeed; playing: boolean };
 	result?: GameResult;
+	/**
+	 * Node where `result` happened. The result only applies while the cursor is on this node
+	 * (see `activeResult`), so stepping back lets the user continue from an earlier position.
+	 * Unset on older sessions: then the result applies on any leaf.
+	 */
+	resultNodeId?: string;
 	/** True when the tree changed since the last explicit save. */
 	dirty: boolean;
 	createdAt: number;

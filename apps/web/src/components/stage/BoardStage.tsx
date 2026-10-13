@@ -4,16 +4,18 @@
 import { useMemo, useState } from 'preact/hooks';
 import type { JSX } from 'preact';
 import { makeUci, positionStatus, turnFromFen, type Color, type PromotionRole, type SquareName } from '@chess/core/chess';
-import { createSession, type Session } from '@chess/core/game';
+import { activeResult, createSession, type Session } from '@chess/core/game';
 import { Board2D, MiniBoard, type Arrow, type Mark } from '@/components/board';
 import { Badge } from '@/components/common/Badge';
 import { Icon } from '@/components/common/Icon';
 import { activeSession, sessionsActions } from '@/state/sessions';
 import { settings } from '@/state/settings';
 import { activeBoardTheme, activePieceSet, activePieceTheme } from '@/state/themes';
+import type { PieceSetAsset, PieceTheme } from '@chess/core/theme';
 import { cx } from '@/lib/classNames';
 import { boardViewModel, lastMoveOf, playerLabel } from './boardModel';
 import { fromMoveHandlers, stageShapes, stageSlots } from './slots';
+import { CapturedPieces } from './CapturedPieces';
 import './BoardStage.scss';
 
 const MODE_LABEL: Record<Session['mode'], string> = {
@@ -28,9 +30,12 @@ interface PlayerStripProps {
 	color: Color;
 	position: 'top' | 'bottom';
 	toMove: boolean;
+	fen: string;
+	pieceSet: PieceSetAsset;
+	pieceTheme: PieceTheme;
 }
 
-function PlayerStrip({ session, color, position, toMove }: PlayerStripProps): JSX.Element {
+function PlayerStrip({ session, color, position, toMove, fen, pieceSet, pieceTheme }: PlayerStripProps): JSX.Element {
 	const Slot = position === 'top' ? stageSlots.clockTop.Render : stageSlots.clockBottom.Render;
 	return (
 		<div class={cx('player-strip', `player-strip--${position}`, toMove && 'player-strip--to-move')}>
@@ -42,6 +47,7 @@ function PlayerStrip({ session, color, position, toMove }: PlayerStripProps): JS
 					{MODE_LABEL[session.mode]}
 				</Badge>
 			)}
+			<CapturedPieces fen={fen} color={color} pieceSet={pieceSet} pieceTheme={pieceTheme} />
 			<span class="player-strip__slot">
 				<Slot session={session} color={color} />
 			</span>
@@ -50,7 +56,8 @@ function PlayerStrip({ session, color, position, toMove }: PlayerStripProps): JS
 }
 
 function ResultBanner({ session }: { session: Session }): JSX.Element | null {
-	const r = session.result;
+	// Only on the final position: stepping back hides it so play can continue from there.
+	const r = activeResult(session);
 	if (!r) return null;
 	const text = r.winner ? `${r.winner === 'white' ? 'White' : 'Black'} wins` : 'Draw';
 	return (
@@ -94,7 +101,7 @@ export function BoardStage({ class: className }: { class?: string }): JSX.Elemen
 	const turn = turnFromFen(vm.fen);
 	const top: Color = session.orientation === 'white' ? 'black' : 'white';
 	const bottom: Color = session.orientation;
-	const over = positionStatus(vm.fen).outcome !== undefined || !!session.result;
+	const over = positionStatus(vm.fen).outcome !== undefined || !!activeResult(session);
 
 	const onMove = (from: SquareName, to: SquareName, promotion?: PromotionRole) => {
 		const uci = makeUci(from, to, promotion);
@@ -111,7 +118,7 @@ export function BoardStage({ class: className }: { class?: string }): JSX.Elemen
 					<stageSlots.evalBar.Render session={session} />
 				</div>
 				<div class="stage__column">
-					<PlayerStrip session={session} color={top} position="top" toMove={!over && turn === top} />
+					<PlayerStrip session={session} color={top} position="top" toMove={!over && turn === top} fen={vm.fen} pieceSet={pieceSet} pieceTheme={pieceTheme} />
 					<div class="stage__board">
 						<Board2D
 							{...vm}
@@ -128,7 +135,7 @@ export function BoardStage({ class: className }: { class?: string }): JSX.Elemen
 							<stageSlots.overlay.Render session={session} />
 						</div>
 					</div>
-					<PlayerStrip session={session} color={bottom} position="bottom" toMove={!over && turn === bottom} />
+					<PlayerStrip session={session} color={bottom} position="bottom" toMove={!over && turn === bottom} fen={vm.fen} pieceSet={pieceSet} pieceTheme={pieceTheme} />
 				</div>
 				<div class="stage__side">
 					<stageSlots.side.Render session={session} />

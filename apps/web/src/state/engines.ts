@@ -16,7 +16,7 @@ import { batch, computed, effect, signal, untracked } from '@preact/signals';
 import { ROOT_ID, turnFromFen, uciPathTo, type Color } from '@chess/core/chess';
 import { createClock, type ClockConfig } from '@chess/core/clock';
 import type { EnginePosition, Uci } from '@chess/core';
-import type { BotConfig as SessionBotConfig, Session } from '@chess/core/game';
+import { activeResult, type BotConfig as SessionBotConfig, type Session } from '@chess/core/game';
 import { Analyzer, BotPlayer, EngineRegistry, isAbortError, type AnalysisState, type DownloadProgress, type EngineEntry } from '@/services/engine';
 import { api } from '@/services/api';
 import { getRepositories } from '@/services/db';
@@ -388,7 +388,7 @@ function createBot(s: Session): void {
 				config: botConfigOf(bot),
 				getPosition: () => {
 					const cur = getSession(sid);
-					if (!cur || cur.mode !== 'bot' || cur.result || !isAtBotTip(cur)) return null;
+					if (!cur || cur.mode !== 'bot' || activeResult(cur) || !isAtBotTip(cur)) return null;
 					reg.touch(bot.engineId);
 					return sessionPosition(cur);
 				},

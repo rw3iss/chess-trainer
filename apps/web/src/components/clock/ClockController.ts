@@ -176,7 +176,9 @@ export class ClockController {
 			this.seen.set(s.id, { nodes, result: !!s.result });
 			if (!prev) continue;
 			let clock = s.clock;
-			if (nodes > prev.nodes && !prev.result && !clock.flagged) clock = this.pressFor(s, clock, now);
+			// Press on a new move — also when that move continued the game from an earlier position
+			// (the old result was cleared), which restarts the paused clock.
+			if (nodes > prev.nodes && !clock.flagged && !(prev.result && s.result)) clock = this.pressFor(s, clock, now);
 			if (s.result && clock.running !== null) clock = pauseClock(clock, now);
 			// Only the active local game runs; others are parked until re-activated.
 			if (s.id !== active && clock.running !== null && s.mode === 'local-pvp') {

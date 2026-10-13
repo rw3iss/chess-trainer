@@ -18,6 +18,7 @@ import {
 	sessionToEnd,
 	sessionToStart,
 	sessionUpdate,
+	activeResult,
 } from './session.js';
 import type { Session } from './types.js';
 
@@ -196,5 +197,41 @@ describe('session', () => {
 		expect(defaultTitle(s)).toBe('Bot 1500 — 1.e4 e5 2.Nf3');
 		const r = addMove(treeFromUci([], 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1'), ROOT_ID, 'e7e5')!;
 		expect(defaultTitle({ mode: 'analysis', tree: r.tree })).toBe('Analysis — 1...e5');
+	});
+});
+
+describe('result tied to the final position', () => {
+	// Fool's mate: 1.f3 e5 2.g4 Qh4#
+	const mate = ['f2f3', 'e7e5', 'g2g4', 'd8h4'];
+	const play = (s: Session, ucis: string[]) => ucis.reduce((acc, u) => sessionMove(acc, u)!, s);
+
+	it('hides the result after stepping back, and a new move continues the game', () => {
+		let s = play(createSession({ mode: 'bot' }), mate);
+		expect(activeResult(s)?.reason).toBe('checkmate');
+		s = sessionStep(s, -1);
+		expect(activeResult(s)).toBeUndefined();
+		s = sessionMove(s, 'b8c6')!; // a different 2nd move for black
+		expect(s.result).toBeUndefined();
+		expect(s.resultNodeId).toBeUndefined();
+		// The mate line is still in the tree; going there shows the result again only via a new detection.
+	});
+
+	it('keeps a manual result only on the node it was set on', () => {
+		let s = play(createSession({ mode: 'local-pvp' }), ['e2e4', 'e7e5']);
+		s = sessionUpdate(s, { result: { winner: 'white', reason: 'resign' } });
+		expect(s.resultNodeId).toBe(s.cursor);
+		expect(activeResult(s)?.reason).toBe('resign');
+		const back = sessionStep(s, -1);
+		expect(activeResult(back)).toBeUndefined();
+		const cleared = sessionUpdate(s, { result: undefined });
+		expect(cleared.result).toBeUndefined();
+		expect(cleared.resultNodeId).toBeUndefined();
+	});
+
+	it('applies a legacy result (no resultNodeId) on leaves only', () => {
+		const s = play(createSession({ mode: 'bot' }), ['e2e4', 'e7e5']);
+		const legacy: Session = { ...s, result: { winner: 'black', reason: 'timeout' } };
+		expect(activeResult(legacy)).toBeDefined();
+		expect(activeResult(sessionStep(legacy, -1))).toBeUndefined();
 	});
 });

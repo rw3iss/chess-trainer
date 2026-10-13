@@ -1,7 +1,7 @@
 // Pure mapping: Session + settings → BoardViewModel (no chess rules here —
 // everything comes from @chess/core).
 import { getNode, legalDests, positionStatus, type Color, type SquareName } from '@chess/core/chess';
-import type { Session } from '@chess/core/game';
+import { activeResult, type Session } from '@chess/core/game';
 import type { BoardViewModel } from '@/components/board';
 import type { BoardDisplaySettings } from '@/state/settings';
 
@@ -12,7 +12,7 @@ export function lastMoveOf(session: Session): [SquareName, SquareName] | undefin
 }
 
 export function movableFor(session: Session): BoardViewModel['movable'] {
-	if (session.result) return 'none';
+	if (activeResult(session)) return 'none';
 	if (session.mode === 'bot' && session.bot) return session.bot.color === 'white' ? 'black' : 'white';
 	if (session.mode === 'online') return 'none'; // online feature sets this per seat
 	return 'both';

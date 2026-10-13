@@ -38,6 +38,7 @@ Subpath imports: `@chess/core/chess`, `/game`, `/clock`, `/engine`, `/theme`, `/
 | `treeToPgn` | `(tree, headers?: Record<string,string>) => string` | Variations, comments (userNote exported as comment), NAGs. |
 | `pgnToGames` | `(pgn) => PgnGame[]` | Multi-game; FEN/SetUp headers honored. `[%clk]`/`[%eval]`/shape commands stripped from comments; pre-move + post-move comments merge into `comment`. Games with an invalid start position are skipped; an illegal move ends its branch. |
 | `nodeCount` / `maxPly` | `(tree) => number` | |
+| `capturedPieces` | `(fen) => { captured: Record<Color, Role[]>; advantage: Record<Color, number> }` | Pieces each side has taken (cheapest first) and material lead in pawns. Promotions clamp. |
 
 Node ids: `nanoid`-like short random strings from `newId()` (exported from `chess/id.ts`; uses `crypto.getRandomValues` when present, else Math.random).
 
@@ -58,6 +59,7 @@ Node ids: `nanoid`-like short random strings from `newId()` (exported from `ches
 | `savedGameFromSession` | `(session, { name, tags?, asNew: boolean, existing?: SavedGame, now? }) => SavedGame` — overwrite keeps id/createdAt/favorite and bumps revision; asNew gets new id and parentGameId = session.savedGameId |
 | `linkSessionToSaved` | `(session, game) => Session` — sets savedGameId, title = game.name, dirty=false |
 | `detectResult` | `(fen, history fens?) => GameResult \| undefined` |
+| `activeResult` | `(session) => GameResult \| undefined` — the result only while the cursor is on `session.resultNodeId` (legacy: on a leaf). Stepping back hides it; a move from an earlier position clears it (`sessionMove`). `sessionUpdate` ties a manual result to the cursor. |
 | `defaultTitle` | `(session) => string` |
 
 ## clock (`src/clock/`)

@@ -5,7 +5,7 @@
 import type { JSX } from 'preact';
 import type { Color } from '@chess/core/chess';
 import { formatClock, remainingAt } from '@chess/core/clock';
-import type { Session } from '@chess/core/game';
+import { activeResult, type Session } from '@chess/core/game';
 import { Icon } from '@/components/common/Icon';
 import { settings } from '@/state/settings';
 import { cx } from '@/lib/classNames';
@@ -36,7 +36,7 @@ export function Clock({ session, color, variant = 'strip', rotated, class: class
 	const paused = clockController.isPaused(session) && clock.toMove === color;
 	const text = formatClock(ms, { tenthsUnderMs: cs.tenths ? TENTHS_UNDER_MS : 0 });
 	const name = color === 'white' ? 'White' : 'Black';
-	const live = session.mode !== 'online' && !session.result && !clock.flagged;
+	const live = session.mode !== 'online' && !activeResult(session) && !clock.flagged;
 
 	const onClick = () => {
 		if (!live) return;

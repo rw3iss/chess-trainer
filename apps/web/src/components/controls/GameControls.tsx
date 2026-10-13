@@ -1,7 +1,7 @@
 // GameControls — always acts on the ACTIVE session (PLAN §4.1).
 // first / prev / play-pause (+ speed) / next / last · flip · fork · save · bot · more.
 import type { JSX } from 'preact';
-import type { PlaybackSpeed } from '@chess/core/game';
+import { activeResult, type PlaybackSpeed } from '@chess/core/game';
 import { IconButton } from '@/components/common/IconButton';
 import { Menu, type MenuItem } from '@/components/common/Menu';
 import { commands } from '@/services/commands';
@@ -45,7 +45,7 @@ export function GameControls({ class: className }: { class?: string }): JSX.Elem
 		{ id: 'fork', label: 'Fork from here', icon: 'fork', disabled: !has, onSelect: () => commands.dispatch('fork') },
 		{ id: 'bot', label: 'Play vs bot…', icon: 'bot', disabled: !has, onSelect: () => commands.dispatch('openBot') },
 		{ id: 'save-as', label: 'Save as…', icon: 'save', shortcut: 'Ctrl ⇧ S', disabled: !has, onSelect: () => commands.dispatch('saveAs') },
-		...(session?.mode === 'local-pvp' && !session.result
+		...(session?.mode === 'local-pvp' && !activeResult(session)
 			? [
 					{ separator: true },
 					{ id: 'draw', label: 'Offer draw…', icon: 'minus', onSelect: () => commands.dispatch('offerDraw') },

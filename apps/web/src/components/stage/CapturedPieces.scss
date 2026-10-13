@@ -1,0 +1,55 @@
+.captured {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	min-width: 0;
+	overflow: hidden;
+
+	&__group {
+		display: inline-flex;
+		align-items: center;
+		flex: none;
+	}
+
+	&__piece {
+		width: 22px;
+		height: 22px;
+		flex: none;
+		filter: drop-shadow(0 0.5px 0.5px rgb(0 0 0 / 0.35));
+
+		// Same pieces overlap, like a small stack.
+		& + & {
+			margin-left: -11px;
+		}
+
+		&--white {
+			--pc-body: var(--pc-white-body);
+			--pc-line: var(--pc-white-line);
+			--pc-accent: var(--pc-white-accent);
+		}
+
+		&--black {
+			--pc-body: var(--pc-black-body);
+			--pc-line: var(--pc-black-line);
+			--pc-accent: var(--pc-black-accent);
+		}
+	}
+
+	&__lead {
+		font-family: var(--font-mono);
+		font-size: var(--text-xs);
+		color: var(--color-text-muted);
+		margin-left: 2px;
+	}
+
+	@media (max-width: 420px) {
+		&__piece {
+			width: 20px;
+			height: 20px;
+
+			& + & {
+				margin-left: -10px;
+			}
+		}
+	}
+}
