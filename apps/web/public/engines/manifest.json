@@ -1,0 +1,49 @@
+{
+	"generatedBy": "apps/web/scripts/copy-engines.mjs",
+	"stockfish": {
+		"package": "stockfish",
+		"version": "19.0.1",
+		"license": "GPL-3.0",
+		"source": "https://github.com/nmrugg/stockfish.js"
+	},
+	"engines": {
+		"sf-lite": {
+			"precache": true,
+			"onDemand": false,
+			"script": "stockfish/stockfish-19-lite-single.js",
+			"wasm": "stockfish/stockfish-19-lite-single.wasm",
+			"totalBytes": 1874201,
+			"files": [
+				{
+					"path": "stockfish/stockfish-19-lite-single.js",
+					"bytes": 28230,
+					"sha256": "ccb130d7ff29408531c47d859a49f91d59d4f482d05a53eb1a3231a4f624c91a"
+				},
+				{
+					"path": "stockfish/stockfish-19-lite-single.wasm",
+					"bytes": 1845971,
+					"sha256": "ee4f115bdb2d32cadf96cada104a05b5ec257d7ad6f57582190b49bc71f096de"
+				}
+			]
+		},
+		"sf-full": {
+			"precache": false,
+			"onDemand": true,
+			"script": "stockfish-full/stockfish-19-single.js",
+			"wasm": "stockfish-full/stockfish-19-single.wasm",
+			"totalBytes": 99197184,
+			"files": [
+				{
+					"path": "stockfish-full/stockfish-19-single.js",
+					"bytes": 28130,
+					"sha256": "8071dee87312f74805a859de933e1a1ef465579ab1a51fbd597388cdce9d444d"
+				},
+				{
+					"path": "stockfish-full/stockfish-19-single.wasm",
+					"bytes": 99169054,
+					"sha256": "991bede2f253ebb08ff01fcc48270f4b9c8e66b12d5bd5f8d6f52eb3e3b3a740"
+				}
+			]
+		}
+	}
+}
