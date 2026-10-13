@@ -1,14 +1,14 @@
 {
 	"version": 1,
-	"generatedAt": "2026-10-13T02:07:06.632Z",
+	"generatedAt": "2026-10-13T02:34:52.693Z",
 	"counts": {
 		"openings": 12322,
 		"positions": 15864,
 		"notes": 1812,
-		"withPopularity": 553
+		"withPopularity": 1103
 	},
 	"files": {
-		"openings": "openings.v1.938a8936.json",
+		"openings": "openings.v1.1be9d5b0.json",
 		"graph": "graph.v1.e71fbd9f.json",
 		"notes": {
 			"A": "notes.v1.A.da09518b.json",
