@@ -36,7 +36,7 @@ export interface EngineRegistryOptions {
 
 /** Local-catalog overrides: the local Maia adapter runs Maia-2 (one ~89 MB model, Elo input). */
 const LOCAL_META_OVERRIDES: Record<string, Partial<EngineMeta>> = {
-	maia: { name: 'Maia-2 (human-like)', sizeMb: Math.round(MAIA2_MODEL_BYTES / 1048576), eloRange: [1100, 2000] },
+	maia: { sizeMb: Math.round(MAIA2_MODEL_BYTES / 1048576) },
 };
 
 const MESSAGES: Record<UnavailableReason, string> = {

@@ -71,7 +71,7 @@ Node ids: `nanoid`-like short random strings from `newId()` (exported from `ches
 - `ENGINE_CATALOG: EngineMeta[]` — every engine from PLAN §5.2 with pros/cons (local + remote). Ids: `sf-lite`, `sf-full`, `maia`, `fairy`, `sf-native`, `lc0`, `maia-remote`, `komodo`.
 - `THINK_PRESET_MS: Record<ThinkPreset, number>` (instant 50, fast 300, normal 1000, deep 3000).
 - `resolveStrength(meta: EngineMeta, targetElo: number | undefined, think: ThinkSetting) => StrengthPlan` — PLAN §5.3.
-- `MAIA_BUCKETS = [1100..1900 step 100]`, `nearestMaiaBucket(elo)`.
+- `MAIA_BUCKETS = [1100..1900 step 100]`, `nearestMaiaBucket(elo)` — Maia-1 buckets (remote lc0 weights). The local Maia-2 adapter takes `targetElo` directly (1100–2000).
 - UCI helpers: `parseInfoLine(line) => EngineInfo | null` (null for `info string`, currmove-only and score-less lines), `parseBestMove(line) => { uci, ponder? } | null` (null for `(none)`/`0000`), `buildPositionCommand(pos: EnginePosition) => string`, `buildGoCommand(go: GoLimits) => string` (no limits / `infinite` → `go infinite`; set MultiPV via `setOptionCommands({ MultiPV: n })`), `setOptionCommands(options) => string[]`.
 - `toWhitePov(score, turn: Color) => EngineScore`, `scoreToWinProbability(score) => number` (0..1 for white, logistic on cp), `formatScore(score) => '+1.23' | '#3' | '-#2'`.
 - `pickBlunderMove(fen, bestUci, chance, rng) => Uci` — returns bestUci or a random legal move (never one that allows mate-in-1 when avoidable).
