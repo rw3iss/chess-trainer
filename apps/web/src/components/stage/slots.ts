@@ -3,6 +3,8 @@
 //   stageSlots.clockTop.register(MyClock);   // receives StageSlotProps
 import type { Color } from '@chess/core/chess';
 import type { Session } from '@chess/core/game';
+import { signal } from '@preact/signals';
+import type { Arrow, Mark } from '@/components/board';
 import { createSlot } from '@/app/slots';
 
 export interface StageSlotProps {
@@ -27,3 +29,18 @@ export const stageSlots = {
 	/** Absolutely positioned over the board — e.g. result banner, overlay clock. */
 	overlay: createSlot<StageSideSlotProps>('stage.overlay'),
 };
+
+/**
+ * Feature-provided board shapes (e.g. engine best-line arrows), keyed by owner so
+ * several features can contribute. Drawn under the user's own right-drag shapes.
+ *   setStageShapes('engine', { arrows: [...], marks: [] });
+ *   setStageShapes('engine', null); // clear
+ */
+export const stageShapes = signal<Record<string, { arrows: Arrow[]; marks: Mark[] }>>({});
+
+export function setStageShapes(owner: string, shapes: { arrows: Arrow[]; marks: Mark[] } | null): void {
+	const next = { ...stageShapes.value };
+	if (shapes) next[owner] = shapes;
+	else delete next[owner];
+	stageShapes.value = next;
+}

@@ -13,7 +13,7 @@ import { settings } from '@/state/settings';
 import { activeBoardTheme, activePieceSet, activePieceTheme } from '@/state/themes';
 import { cx } from '@/lib/classNames';
 import { boardViewModel, lastMoveOf, playerLabel } from './boardModel';
-import { stageSlots } from './slots';
+import { stageShapes, stageSlots } from './slots';
 import './BoardStage.scss';
 
 const MODE_LABEL: Record<Session['mode'], string> = {
@@ -86,6 +86,10 @@ export function BoardStage({ class: className }: { class?: string }): JSX.Elemen
 	}
 
 	const vm = boardViewModel(session, s.board);
+	const external = Object.values(stageShapes.value).reduce(
+		(acc, x) => ({ arrows: [...acc.arrows, ...x.arrows], marks: [...acc.marks, ...x.marks] }),
+		{ arrows: [] as Arrow[], marks: [] as Mark[] },
+	);
 	const shapeKey = `${session.id}:${session.cursor}`;
 	const turn = turnFromFen(vm.fen);
 	const top: Color = session.orientation === 'white' ? 'black' : 'white';
@@ -109,8 +113,8 @@ export function BoardStage({ class: className }: { class?: string }): JSX.Elemen
 					<div class="stage__board">
 						<Board2D
 							{...vm}
-							arrows={shapes.key === shapeKey ? shapes.arrows : []}
-							marks={shapes.key === shapeKey ? shapes.marks : []}
+							arrows={[...external.arrows, ...(shapes.key === shapeKey ? shapes.arrows : [])]}
+							marks={[...external.marks, ...(shapes.key === shapeKey ? shapes.marks : [])]}
 							boardTheme={boardTheme}
 							pieceTheme={pieceTheme}
 							pieceSet={pieceSet}
