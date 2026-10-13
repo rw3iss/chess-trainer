@@ -97,6 +97,7 @@ Strength truth table (`resolveStrength`):
 - `cloneBoardTheme(theme, name) / clonePieceTheme(theme, name)` → new id, builtIn false, baseId set.
 - `pieceThemeCssVars(theme) => Record<string,string>` (`--pc-white-body`, … , `--pc-shade`, `--pc-shadow`), `boardThemeCssVars(theme) => Record<string,string>`.
 - `validateBoardTheme(x) / validatePieceTheme(x)` → type guards for import.
+- `findPieceSet(id)`. Defaults: board `walnut`, pieces `lux`. `BUILTIN_PIECE_SETS` lives in `pieceSets.generated.ts` — regenerate with `pnpm assets:pieces` (`-- --render` also writes `tools/piece-assets/out/preview.png`).
 
 ## openings (`src/openings/`) — owned by the openings-data work
 

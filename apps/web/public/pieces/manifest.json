@@ -1,0 +1,312 @@
+[
+	{
+		"id": "lux",
+		"name": "Lux",
+		"author": "chess app (original)",
+		"license": "MIT",
+		"sprite": "pieces/lux/sprite.svg",
+		"layout": "shared",
+		"viewBox": "4 3 92 92",
+		"defaultColors": {
+			"white": {
+				"body": "#f3ead8",
+				"line": "#3b2f24",
+				"accent": "#5a4a3a"
+			},
+			"black": {
+				"body": "#3a3230",
+				"line": "#100c0a",
+				"accent": "#cdbda4"
+			}
+		}
+	},
+	{
+		"id": "sleek",
+		"name": "Sleek",
+		"author": "chess app (original)",
+		"license": "MIT",
+		"sprite": "pieces/sleek/sprite.svg",
+		"layout": "shared",
+		"viewBox": "4 3 92 92",
+		"defaultColors": {
+			"white": {
+				"body": "#fbfaf7",
+				"line": "#1d1d22",
+				"accent": "#1d1d22"
+			},
+			"black": {
+				"body": "#2b2b31",
+				"line": "#0c0c0f",
+				"accent": "#d8d8de"
+			}
+		}
+	},
+	{
+		"id": "cburnett",
+		"name": "Cburnett",
+		"author": "Colin M.L. Burnett",
+		"license": "GPL-2.0-or-later",
+		"sourceUrl": "https://github.com/lichess-org/lila/tree/master/public/piece/cburnett",
+		"sprite": "pieces/cburnett/sprite.svg",
+		"layout": "per-color",
+		"viewBox": "0 0 45 45",
+		"defaultColors": {
+			"white": {
+				"body": "#ffffff",
+				"line": "#000000",
+				"accent": "#000000"
+			},
+			"black": {
+				"body": "#000000",
+				"line": "#000000",
+				"accent": "#ececec"
+			}
+		}
+	},
+	{
+		"id": "merida",
+		"name": "Merida",
+		"author": "Armando Hernandez Marroquin",
+		"license": "GPL-2.0-or-later",
+		"sourceUrl": "https://github.com/lichess-org/lila/tree/master/public/piece/merida",
+		"sprite": "pieces/merida/sprite.svg",
+		"layout": "per-color",
+		"viewBox": "0 0 50 50",
+		"defaultColors": {
+			"white": {
+				"body": "#ffffff",
+				"line": "#1f1a17",
+				"accent": "#1f1a17"
+			},
+			"black": {
+				"body": "#1f1a17",
+				"line": "#1f1a17",
+				"accent": "#1f1a17"
+			}
+		}
+	},
+	{
+		"id": "rhosgfx",
+		"name": "RhosGFX",
+		"author": "RhosGFX",
+		"license": "CC0-1.0",
+		"sourceUrl": "https://github.com/lichess-org/lila/tree/master/public/piece/rhosgfx",
+		"sprite": "pieces/rhosgfx/sprite.svg",
+		"layout": "per-color",
+		"viewBox": "0 0 72 72",
+		"defaultColors": {
+			"white": {
+				"body": "#f4c38e",
+				"line": "#1a1a1a",
+				"accent": "#1a1a1a"
+			},
+			"black": {
+				"body": "#bb5938",
+				"line": "#1a1a1a",
+				"accent": "#1a1a1a"
+			}
+		}
+	},
+	{
+		"id": "fantasy",
+		"name": "Fantasy",
+		"author": "Maurizio Monge",
+		"license": "MIT",
+		"sourceUrl": "https://github.com/lichess-org/lila/tree/master/public/piece/fantasy",
+		"sprite": "pieces/fantasy/sprite.svg",
+		"layout": "per-color",
+		"viewBox": "0 0 933.33 933.33",
+		"defaultColors": {
+			"white": {
+				"body": "#dfe9eb",
+				"line": "#000000",
+				"accent": "#000000"
+			},
+			"black": {
+				"body": "#4e5265",
+				"line": "#000000",
+				"accent": "#7f899b"
+			}
+		}
+	},
+	{
+		"id": "spatial",
+		"name": "Spatial",
+		"author": "Maurizio Monge",
+		"license": "MIT",
+		"sourceUrl": "https://github.com/lichess-org/lila/tree/master/public/piece/spatial",
+		"sprite": "pieces/spatial/sprite.svg",
+		"layout": "per-color",
+		"viewBox": "0 0 933.333 933.333",
+		"defaultColors": {
+			"white": {
+				"body": "#dfe9eb",
+				"line": "#000000",
+				"accent": "#000000"
+			},
+			"black": {
+				"body": "#4e5265",
+				"line": "#000000",
+				"accent": "#000000"
+			}
+		}
+	},
+	{
+		"id": "celtic",
+		"name": "Celtic",
+		"author": "Maurizio Monge",
+		"license": "MIT",
+		"sourceUrl": "https://github.com/lichess-org/lila/tree/master/public/piece/celtic",
+		"sprite": "pieces/celtic/sprite.svg",
+		"layout": "per-color",
+		"viewBox": "0 0 933 933",
+		"defaultColors": {
+			"white": {
+				"body": "#dfe9eb",
+				"line": "#000000",
+				"accent": "#000000"
+			},
+			"black": {
+				"body": "#4e5265",
+				"line": "#000000",
+				"accent": "#000000"
+			}
+		}
+	},
+	{
+		"id": "chessnut",
+		"name": "Chessnut",
+		"author": "Alexis Luengas",
+		"license": "Apache-2.0",
+		"sourceUrl": "https://github.com/lichess-org/lila/tree/master/public/piece/chessnut",
+		"sprite": "pieces/chessnut/sprite.svg",
+		"layout": "per-color",
+		"viewBox": "0 0 800 800",
+		"defaultColors": {
+			"white": {
+				"body": "#ffffff",
+				"line": "#000000",
+				"accent": "#000000"
+			},
+			"black": {
+				"body": "#000000",
+				"line": "#000000",
+				"accent": "#f2f2f2"
+			}
+		}
+	},
+	{
+		"id": "kiwen-suwi",
+		"name": "Kiwen Suwi",
+		"author": "neverRare",
+		"license": "CC-BY-4.0",
+		"sourceUrl": "https://github.com/lichess-org/lila/tree/master/public/piece/kiwen-suwi",
+		"sprite": "pieces/kiwen-suwi/sprite.svg",
+		"layout": "per-color",
+		"viewBox": "0 0 260 260",
+		"defaultColors": {
+			"white": {
+				"body": "#ffffff",
+				"line": "#262626",
+				"accent": "#262626"
+			},
+			"black": {
+				"body": "#262626",
+				"line": "#262626",
+				"accent": "#262626"
+			}
+		}
+	},
+	{
+		"id": "california",
+		"name": "California",
+		"author": "Jerry S.",
+		"license": "CC-BY-NC-SA-4.0",
+		"sourceUrl": "https://github.com/lichess-org/lila/tree/master/public/piece/california",
+		"sprite": "pieces/california/sprite.svg",
+		"layout": "per-color",
+		"viewBox": "-66.405 -60 511.58 511.58",
+		"defaultColors": {
+			"white": {
+				"body": "#ffffff",
+				"line": "#000000",
+				"accent": "#000000"
+			},
+			"black": {
+				"body": "#808080",
+				"line": "#000000",
+				"accent": "#000000"
+			}
+		},
+		"personalUseOnly": true
+	},
+	{
+		"id": "cardinal",
+		"name": "Cardinal",
+		"author": "sadsnake1",
+		"license": "CC-BY-NC-SA-4.0",
+		"sourceUrl": "https://github.com/lichess-org/lila/tree/master/public/piece/cardinal",
+		"sprite": "pieces/cardinal/sprite.svg",
+		"layout": "per-color",
+		"viewBox": "0 0 50 50",
+		"defaultColors": {
+			"white": {
+				"body": "#f3f3f3",
+				"line": "#000000",
+				"accent": "#000000"
+			},
+			"black": {
+				"body": "#1e1e1e",
+				"line": "#000000",
+				"accent": "#e6e6e6"
+			}
+		},
+		"personalUseOnly": true
+	},
+	{
+		"id": "maestro",
+		"name": "Maestro",
+		"author": "sadsnake1",
+		"license": "CC-BY-NC-SA-4.0",
+		"sourceUrl": "https://github.com/lichess-org/lila/tree/master/public/piece/maestro",
+		"sprite": "pieces/maestro/sprite.svg",
+		"layout": "per-color",
+		"viewBox": "0 1.5 50 50",
+		"defaultColors": {
+			"white": {
+				"body": "#ffffff",
+				"line": "#000000",
+				"accent": "#000000"
+			},
+			"black": {
+				"body": "#303030",
+				"line": "#000000",
+				"accent": "#ffffff"
+			}
+		},
+		"personalUseOnly": true
+	},
+	{
+		"id": "staunty",
+		"name": "Staunty",
+		"author": "sadsnake1",
+		"license": "CC-BY-NC-SA-4.0",
+		"sourceUrl": "https://github.com/lichess-org/lila/tree/master/public/piece/staunty",
+		"sprite": "pieces/staunty/sprite.svg",
+		"layout": "per-color",
+		"viewBox": "0 0 50 50",
+		"defaultColors": {
+			"white": {
+				"body": "#f0f0f0",
+				"line": "#3c3c3c",
+				"accent": "#3c3c3c"
+			},
+			"black": {
+				"body": "#5f5955",
+				"line": "#1e1e1e",
+				"accent": "#1e1e1e"
+			}
+		},
+		"personalUseOnly": true
+	}
+]
