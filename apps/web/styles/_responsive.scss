@@ -15,6 +15,15 @@
 	@media (min-width: $bp-tablet) { @content; }
 }
 
+// App layout split (PLAN §4.1): below = stacked mobile layout, at/above = board + side panel.
+@mixin stacked {
+	@media (max-width: #{$bp-split - 1px}) { @content; }
+}
+
+@mixin split {
+	@media (min-width: $bp-split) { @content; }
+}
+
 @mixin desktop {
 	@media (min-width: $bp-desktop) { @content; }
 }

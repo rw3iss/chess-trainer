@@ -1,0 +1,16 @@
+{
+	"fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+	"source": "lichess",
+	"white": 1253211,
+	"draws": 112764,
+	"black": 1158342,
+	"moves": [
+		{ "uci": "e2e4", "san": "e4", "white": 610523, "draws": 52741, "black": 577211, "averageRating": 2041 },
+		{ "uci": "d2d4", "san": "d4", "white": 432155, "draws": 40122, "black": 380447, "averageRating": 2063 },
+		{ "uci": "g1f3", "san": "Nf3", "white": 101233, "draws": 10112, "black": 92055, "averageRating": 2072 },
+		{ "uci": "c2c4", "san": "c4", "white": 77003, "draws": 7342, "black": 69111, "averageRating": 2080 },
+		{ "uci": "g2g3", "san": "g3", "white": 12007, "draws": 1102, "black": 11232, "averageRating": 2031 }
+	],
+	"opening": { "eco": "A00", "name": "Starting position" },
+	"cachedAt": "2026-10-12T00:00:00.000Z"
+}

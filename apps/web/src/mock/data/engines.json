@@ -1,0 +1,23 @@
+[
+	{
+		"id": "sf-native", "name": "Stockfish 19 (server)", "family": "stockfish", "kind": "remote",
+		"description": "Native multi-threaded Stockfish with the full NNUE network.",
+		"eloRange": [1320, 3600], "humanLike": false, "license": "GPL-3.0",
+		"pros": ["Strongest analysis", "Multi-threaded"], "cons": ["Needs the server"],
+		"available": true
+	},
+	{
+		"id": "maia-remote", "name": "Maia (server)", "family": "maia", "kind": "remote",
+		"description": "Human-like play at 1100–1900 via lc0 with Maia nets.",
+		"eloRange": [1100, 1900], "humanLike": true, "license": "GPL-3.0",
+		"pros": ["Human-like mistakes"], "cons": ["Needs the server"],
+		"available": true
+	},
+	{
+		"id": "komodo", "name": "Komodo Dragon 3.3", "family": "komodo", "kind": "remote",
+		"description": "User-supplied binary.",
+		"eloRange": [1000, 3500], "humanLike": false, "license": "Proprietary (free download)",
+		"pros": ["Personality settings"], "cons": ["Binary must be supplied"],
+		"available": false, "reason": "binary not found at /opt/engines/komodo"
+	}
+]

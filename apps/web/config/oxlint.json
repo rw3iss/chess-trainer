@@ -6,13 +6,18 @@
 		"perf": "warn",
 		"style": "off"
 	},
-	"ignorePatterns": ["dist", "node_modules", "public"],
+	"ignorePatterns": [
+		"dist",
+		"node_modules",
+		"public"
+	],
 	"env": {
 		"browser": true,
 		"es2023": true
 	},
 	"rules": {
 		"react/react-in-jsx-scope": "off",
-		"react/jsx-key": "off"
+		"react/jsx-key": "off",
+		"no-underscore-dangle": "off"
 	}
 }

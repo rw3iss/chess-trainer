@@ -1,0 +1,41 @@
+@use '@styles/mixins' as *;
+
+.spinner {
+	position: relative;
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	color: currentColor;
+
+	&__svg {
+		animation: spinner-rotate 0.9s linear infinite;
+	}
+
+	&__track {
+		stroke: currentColor;
+		opacity: 0.18;
+	}
+
+	&__arc {
+		stroke: currentColor;
+		stroke-dasharray: 60;
+		stroke-dashoffset: 42;
+	}
+
+	&__label {
+		@include visually-hidden;
+	}
+
+	@include respect-reduced-motion {
+		&__svg {
+			animation-duration: 2.4s;
+		}
+	}
+}
+
+@keyframes spinner-rotate {
+	to {
+		transform: rotate(360deg);
+	}
+}

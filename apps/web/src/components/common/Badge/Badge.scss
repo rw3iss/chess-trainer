@@ -1,0 +1,48 @@
+@use 'sass:map';
+
+$tones: (
+	neutral: (bg: var(--color-active), fg: var(--color-text-muted), dot: var(--color-text-subtle)),
+	accent: (bg: var(--color-accent-soft), fg: var(--color-accent-text), dot: var(--color-accent)),
+	success: (bg: var(--color-success-soft), fg: var(--color-success), dot: var(--color-success)),
+	warn: (bg: var(--color-warn-soft), fg: var(--color-warn), dot: var(--color-warn)),
+	danger: (bg: var(--color-danger-soft), fg: var(--color-danger), dot: var(--color-danger)),
+	info: (bg: var(--color-info-soft), fg: var(--color-info), dot: var(--color-info)),
+);
+
+.badge {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	height: 20px;
+	padding: 0 var(--space-2);
+	border-radius: var(--radius-full);
+	font-family: var(--font-body);
+	font-size: var(--text-xs);
+	font-weight: var(--weight-medium);
+	font-variant-numeric: tabular-nums;
+	line-height: 1;
+	white-space: nowrap;
+	vertical-align: middle;
+
+	@each $name, $t in $tones {
+		&--#{$name} {
+			background: map.get($t, bg);
+			color: map.get($t, fg);
+		}
+	}
+}
+
+.badge-dot {
+	display: inline-block;
+	flex-shrink: 0;
+	width: 8px;
+	height: 8px;
+	border-radius: var(--radius-full);
+	vertical-align: middle;
+
+	@each $name, $t in $tones {
+		&--#{$name} {
+			background: map.get($t, dot);
+		}
+	}
+}

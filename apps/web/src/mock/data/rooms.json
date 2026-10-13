@@ -1,0 +1,10 @@
+[
+	{
+		"id": "demo-room",
+		"name": "Friendly 10+5",
+		"createdAt": 1760300000000,
+		"players": { "white": { "userId": "owner", "displayName": "You", "connected": true } },
+		"spectators": 0,
+		"inProgress": false
+	}
+]

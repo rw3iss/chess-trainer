@@ -1,0 +1,174 @@
+@use '@styles/mixins' as *;
+
+.shell {
+	display: flex;
+	flex-direction: column;
+	height: 100dvh;
+	overflow: hidden;
+
+	&__skip {
+		@include visually-hidden;
+
+		&:focus {
+			position: fixed;
+			top: var(--space-2);
+			left: var(--space-2);
+			z-index: var(--z-tooltip);
+			width: auto;
+			height: auto;
+			clip: auto;
+			padding: var(--space-2) var(--space-3);
+			border-radius: var(--radius-sm);
+			background: var(--color-accent);
+			color: var(--color-accent-fg);
+		}
+	}
+
+	&__body {
+		flex: 1;
+		min-height: 0;
+		display: flex;
+	}
+
+	&__stage {
+		flex: 1;
+	}
+
+	&__panel {
+		--panel-width: var(--sidepanel-width);
+		width: var(--panel-width);
+		flex: none;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+		background: var(--color-surface-1);
+		border-left: 1px solid var(--color-border);
+		box-shadow: -1px 0 0 var(--color-border), -24px 0 48px -32px rgba(0, 0, 0, 0.35);
+		transition: width var(--dur-slow) var(--ease-out);
+	}
+
+	&--wide &__panel {
+		--panel-width: clamp(520px, 52vw, 900px);
+	}
+
+	&__tabs {
+		flex: none;
+		padding: 0 var(--space-3);
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	&__content {
+		position: relative;
+		flex: 1;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+	}
+
+	&__route {
+		position: relative;
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+
+		&--hidden {
+			display: none;
+		}
+	}
+
+	&__override {
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
+		padding: var(--gutter);
+	}
+
+	&__loading {
+		position: absolute;
+		top: var(--space-3);
+		right: var(--space-3);
+		z-index: var(--z-base);
+	}
+
+	&__controls {
+		flex: none;
+	}
+
+	&__sheet-header {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		height: 48px;
+		flex: none;
+		padding: 0 var(--space-1);
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	&__sheet-back {
+		@include interactive;
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		height: var(--touch-target);
+		padding: 0 var(--space-3) 0 var(--space-2);
+		border-radius: var(--radius-md);
+		color: var(--color-text-muted);
+		font-weight: var(--weight-medium);
+	}
+
+	// ── Stacked (mobile) layout: board on top, panel scrolls beneath it ────
+	&--stacked &__body {
+		flex-direction: column;
+	}
+
+	&--stacked &__stage {
+		flex: none;
+	}
+
+	&--stacked &__panel {
+		width: 100%;
+		flex: 1;
+		min-height: 0;
+		border-left: none;
+		box-shadow: none;
+		background: transparent;
+	}
+
+	&--stacked &__tabs {
+		padding: 0 var(--space-2);
+		background: var(--color-bg);
+	}
+
+	&--stacked &__controls {
+		position: relative;
+		z-index: calc(var(--z-sheet) + 1);
+	}
+
+	&--sheet-open &__controls {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
+
+	&__content--sheet {
+		position: fixed;
+		inset: 0 0 calc(var(--controls-height) + env(safe-area-inset-bottom));
+		z-index: var(--z-sheet);
+		background: var(--color-bg);
+		animation: shell-sheet-in var(--dur-slow) var(--ease-out);
+	}
+
+	&__content--sheet &__route {
+		overflow-y: auto;
+	}
+
+}
+
+@keyframes shell-sheet-in {
+	from {
+		opacity: 0;
+		transform: translateY(24px);
+	}
+}

@@ -1,41 +1,62 @@
-// Theme overrides — swap at runtime by setting
-//   document.documentElement.dataset.theme = 'dark'   (or 'light')
-//
-// The default `:root` values in _variables.scss are the light theme; this file
-// overrides them when `[data-theme='dark']` is set. Add more themes as
-// `[data-theme='some-name']` blocks below.
+// Theme overrides. The default (:root) is the dark "modern study" theme.
+// useTheme() sets <html data-theme="light|dark"> from settings (light/dark/system).
+// Before JS runs, index.html applies the persisted theme to avoid a flash.
 
-[data-theme='dark'] {
-	--color-bg: #0b0b12;
-	--color-surface: #15151f;
-	--color-surface-2: #1f1f2d;
-	--color-text: #e9e9f4;
-	--color-text-muted: #9494a7;
-	--color-border: #2a2a3a;
-	--color-primary: #818cf8;
-	--color-primary-fg: #0b0b12;
-	--color-accent: #a78bfa;
-	--color-danger: #f87171;
-	--color-success: #4ade80;
+@mixin light-theme {
+	color-scheme: light;
 
-	--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-	--shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
-	--shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.6);
+	--color-bg: #f3eee4;
+	--color-bg-glow: #f9f5ed;
+	--color-surface-1: #fbf8f2;
+	--color-surface-2: #f0e9dc;
+	--color-surface-3: #e6dccb;
+	--color-surface-overlay: rgba(243, 238, 228, 0.78);
+	--color-border: rgba(58, 46, 28, 0.11);
+	--color-border-strong: rgba(58, 46, 28, 0.2);
+	--color-hover: rgba(58, 46, 28, 0.05);
+	--color-active: rgba(58, 46, 28, 0.09);
+
+	--color-text: #2a241b;
+	--color-text-muted: #6e6455;
+	--color-text-subtle: #9a8f7e;
+	--color-text-inverse: #fbf7ef;
+
+	--color-accent: #a27a2e;
+	--color-accent-fg: #fffaf0;
+	--color-accent-hover: color-mix(in oklab, var(--color-accent) 88%, black);
+	--color-accent-text: color-mix(in oklab, var(--color-accent) 82%, black);
+
+	--color-success: #3d8a5a;
+	--color-warn: #b27a1e;
+	--color-danger: #b84a3c;
+	--color-info: #3f6fa3;
+
+	--color-white-adv: #fffdf8;
+	--color-black-adv: #3a352d;
+	--color-draw: #a69d8d;
+
+	--shadow-sm: 0 1px 2px rgba(58, 46, 28, 0.08);
+	--shadow-md: 0 6px 18px rgba(58, 46, 28, 0.1), 0 1px 3px rgba(58, 46, 28, 0.08);
+	--shadow-lg: 0 18px 48px rgba(58, 46, 28, 0.16), 0 4px 12px rgba(58, 46, 28, 0.08);
+	--shadow-board: 0 22px 50px rgba(58, 46, 28, 0.22), 0 4px 12px rgba(58, 46, 28, 0.12);
+	--shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-// Respect OS-level preference as a fallback if no explicit theme is set.
-@media (prefers-color-scheme: dark) {
+[data-theme='light'] {
+	@include light-theme;
+}
+
+// No explicit theme yet (first paint before JS) → follow the OS.
+@media (prefers-color-scheme: light) {
 	:root:not([data-theme]) {
-		--color-bg: #0b0b12;
-		--color-surface: #15151f;
-		--color-surface-2: #1f1f2d;
-		--color-text: #e9e9f4;
-		--color-text-muted: #9494a7;
-		--color-border: #2a2a3a;
-		--color-primary: #818cf8;
-		--color-primary-fg: #0b0b12;
-		--color-accent: #a78bfa;
-		--color-danger: #f87171;
-		--color-success: #4ade80;
+		@include light-theme;
 	}
+}
+
+// Density (settings → app → density).
+[data-density='compact'] {
+	--control-md: 36px;
+	--control-lg: 42px;
+	--gutter: var(--space-3);
+	--gutter-lg: var(--space-4);
 }

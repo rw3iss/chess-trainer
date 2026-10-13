@@ -1,0 +1,98 @@
+@use '@styles/mixins' as *;
+
+.icon-btn {
+	@include interactive;
+	position: relative;
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	width: var(--control-md);
+	height: var(--control-md);
+	padding: 0;
+	border: 1px solid transparent;
+	border-radius: var(--radius-sm);
+	background: transparent;
+	color: var(--color-text-muted);
+	-webkit-tap-highlight-color: transparent;
+
+	&:hover:not(:disabled) {
+		color: var(--color-text);
+	}
+
+	&:active:not(:disabled) {
+		transform: scale(0.96);
+	}
+
+	&--sm {
+		width: var(--control-sm);
+		height: var(--control-sm);
+	}
+
+	&--lg {
+		width: var(--control-lg);
+		height: var(--control-lg);
+		border-radius: var(--radius-md);
+	}
+
+	&--solid {
+		background: var(--color-surface-2);
+		border-color: var(--color-border);
+		color: var(--color-text);
+		box-shadow: var(--shadow-inset);
+
+		&:hover:not(:disabled) {
+			background: var(--color-surface-3);
+		}
+	}
+
+	&--accent {
+		background: var(--color-accent);
+		color: var(--color-accent-fg);
+		box-shadow: var(--shadow-sm);
+
+		&:hover:not(:disabled) {
+			background: var(--color-accent-hover);
+			color: var(--color-accent-fg);
+		}
+	}
+
+	&__badge {
+		@include tabular;
+		position: absolute;
+		top: 2px;
+		right: 2px;
+		min-width: 16px;
+		height: 16px;
+		padding: 0 var(--space-1);
+		border-radius: var(--radius-full);
+		background: var(--color-accent);
+		color: var(--color-accent-fg);
+		font-size: calc(var(--text-xs) - 1px);
+		font-weight: var(--weight-semibold);
+		line-height: 16px;
+		text-align: center;
+		pointer-events: none;
+		box-shadow: 0 0 0 2px var(--color-bg);
+	}
+
+	@media (pointer: coarse) {
+		min-width: var(--touch-target);
+		min-height: var(--touch-target);
+
+		&--sm {
+			min-width: var(--control-md);
+			min-height: var(--control-md);
+		}
+	}
+}
+
+.icon-btn--active:not(.icon-btn--accent) {
+	background: var(--color-accent-soft);
+	color: var(--color-accent-text);
+
+	&:hover:not(:disabled) {
+		background: var(--color-accent-soft);
+		color: var(--color-accent-text);
+	}
+}

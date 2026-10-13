@@ -12,7 +12,7 @@ pages/
     └── ...
 ```
 
-Pages compose components, wire up data via hooks/services, and own routing concerns. Populated when the `--router` feature is scaffolded.
+Pages compose components, wire up data via hooks/services, and own routing concerns. Routes are registered in `src/app/routes.ts` (preact-iso, lazy). Pages render inside the side panel; the board never unmounts.
 
 **Pages live here, not in `src/components/`.** A page is a route/screen-level view. The
 pieces a page is built from go in `src/components/<feature-or-component>/`, and primitive

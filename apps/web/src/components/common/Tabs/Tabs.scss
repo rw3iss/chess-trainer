@@ -1,0 +1,140 @@
+@use '@styles/mixins' as *;
+
+.tabs {
+	position: relative;
+	display: flex;
+	align-items: stretch;
+	gap: var(--space-1);
+	min-width: 0;
+	overflow-x: auto;
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
+
+	&__tab {
+		position: relative;
+		z-index: 1;
+		display: inline-flex;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-2);
+		height: var(--control-md);
+		padding: 0 var(--space-3);
+		border: 0;
+		border-radius: var(--radius-sm);
+		background: transparent;
+		color: var(--color-text-muted);
+		font-family: var(--font-body);
+		font-size: var(--text-md);
+		font-weight: var(--weight-medium);
+		white-space: nowrap;
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+		transition: color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
+
+		&:hover {
+			color: var(--color-text);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--color-focus);
+			outline-offset: -2px;
+		}
+
+		&--active {
+			color: var(--color-text);
+		}
+	}
+
+	&__badge {
+		@include tabular;
+		min-width: 18px;
+		padding: 0 var(--space-1);
+		border-radius: var(--radius-full);
+		background: var(--color-active);
+		color: var(--color-text-muted);
+		font-size: var(--text-xs);
+		line-height: 18px;
+		text-align: center;
+	}
+
+	&__tab--active &__badge {
+		background: var(--color-accent-soft);
+		color: var(--color-accent-text);
+	}
+
+	&__indicator {
+		position: absolute;
+		left: 0;
+		pointer-events: none;
+		opacity: 0;
+		transition: transform var(--dur-med) var(--ease-out), width var(--dur-med) var(--ease-out), opacity var(--dur-fast);
+
+		&--ready {
+			opacity: 1;
+		}
+	}
+
+	// ── Underline ──────────────────────────────────────────────────────
+	&--underline {
+		gap: var(--space-2);
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	&--underline &__tab {
+		border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+
+		&:hover {
+			background: var(--color-hover);
+		}
+	}
+
+	&--underline &__indicator {
+		bottom: -1px;
+		height: 2px;
+		border-radius: var(--radius-full);
+		background: var(--color-accent);
+	}
+
+	// ── Pill ───────────────────────────────────────────────────────────
+	&--pill {
+		padding: var(--space-1);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		background: var(--color-surface-1);
+	}
+
+	&--pill &__indicator {
+		top: var(--space-1);
+		bottom: var(--space-1);
+		border-radius: var(--radius-sm);
+		background: var(--color-surface-3);
+		box-shadow: var(--shadow-sm);
+	}
+
+	// ── Sizes ──────────────────────────────────────────────────────────
+	&--sm &__tab {
+		height: var(--control-sm);
+		padding: 0 var(--space-2);
+		font-size: var(--text-sm);
+	}
+
+	&--pill.tabs--sm &__tab {
+		height: calc(var(--control-sm) - var(--space-2));
+	}
+
+	@include respect-reduced-motion {
+		&__indicator {
+			transition: none;
+		}
+	}
+
+	@media (pointer: coarse) {
+		&__tab {
+			min-height: var(--touch-target);
+		}
+	}
+}

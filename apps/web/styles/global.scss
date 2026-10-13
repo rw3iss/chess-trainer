@@ -2,27 +2,79 @@
 // component as a traditional Component.scss, imported once at the top of the
 // component (real class names, no CSS modules).
 
-@use 'variables';
-@use 'themes';
-@use 'reset';
-
-// Forward mixins + responsive so component SCSS can `@use '@styles/mixins' as *;`
 @forward 'mixins';
 @forward 'responsive';
 
-body {
+@use 'tokens';
+@use 'themes';
+@use 'reset';
+@use 'mixins' as *;
+
+html {
 	background: var(--color-bg);
+	-webkit-tap-highlight-color: transparent;
+}
+
+body {
+	background:
+		radial-gradient(1200px 700px at 30% -10%, var(--color-bg-glow), transparent 70%),
+		var(--color-bg);
 	color: var(--color-text);
 	font-family: var(--font-body);
-	font-size: 16px;
-	line-height: 1.5;
-	transition: background var(--dur-med) var(--ease-out), color var(--dur-med) var(--ease-out);
+	font-size: var(--text-md);
+	line-height: var(--leading-normal);
+	font-feature-settings: 'cv11', 'ss01';
+	transition: background-color var(--dur-med) var(--ease-out), color var(--dur-med) var(--ease-out);
+	overscroll-behavior: none;
 }
 
 a {
-	color: var(--color-primary);
+	color: var(--color-accent-text);
 	&:hover {
 		text-decoration: underline;
 		text-underline-offset: 2px;
+	}
+}
+
+h1, h2, h3 {
+	font-family: var(--font-display);
+	font-weight: var(--weight-medium);
+	letter-spacing: -0.01em;
+	line-height: var(--leading-tight);
+}
+
+::selection {
+	background: var(--color-accent-soft);
+}
+
+:focus-visible {
+	outline: 2px solid var(--color-focus);
+	outline-offset: 2px;
+}
+
+// Thin, quiet scrollbars.
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--color-border-strong) transparent;
+}
+
+.visually-hidden {
+	@include visually-hidden;
+}
+
+@include respect-reduced-motion {
+	*, *::before, *::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+// Reduced motion forced from settings (data-motion="reduced" on <html>).
+[data-motion='reduced'] {
+	*, *::before, *::after {
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
 	}
 }

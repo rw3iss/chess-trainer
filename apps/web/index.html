@@ -2,9 +2,33 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="theme-color" content="#0b0b12" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta name="theme-color" content="#0e0f12" />
+		<meta name="description" content="Learn chess openings — browse, play through, fork and practise against bots. Works offline." />
+		<link rel="icon" href="/icon.svg" type="image/svg+xml" />
+		<link rel="apple-touch-icon" href="/icon.svg" />
 		<title>Chess Openings</title>
+		<!-- Fonts: Google Fonts with display=swap (cached by the service worker). Local fallbacks in --font-* stacks. -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+		/>
+		<script>
+			// Apply the persisted theme before first paint (mirrors state/settings THEME_BOOT_KEY).
+			(function () {
+				try {
+					var s = JSON.parse(localStorage.getItem('chess:theme-boot') || '{}');
+					var mode = s.mode || 'system';
+					var light = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+					var root = document.documentElement;
+					root.dataset.theme = mode === 'system' ? (light ? 'light' : 'dark') : mode;
+					if (s.density) root.dataset.density = s.density;
+					if (s.accent) root.style.setProperty('--color-accent', s.accent);
+				} catch (e) {}
+			})();
+		</script>
 	</head>
 	<body>
 		<div id="root">

@@ -1,0 +1,48 @@
+@use '@styles/mixins' as *;
+
+.opening-header {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+	padding: var(--space-4) var(--gutter) var(--space-3);
+
+	&__top {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+	}
+
+	&__eyebrow {
+		@include eyebrow;
+	}
+
+	&__meta {
+		font-size: var(--text-xs);
+		color: var(--color-text-subtle);
+		letter-spacing: 0.02em;
+	}
+
+	&__name {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		font-size: var(--text-2xl);
+		font-variation-settings: 'opsz' 72;
+
+		&--muted {
+			color: var(--color-text-muted);
+		}
+	}
+
+	&__family {
+		@include truncate;
+	}
+
+	&__variation {
+		font-family: var(--font-body);
+		font-size: var(--text-md);
+		font-weight: var(--weight-regular);
+		color: var(--color-text-muted);
+		letter-spacing: 0;
+	}
+}

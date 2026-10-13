@@ -36,7 +36,8 @@ services (interfaces)     (db repositories · api ApiClient · engine registry �
 - **Engines** implement `EngineAdapter`. Local adapters run in Web Workers (Stockfish WASM, Maia ONNX). Remote adapters talk to the server's `/engine` socket.io namespace. `EngineRegistry` merges both and reports availability.
 - **Openings** datasets are static, hashed JSON in `/data/`, precached by the service worker. A search worker (MiniSearch) indexes them; `OpeningIndex` identifies openings and continuations for any position.
 - **Themes**: board and piece themes are JSON (`@chess/core/theme`). Pieces are SVG sprites with role classes (`pc-body`, `pc-line`, `pc-accent`, `pc-shade`) coloured through CSS variables, so any colour keeps its shading. Board textures are procedural SVG filters tinted by the theme's light/dark colours.
-- **Commands bus** (`services/commands`) decouples keyboard shortcuts and menus from features (e.g. `save`, `saveAs`, `focusSearch`).
+- **Commands bus** (`services/commands`) decouples keyboard shortcuts and menus from features (e.g. `save`, `saveAs`, `focusSearch`). Handlers stack: a feature's handler (SaveModal) overrides the default quick-save.
+- **Extension slots** (`app/slots.tsx`): features plug UI into the shell without editing it — `stageSlots` (clocks, eval bar, overlays), `panelSlots.engine`, `notesSlots.dataset`; opening names via `setOpeningIdentifier()`. Full table: `apps/web/BUILD.md`.
 
 ## Server (optional)
 

@@ -1,0 +1,39 @@
+@use '@styles/mixins' as *;
+
+.notes-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+	margin: var(--space-3) var(--gutter) var(--gutter);
+
+	&__user {
+		@include surface(2);
+		padding: var(--space-3);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+	}
+
+	&__head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	&__title {
+		@include eyebrow;
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+	}
+
+	&__status {
+		font-size: var(--text-xs);
+		color: var(--color-text-subtle);
+	}
+
+	textarea {
+		resize: vertical;
+		min-height: 72px;
+	}
+}

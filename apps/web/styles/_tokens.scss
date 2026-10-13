@@ -1,0 +1,133 @@
+// Design tokens as CSS custom properties (emitted ONCE, via global.scss).
+// DESIGN.md is the source of intent. Sass-only values live in _variables.scss.
+// :root holds the DEFAULT theme ("modern study" dark — ink/charcoal + brass).
+// _themes.scss overrides for [data-theme='light'] (warm paper).
+// --color-accent is user-configurable (settings → app → accent); every accent
+// derivative is computed from it with color-mix so one var re-tints the app.
+
+:root {
+	color-scheme: dark;
+
+	// ── Surfaces (ink / charcoal) ─────────────────────────────────────────
+	--color-bg: #0e0f12;
+	--color-bg-glow: #17181d;
+	--color-surface-1: #15161a;
+	--color-surface-2: #1c1d22;
+	--color-surface-3: #25262c;
+	--color-surface-overlay: rgba(14, 15, 18, 0.72);
+	--color-border: rgba(236, 228, 214, 0.08);
+	--color-border-strong: rgba(236, 228, 214, 0.16);
+	--color-hover: rgba(236, 228, 214, 0.05);
+	--color-active: rgba(236, 228, 214, 0.09);
+
+	// ── Text ──────────────────────────────────────────────────────────────
+	--color-text: #ece6da;
+	--color-text-muted: #9c968b;
+	--color-text-subtle: #6f6a62;
+	--color-text-inverse: #16130e;
+
+	// ── Accent (brass, user-configurable) ─────────────────────────────────
+	--color-accent: #c9a45c;
+	--color-accent-fg: #16130e;
+	--color-accent-hover: color-mix(in oklab, var(--color-accent) 86%, white);
+	--color-accent-soft: color-mix(in oklab, var(--color-accent) 16%, transparent);
+	--color-accent-softer: color-mix(in oklab, var(--color-accent) 9%, transparent);
+	--color-accent-text: color-mix(in oklab, var(--color-accent) 88%, white);
+	--color-focus: color-mix(in oklab, var(--color-accent) 70%, transparent);
+
+	// ── Semantic ──────────────────────────────────────────────────────────
+	--color-success: #6fbf8a;
+	--color-warn: #e0a84e;
+	--color-danger: #e06c5e;
+	--color-info: #7aa7d9;
+	--color-success-soft: color-mix(in oklab, var(--color-success) 16%, transparent);
+	--color-warn-soft: color-mix(in oklab, var(--color-warn) 16%, transparent);
+	--color-danger-soft: color-mix(in oklab, var(--color-danger) 16%, transparent);
+	--color-info-soft: color-mix(in oklab, var(--color-info) 16%, transparent);
+
+	// ── Chess advantage (eval bar, W/D/L bars) ────────────────────────────
+	--color-white-adv: #f1ece2;
+	--color-black-adv: #2a2a2e;
+	--color-draw: #8c877d;
+
+	// ── Typography ────────────────────────────────────────────────────────
+	--font-display: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+	--font-body: 'Inter', 'Inter Variable', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	--font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+	--font-figurine: 'Noto Sans Symbols 2', 'Segoe UI Symbol', 'DejaVu Sans', var(--font-body);
+
+	--font-scale: 1;
+	--text-xs: calc(11px * var(--font-scale));
+	--text-sm: calc(13px * var(--font-scale));
+	--text-md: calc(14px * var(--font-scale));
+	--text-lg: calc(16px * var(--font-scale));
+	--text-xl: calc(20px * var(--font-scale));
+	--text-2xl: calc(26px * var(--font-scale));
+	--text-3xl: calc(34px * var(--font-scale));
+
+	--weight-regular: 400;
+	--weight-medium: 500;
+	--weight-semibold: 600;
+
+	--leading-tight: 1.2;
+	--leading-normal: 1.5;
+	--tracking-caps: 0.08em;
+
+	// ── Spacing (4 px scale) ──────────────────────────────────────────────
+	--space-0: 2px;
+	--space-1: 4px;
+	--space-2: 8px;
+	--space-3: 12px;
+	--space-4: 16px;
+	--space-5: 20px;
+	--space-6: 24px;
+	--space-8: 32px;
+	--space-10: 40px;
+	--space-12: 48px;
+	--space-16: 64px;
+
+	--gutter: var(--space-4);
+	--gutter-lg: var(--space-6);
+
+	// ── Sizes ─────────────────────────────────────────────────────────────
+	--touch-target: 44px;
+	--control-sm: 32px;
+	--control-md: 40px;
+	--control-lg: 48px;
+	--topnav-height: 56px;
+	--controls-height: 64px;
+	--sidepanel-width: clamp(340px, 30vw, 440px);
+
+	// ── Radii ─────────────────────────────────────────────────────────────
+	--radius-xs: 4px;
+	--radius-sm: 6px;
+	--radius-md: 10px;
+	--radius-lg: 16px;
+	--radius-full: 9999px;
+
+	// ── Shadows ───────────────────────────────────────────────────────────
+	--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+	--shadow-md: 0 6px 18px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.3);
+	--shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
+	--shadow-board: 0 24px 60px rgba(0, 0, 0, 0.55), 0 6px 16px rgba(0, 0, 0, 0.35);
+	--shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+	// ── Motion ────────────────────────────────────────────────────────────
+	--ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+	--ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+	--ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+	--dur-fast: 120ms;
+	--dur-med: 200ms;
+	--dur-slow: 360ms;
+	--dur-piece: 180ms;
+
+	// ── Layers ────────────────────────────────────────────────────────────
+	--z-base: 1;
+	--z-sticky: 20;
+	--z-nav: 30;
+	--z-dropdown: 50;
+	--z-sheet: 60;
+	--z-modal: 70;
+	--z-toast: 80;
+	--z-tooltip: 90;
+}

@@ -1,0 +1,106 @@
+@use '@styles/mixins' as *;
+
+.home {
+	min-height: 100%;
+
+	&--loading {
+		display: grid;
+		place-items: center;
+		padding: var(--space-12);
+	}
+}
+
+.start-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-6);
+	padding: var(--space-8) var(--gutter-lg);
+
+	&__hero {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-3);
+	}
+
+	&__mark {
+		display: inline-grid;
+		place-items: center;
+		width: 56px;
+		height: 56px;
+		border-radius: var(--radius-lg);
+		background: linear-gradient(145deg, var(--color-accent-soft), var(--color-accent-softer));
+		color: var(--color-accent-text);
+		box-shadow: inset 0 0 0 1px var(--color-accent-soft);
+	}
+
+	&__title {
+		font-size: var(--text-3xl);
+		font-variation-settings: 'opsz' 96;
+	}
+
+	&__lead {
+		color: var(--color-text-muted);
+		font-size: var(--text-lg);
+		max-width: 36ch;
+	}
+
+	&__actions {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+	}
+
+	&__eyebrow {
+		@include eyebrow;
+		margin-bottom: var(--space-2);
+	}
+
+	&__list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+		margin: 0;
+	}
+
+	&__game {
+		@include interactive;
+		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+		width: 100%;
+		min-height: var(--touch-target);
+		padding: 0 var(--space-3);
+		border-radius: var(--radius-md);
+		color: var(--color-text-muted);
+		text-align: left;
+	}
+
+	&__game-name {
+		flex: 1;
+		color: var(--color-text);
+		@include truncate;
+	}
+
+	&__game-time {
+		font-size: var(--text-xs);
+		color: var(--color-text-subtle);
+	}
+
+	&__tip {
+		font-size: var(--text-sm);
+		color: var(--color-text-subtle);
+
+		kbd {
+			display: inline-block;
+			min-width: 22px;
+			padding: 1px var(--space-1);
+			border-radius: var(--radius-xs);
+			border: 1px solid var(--color-border-strong);
+			background: var(--color-surface-2);
+			font-family: var(--font-body);
+			font-size: var(--text-xs);
+			text-align: center;
+			color: var(--color-text-muted);
+		}
+	}
+}

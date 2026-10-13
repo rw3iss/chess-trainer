@@ -1,0 +1,147 @@
+@use '@styles/mixins' as *;
+
+// Floating popover shell (Menu + ContextMenu).
+.menu {
+	position: fixed;
+	z-index: var(--z-dropdown);
+	display: flex;
+	flex-direction: column;
+	max-width: min(360px, calc(100vw - var(--space-4)));
+	max-height: min(70vh, 520px);
+	padding: var(--space-1);
+	border: 1px solid var(--color-border-strong);
+	border-radius: var(--radius-md);
+	background: var(--color-surface-2);
+	box-shadow: var(--shadow-md);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	animation: menu-in var(--dur-fast) var(--ease-out) both;
+	transform-origin: top center;
+
+	&--top {
+		transform-origin: bottom center;
+	}
+
+	&__header,
+	&__footer {
+		padding: var(--space-2) var(--space-3);
+		font-size: var(--text-sm);
+		color: var(--color-text-muted);
+	}
+
+	&__header {
+		border-bottom: 1px solid var(--color-border);
+		margin-bottom: var(--space-1);
+	}
+
+	&__footer {
+		border-top: 1px solid var(--color-border);
+		margin-top: var(--space-1);
+	}
+
+	@include respect-reduced-motion {
+		animation: none;
+	}
+}
+
+.menu-list {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	outline: none;
+
+	&__item {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		width: 100%;
+		min-height: var(--control-sm);
+		padding: 0 var(--space-3) 0 var(--space-2);
+		border: 0;
+		border-radius: var(--radius-sm);
+		background: transparent;
+		color: var(--color-text);
+		font-family: var(--font-body);
+		font-size: var(--text-md);
+		text-align: left;
+		cursor: pointer;
+		transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+
+		&:focus,
+		&:focus-visible {
+			outline: none;
+			background: var(--color-active);
+		}
+
+		&:focus-visible {
+			box-shadow: inset 0 0 0 1px var(--color-focus);
+		}
+
+		&--danger {
+			color: var(--color-danger);
+
+			&:focus {
+				background: var(--color-danger-soft);
+			}
+		}
+
+		&--disabled {
+			cursor: not-allowed;
+			opacity: 0.45;
+
+			&:focus {
+				background: transparent;
+			}
+		}
+	}
+
+	&__lead {
+		display: inline-flex;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+		width: 18px;
+		color: var(--color-text-muted);
+	}
+
+	&__item--danger &__lead {
+		color: currentColor;
+	}
+
+	&__label {
+		@include truncate;
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__shortcut {
+		@include tabular;
+		margin-left: var(--space-4);
+		font-size: var(--text-xs);
+		color: var(--color-text-subtle);
+	}
+
+	&__separator {
+		height: 1px;
+		margin: var(--space-1) var(--space-2);
+		background: var(--color-border);
+	}
+
+	&__heading {
+		@include eyebrow;
+		padding: var(--space-2) var(--space-3) var(--space-1);
+	}
+
+	@media (pointer: coarse) {
+		&__item {
+			min-height: var(--touch-target);
+		}
+	}
+}
+
+@keyframes menu-in {
+	from {
+		opacity: 0;
+		transform: scale(0.97) translateY(-2px);
+	}
+}

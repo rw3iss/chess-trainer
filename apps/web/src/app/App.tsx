@@ -1,11 +1,16 @@
+// Root composition: router location + persistent AppShell + app-wide effects.
 import type { JSX } from 'preact';
-import './App.scss';
+import { LocationProvider } from 'preact-iso';
+import { AppShell } from '@/components/shell/AppShell';
+import { useApplyAppearance } from '@/hooks/useTheme';
+import { useServiceWorkerToasts } from '@/hooks/useServiceWorkerToasts';
 
 export function App(): JSX.Element {
+	useApplyAppearance();
+	useServiceWorkerToasts();
 	return (
-		<main class="app">
-			<h1>Chess Openings</h1>
-			<p>Scaffold ready. Start building components under <code>src/components/</code>.</p>
-		</main>
+		<LocationProvider>
+			<AppShell />
+		</LocationProvider>
 	);
 }

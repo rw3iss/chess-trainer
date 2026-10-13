@@ -1,0 +1,7 @@
+{
+	"status": "ok",
+	"name": "chess-server (mock)",
+	"version": "0.0.0-mock",
+	"protocol": 1,
+	"features": { "auth": true, "explorer": true, "engines": true, "rooms": true, "sync": false }
+}

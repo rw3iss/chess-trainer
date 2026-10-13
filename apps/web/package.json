@@ -5,10 +5,13 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite --config config/vite.config.ts",
-		"build": "tsc -p config/tsconfig.app.json --noEmit && vite build --config config/vite.config.ts",
+		"build": "pnpm typecheck && vite build --config config/vite.config.ts",
 		"preview": "vite preview --config config/vite.config.ts",
-		"typecheck": "tsc --noEmit -p config/tsconfig.app.json",
-		"lint": "oxlint --config config/oxlint.json src"
+		"typecheck": "tsc --noEmit -p config/tsconfig.app.json && tsc --noEmit -p config/tsconfig.worker.json",
+		"lint": "oxlint --config config/oxlint.json src",
+		"test": "vitest run --config config/vitest.config.ts",
+		"test:watch": "vitest --config config/vitest.config.ts",
+		"test:e2e": "playwright test --config config/playwright.config.ts"
 	},
 	"dependencies": {
 		"@chess/core": "workspace:*",

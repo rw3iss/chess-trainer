@@ -1,0 +1,181 @@
+@use '@styles/mixins' as *;
+
+.sheet-layer {
+	position: fixed;
+	inset: 0;
+	z-index: var(--z-sheet);
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+
+	&--right {
+		align-items: stretch;
+		justify-content: flex-end;
+	}
+
+	&__backdrop {
+		position: absolute;
+		inset: 0;
+		background: var(--color-surface-overlay);
+		backdrop-filter: blur(4px);
+		-webkit-backdrop-filter: blur(4px);
+		animation: sheet-fade-in var(--dur-med) var(--ease-out) both;
+	}
+
+	&[data-state='closed'] {
+		pointer-events: none;
+	}
+
+	&[data-state='closed'] &__backdrop {
+		animation: sheet-fade-out var(--dur-med) var(--ease-out) both;
+	}
+}
+
+.sheet {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	background: var(--color-surface-1);
+	box-shadow: var(--shadow-lg);
+	outline: none;
+	transition: transform var(--dur-med) var(--ease-out);
+
+	// ── Bottom ─────────────────────────────────────────────────────────
+	&--bottom {
+		width: 100%;
+		max-width: 640px;
+		max-height: calc(100dvh - var(--space-8));
+		border: 1px solid var(--color-border-strong);
+		border-bottom: 0;
+		border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+		padding-bottom: env(safe-area-inset-bottom);
+		animation: sheet-up var(--dur-slow) var(--ease-out) both;
+	}
+
+	&--bottom.sheet--full {
+		height: calc(100dvh - var(--space-8));
+	}
+
+	.sheet-layer[data-state='closed'] &--bottom {
+		animation: sheet-down var(--dur-med) var(--ease-in-out) both;
+	}
+
+	// ── Right ──────────────────────────────────────────────────────────
+	&--right {
+		width: min(420px, 100vw - var(--space-8));
+		height: 100%;
+		border-left: 1px solid var(--color-border-strong);
+		animation: sheet-in-right var(--dur-slow) var(--ease-out) both;
+	}
+
+	.sheet-layer[data-state='closed'] &--right {
+		animation: sheet-out-right var(--dur-med) var(--ease-in-out) both;
+	}
+
+	&__handle {
+		display: flex;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+		height: var(--space-6);
+		cursor: grab;
+		touch-action: none;
+
+		&:active {
+			cursor: grabbing;
+		}
+	}
+
+	&__grip {
+		width: 36px;
+		height: 4px;
+		border-radius: var(--radius-full);
+		background: var(--color-border-strong);
+	}
+
+	&__header {
+		display: flex;
+		flex-shrink: 0;
+		align-items: center;
+		gap: var(--space-3);
+		padding: var(--space-2) var(--space-3) var(--space-2) var(--space-5);
+	}
+
+	&--right &__header {
+		padding-top: var(--space-4);
+	}
+
+	&__title {
+		@include truncate;
+		flex: 1;
+		min-width: 0;
+		margin: 0;
+		font-family: var(--font-display);
+		font-size: var(--text-lg);
+		font-weight: var(--weight-medium);
+		color: var(--color-text);
+	}
+
+	&__actions {
+		display: flex;
+		align-items: center;
+		gap: var(--space-1);
+		margin-left: auto;
+	}
+
+	&__body {
+		flex: 1 1 auto;
+		min-height: 0;
+		padding: var(--space-2) var(--space-5) var(--space-5);
+		overflow-y: auto;
+		overscroll-behavior: contain;
+	}
+
+	@include respect-reduced-motion {
+		&--bottom,
+		&--right {
+			animation-name: sheet-fade-in;
+		}
+
+		.sheet-layer[data-state='closed'] &--bottom,
+		.sheet-layer[data-state='closed'] &--right {
+			animation-name: sheet-fade-out;
+		}
+	}
+}
+
+@keyframes sheet-fade-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes sheet-fade-out {
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes sheet-up {
+	from {
+		transform: translateY(100%);
+	}
+}
+
+@keyframes sheet-down {
+	to {
+		transform: translateY(100%);
+	}
+}
+
+@keyframes sheet-in-right {
+	from {
+		transform: translateX(100%);
+	}
+}
+
+@keyframes sheet-out-right {
+	to {
+		transform: translateX(100%);
+	}
+}
