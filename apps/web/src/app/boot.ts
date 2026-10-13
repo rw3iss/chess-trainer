@@ -8,6 +8,8 @@ import { flushStores, initStores } from '@/state';
 import { settings } from '@/state/settings';
 import { serverConnector } from '@/services/server';
 import { registerDefaultSessionCommands } from '@/components/controls/sessionCommands';
+import { installNewGameFeature } from '@/components/controls/NewGameModal/install';
+import { installClockFeature } from '@/components/clock/install';
 
 let booted = false;
 
@@ -15,7 +17,20 @@ export async function boot(): Promise<void> {
 	if (booted) return;
 	booted = true;
 	registerDefaultSessionCommands();
+	// Engine feature: Engine tab, eval bar, arrows, BotModal ('openBot'). Lazy chunk.
+	void import('@/components/engine').then((m) => m.registerEngineFeature());
+	// New game modal + local PvP ('newGame', 'resign', 'offerDraw').
+	installNewGameFeature();
 	await initStores();
+	// Clocks (stage slots + controller) and move sounds — after sessions are restored.
+	installClockFeature();
+	// Server feature: background sync + online-room stage wiring (after stores restore).
+	void import('@/components/server').then((m) => m.registerServerFeature());
+	// PWA: install prompt layer + persistent-storage request after the first save.
+	void import('@/components/pwa').then((m) => m.registerPwaFeature());
+	// Saved games: 'save' / 'saveAs' → SaveModal (quick overwrite when linked).
+	void import('@/components/controls/SaveModal').then((m) => m.registerGamesFeature());
+	void import('@/components/openings').then((m) => m.registerOpeningsFeature());
 
 	// Re-probe whenever the configured server URL changes.
 	let lastUrl: string | null | undefined;

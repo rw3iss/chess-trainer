@@ -5,6 +5,7 @@ test('shell renders and sessions survive reload', async ({ page }) => {
 	await page.goto('/');
 	await expect(page.getByRole('toolbar', { name: 'Game controls' })).toBeVisible();
 	await page.getByRole('button', { name: 'New game' }).first().click();
+	await page.getByRole('dialog', { name: 'New game' }).getByRole('button', { name: 'Start', exact: true }).click();
 	await page.evaluate(() => {
 		const c = (window as unknown as { __chess: { sessionsActions: { move(u: string): unknown } } }).__chess;
 		c.sessionsActions.move('e2e4');

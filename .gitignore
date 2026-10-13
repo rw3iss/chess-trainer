@@ -9,3 +9,5 @@ coverage/
 .cache/
 playwright-report/
 test-results/
+.playwright-mcp/
+apps/web/screenshots/

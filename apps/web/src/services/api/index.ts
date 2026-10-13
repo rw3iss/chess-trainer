@@ -9,8 +9,10 @@ import { MockApiAdapter } from './MockApiAdapter';
 
 export type { ApiClient, RoomSummary } from './ApiClient';
 export { ApiRequestError } from './ApiClient';
+export { HttpApiAdapter, type HttpApiOptions } from './HttpApiAdapter';
 
 let tokenProvider: () => string | null = () => null;
+let unauthorizedHandler: (() => Promise<string | null>) | null = null;
 const mock: ApiClient = new MockApiAdapter();
 let http: HttpApiAdapter | null = null;
 let httpUrl: string | null = null;
@@ -20,9 +22,14 @@ export function setAuthTokenProvider(fn: () => string | null): void {
 	tokenProvider = fn;
 }
 
+/** Auth layer registers how to get a fresh token after a 401 (refresh flow). */
+export function setUnauthorizedHandler(fn: (() => Promise<string | null>) | null): void {
+	unauthorizedHandler = fn;
+}
+
 function httpFor(url: string): HttpApiAdapter {
 	if (!http || httpUrl !== url) {
-		http = new HttpApiAdapter({ baseUrl: url, getToken: () => tokenProvider() });
+		http = new HttpApiAdapter({ baseUrl: url, getToken: () => tokenProvider(), onUnauthorized: () => unauthorizedHandler?.() ?? Promise.resolve(null) });
 		httpUrl = url;
 	}
 	return http;

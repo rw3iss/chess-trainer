@@ -6,6 +6,7 @@ import type { Session } from '@chess/core/game';
 import { Menu, type MenuItem } from '@/components/common/Menu';
 import { Icon } from '@/components/common/Icon';
 import { activeId, activeSession, openSessions, sessionCount, sessionsActions } from '@/state/sessions';
+import { commands } from '@/services/commands';
 import { describeMove } from '@/lib/format';
 import { cx } from '@/lib/classNames';
 import './SessionSwitcher.scss';
@@ -42,8 +43,8 @@ export function SessionSwitcher({ compact = false }: { compact?: boolean }): JSX
 			label: 'New game',
 			icon: 'plus',
 			onSelect: () => {
-				sessionsActions.newSession();
 				route('/');
+				commands.dispatch('newGame');
 			},
 		},
 		{ id: 'all', label: 'All sessions', icon: 'grid', shortcut: count > QUICK_LIST_MAX ? `+${count - QUICK_LIST_MAX}` : undefined, onSelect: () => route('/sessions') },
@@ -59,7 +60,14 @@ export function SessionSwitcher({ compact = false }: { compact?: boolean }): JSX
 				<button {...p} type="button" class={cx('session-switcher', compact && 'session-switcher--compact')}>
 					<span class="session-switcher__label">
 						<span class="session-switcher__eyebrow">Current</span>
-						<span class="session-switcher__title">{current?.title ?? 'No game open'}</span>
+						<span class="session-switcher__title">
+							{current?.title ?? 'No game open'}
+							{current?.dirty && current.savedGameId && (
+								<span class="session-switcher__dirty" title="Unsaved changes" aria-label="(unsaved changes)">
+									•
+								</span>
+							)}
+						</span>
 					</span>
 					<span class="session-switcher__count" aria-label={`${count} open`}>
 						{count}

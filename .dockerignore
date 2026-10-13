@@ -1,0 +1,25 @@
+# Docker build context = repo root (apps/server/config/Dockerfile, apps/web/config/Dockerfile).
+**/node_modules
+**/dist
+**/coverage
+**/.turbo
+**/*.log
+.git
+.github
+.vscode
+.idea
+.claude
+graphify-out
+
+# secrets + local data
+.env
+**/.env
+**/.env.*
+!**/.env.example
+apps/server/data
+
+# test / tooling output
+**/test-results
+**/playwright-report
+**/screenshots
+tools/openings-data/cache

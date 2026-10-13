@@ -13,7 +13,7 @@ import { settings } from '@/state/settings';
 import { activeBoardTheme, activePieceSet, activePieceTheme } from '@/state/themes';
 import { cx } from '@/lib/classNames';
 import { boardViewModel, lastMoveOf, playerLabel } from './boardModel';
-import { stageShapes, stageSlots } from './slots';
+import { fromMoveHandlers, stageShapes, stageSlots } from './slots';
 import './BoardStage.scss';
 
 const MODE_LABEL: Record<Session['mode'], string> = {
@@ -35,7 +35,7 @@ function PlayerStrip({ session, color, position, toMove }: PlayerStripProps): JS
 	return (
 		<div class={cx('player-strip', `player-strip--${position}`, toMove && 'player-strip--to-move')}>
 			<span class={cx('player-strip__swatch', `player-strip__swatch--${color}`)} aria-hidden="true" />
-			<span class="player-strip__name">{playerLabel(session, color)}</span>
+			<span class="player-strip__name">{fromMoveHandlers((h) => h.playerLabel?.(session, color)) ?? playerLabel(session, color)}</span>
 			{toMove && <span class="player-strip__turn">to move</span>}
 			{position === 'top' && (
 				<Badge tone={session.mode === 'analysis' ? 'neutral' : 'accent'} class="player-strip__mode">
@@ -85,7 +85,7 @@ export function BoardStage({ class: className }: { class?: string }): JSX.Elemen
 		);
 	}
 
-	const vm = boardViewModel(session, s.board);
+	const vm = boardViewModel(session, s.board, active ? fromMoveHandlers((h) => h.movable?.(active)) : undefined);
 	const external = Object.values(stageShapes.value).reduce(
 		(acc, x) => ({ arrows: [...acc.arrows, ...x.arrows], marks: [...acc.marks, ...x.marks] }),
 		{ arrows: [] as Arrow[], marks: [] as Mark[] },
@@ -98,6 +98,8 @@ export function BoardStage({ class: className }: { class?: string }): JSX.Elemen
 
 	const onMove = (from: SquareName, to: SquareName, promotion?: PromotionRole) => {
 		const uci = makeUci(from, to, promotion);
+		// A feature (e.g. online play) may take over the move instead of applying it locally.
+		if (active && fromMoveHandlers((h) => (h.onMove?.(active, uci) ? true : undefined))) return;
 		const target = active ?? sessionsActions.newSession();
 		sessionsActions.move(uci, target.id);
 	};

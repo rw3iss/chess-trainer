@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { Button } from '@/components/common/Button';
 import { activeId, openSessions, sessionsActions } from '@/state/sessions';
 import { playback } from '@/state/playback';
+import { commands } from '@/services/commands';
 import './Sessions.scss';
 
 export default function Sessions(): JSX.Element {
@@ -31,8 +32,8 @@ export default function Sessions(): JSX.Element {
 					variant="primary"
 					icon="plus"
 					onClick={() => {
-						sessionsActions.newSession();
 						route('/');
+						commands.dispatch('newGame');
 					}}
 				>
 					New game

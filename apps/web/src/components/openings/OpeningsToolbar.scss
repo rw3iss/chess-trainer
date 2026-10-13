@@ -1,0 +1,101 @@
+@use '@styles/mixins' as *;
+
+.openings-toolbar {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+	padding: var(--space-3) var(--gutter) var(--space-2);
+
+	&__search .field__input {
+		font-size: var(--text-md);
+	}
+
+	&__row {
+		display: flex;
+		align-items: center;
+		gap: var(--space-1);
+		min-width: 0;
+	}
+
+	&__spacer {
+		flex: 1;
+	}
+
+	&__sort {
+		width: auto;
+		max-width: 11rem;
+
+		.select__native {
+			height: 28px;
+			border-color: transparent;
+			background: transparent;
+			font-size: var(--text-sm);
+			color: var(--color-text-muted);
+			text-align: right;
+		}
+
+		.select__native:hover {
+			color: var(--color-text);
+			background: var(--color-hover);
+		}
+	}
+
+	&__fav--on {
+		color: var(--color-accent);
+	}
+
+	&__filters {
+		@include surface(1);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-3);
+		padding: var(--space-3);
+		animation: openings-toolbar-in var(--dur-med) var(--ease-out);
+	}
+
+	&__field {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+	}
+
+	&__label {
+		font-size: var(--text-sm);
+		font-weight: var(--weight-medium);
+		color: var(--color-text-muted);
+	}
+
+	&__chips {
+		display: flex;
+		gap: var(--space-1);
+	}
+
+	&__range {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--space-3);
+	}
+
+	&__summary {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: var(--space-1);
+		min-height: 24px;
+	}
+
+	&__count {
+		@include tabular;
+		margin-right: var(--space-1);
+		font-size: var(--text-xs);
+		color: var(--color-text-subtle);
+	}
+
+}
+
+@keyframes openings-toolbar-in {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+}

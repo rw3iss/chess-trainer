@@ -1,0 +1,39 @@
+// Piece strip preview (see MiniBoard for the per-side var mapping).
+.piece-preview {
+	display: block;
+	width: 100%;
+	height: auto;
+	border-radius: var(--radius-xs);
+	overflow: hidden;
+
+	&__light {
+		fill: var(--board-light, var(--color-surface-3));
+	}
+
+	&__dark {
+		fill: var(--board-dark, var(--color-surface-2));
+	}
+
+	&--plain {
+		.piece-preview__light,
+		.piece-preview__dark {
+			fill: var(--color-surface-2);
+		}
+	}
+
+	&__piece {
+		filter: drop-shadow(0 0.02px 0.04px rgb(0 0 0 / calc(var(--pc-shadow, 0.5) * 0.8)));
+	}
+
+	&__piece--white {
+		--pc-body: var(--pc-white-body);
+		--pc-line: var(--pc-white-line);
+		--pc-accent: var(--pc-white-accent);
+	}
+
+	&__piece--black {
+		--pc-body: var(--pc-black-body);
+		--pc-line: var(--pc-black-line);
+		--pc-accent: var(--pc-black-accent);
+	}
+}

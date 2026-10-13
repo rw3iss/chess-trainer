@@ -1,0 +1,109 @@
+@use '@styles/mixins' as *;
+
+.install-prompt {
+	@include surface(3);
+	position: fixed;
+	// Desktop: bottom-left over the board stage, clear of the side-panel tabs and controls.
+	bottom: calc(var(--gutter) + env(safe-area-inset-bottom));
+	left: var(--gutter);
+	z-index: var(--z-toast);
+	display: flex;
+	align-items: flex-start;
+	gap: var(--space-3);
+	width: min(380px, calc(100vw - 2 * var(--gutter)));
+	padding: var(--space-4) var(--space-2) var(--space-4) var(--space-4);
+	border-color: var(--color-border-strong);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-lg), var(--shadow-inset);
+	color: var(--color-text);
+	animation: install-prompt-in var(--dur-slow) var(--ease-out) both;
+
+	// Brass hairline along the top edge — ties the card to the accent without shouting.
+	&::before {
+		content: '';
+		position: absolute;
+		top: -1px;
+		left: var(--space-6);
+		right: var(--space-6);
+		height: 1px;
+		background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
+		opacity: 0.7;
+	}
+
+	&__icon {
+		flex-shrink: 0;
+		width: 44px;
+		height: 44px;
+		border-radius: var(--radius-md);
+		box-shadow: var(--shadow-sm);
+	}
+
+	&__body {
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__title {
+		margin: 0;
+		font-family: var(--font-display);
+		font-size: var(--text-lg);
+		font-weight: var(--weight-semibold);
+		line-height: var(--leading-tight);
+	}
+
+	&__text {
+		margin: var(--space-1) 0 0;
+		font-size: var(--text-sm);
+		line-height: var(--leading-normal);
+		color: var(--color-text-muted);
+
+		strong {
+			font-weight: var(--weight-semibold);
+			color: var(--color-text);
+		}
+	}
+
+	&__glyph {
+		vertical-align: -2px;
+		color: var(--color-accent-text);
+	}
+
+	&__actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		margin-top: var(--space-3);
+		// Align ghost button text with the body copy.
+		margin-left: calc(-1 * var(--space-1));
+	}
+
+	&__close {
+		flex-shrink: 0;
+		margin-top: calc(-1 * var(--space-2));
+	}
+
+	@include stacked {
+		left: var(--space-3);
+		right: var(--space-3);
+		width: auto;
+		bottom: auto;
+		top: calc(var(--topnav-height) + var(--space-2) + env(safe-area-inset-top));
+	}
+
+	@include respect-reduced-motion {
+		animation-name: install-prompt-fade;
+	}
+}
+
+@keyframes install-prompt-in {
+	from {
+		opacity: 0;
+		transform: translateY(-8px) scale(0.98);
+	}
+}
+
+@keyframes install-prompt-fade {
+	from {
+		opacity: 0;
+	}
+}

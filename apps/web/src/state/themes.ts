@@ -29,16 +29,36 @@ function pick<T extends { id: string }>(list: T[], id: string, fallbackId: strin
 	return list.find((t) => t.id === id) ?? list.find((t) => t.id === fallbackId) ?? list[0];
 }
 
-export const activeBoardTheme = computed(() => pick(boardThemes.value, settings.value.boardThemeId, DEFAULT_BOARD_THEME_ID));
+/** Active board theme with settings.board.arrowColor applied (when set). */
+export const activeBoardTheme = computed<BoardTheme | undefined>(() => {
+	const base = pick(boardThemes.value, settings.value.boardThemeId, DEFAULT_BOARD_THEME_ID);
+	const arrow = settings.value.board.arrowColor;
+	if (!base || !arrow) return base;
+	return { ...base, highlights: { ...base.highlights, arrow } };
+});
 
-/** Active piece theme with settings.pieceColorOverrides applied. */
+/** User-created themes only. */
+export const customBoardThemes = computed(() => _customBoard.value);
+export const customPieceThemes = computed(() => _customPiece.value);
+
+/** Active piece theme with settings.pieceColorOverrides / pieceDepthOverrides applied. */
+export const baseActivePieceTheme = computed(() => pick(pieceThemes.value, settings.value.pieceThemeId, DEFAULT_PIECE_THEME_ID));
+
 export const activePieceTheme = computed<PieceTheme | undefined>(() => {
 	const base = pick(pieceThemes.value, settings.value.pieceThemeId, DEFAULT_PIECE_THEME_ID);
 	if (!base) return undefined;
 	const ov = settings.value.pieceColorOverrides;
+	const depth = settings.value.pieceDepthOverrides ?? {};
 	const sides: Color[] = ['white', 'black'];
-	if (!sides.some((c) => ov[c] && Object.keys(ov[c]!).length)) return base;
-	return { ...base, colors: { white: { ...base.colors.white, ...ov.white }, black: { ...base.colors.black, ...ov.black } } };
+	const hasColors = sides.some((c) => ov[c] && Object.keys(ov[c]!).length);
+	const hasDepth = depth.shading !== undefined || depth.shadow !== undefined;
+	if (!hasColors && !hasDepth) return base;
+	return {
+		...base,
+		colors: hasColors ? { white: { ...base.colors.white, ...ov.white }, black: { ...base.colors.black, ...ov.black } } : base.colors,
+		shading: depth.shading ?? base.shading,
+		shadow: depth.shadow ?? base.shadow,
+	};
 });
 
 export const activePieceSet = computed<PieceSetAsset | undefined>(() => {

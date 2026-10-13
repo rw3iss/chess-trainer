@@ -1,0 +1,122 @@
+@use '@styles/mixins' as *;
+
+.pgn-import {
+	&__body {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-4);
+	}
+
+	&__drop {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-1);
+		min-height: 140px;
+		padding: var(--space-6) var(--space-4);
+		border: 1.5px dashed var(--color-border-strong);
+		border-radius: var(--radius-md);
+		background: var(--color-surface-2);
+		text-align: center;
+		cursor: pointer;
+		transition: border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
+
+		&:hover,
+		&--over {
+			border-color: var(--color-accent);
+			background: var(--color-accent-softer);
+		}
+
+		&:focus-within {
+			outline: 2px solid var(--color-focus);
+			outline-offset: 2px;
+		}
+	}
+
+	&__drop-icon {
+		color: var(--color-accent);
+		margin-bottom: var(--space-1);
+	}
+
+	&__drop-title {
+		font-weight: var(--weight-semibold);
+		overflow-wrap: anywhere;
+	}
+
+	&__drop-hint {
+		font-size: var(--text-sm);
+		color: var(--color-text-muted);
+	}
+
+	&__paste textarea {
+		font-family: var(--font-mono);
+		font-size: var(--text-sm);
+	}
+
+	&__preview {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+		min-height: var(--space-6);
+	}
+
+	&__status {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
+		font-size: var(--text-sm);
+		color: var(--color-text-muted);
+
+		&--ok {
+			color: var(--color-text);
+
+			svg {
+				color: var(--color-success);
+			}
+		}
+
+		&--error {
+			color: var(--color-danger);
+		}
+	}
+
+	&__list {
+		display: flex;
+		flex-direction: column;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		@include surface(2);
+		overflow: hidden;
+	}
+
+	&__item {
+		display: flex;
+		justify-content: space-between;
+		gap: var(--space-3);
+		padding: var(--space-2) var(--space-3);
+		font-size: var(--text-sm);
+
+		& + & {
+			border-top: 1px solid var(--color-border);
+		}
+
+		&--more {
+			color: var(--color-text-muted);
+			font-style: italic;
+		}
+	}
+
+	&__item-name {
+		min-width: 0;
+		@include truncate;
+	}
+
+	&__item-meta {
+		flex: none;
+		@include tabular;
+		font-size: var(--text-xs);
+		color: var(--color-text-muted);
+	}
+}

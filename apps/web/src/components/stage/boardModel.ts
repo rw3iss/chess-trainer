@@ -18,10 +18,10 @@ export function movableFor(session: Session): BoardViewModel['movable'] {
 	return 'both';
 }
 
-export function boardViewModel(session: Session, board: BoardDisplaySettings): BoardViewModel {
+export function boardViewModel(session: Session, board: BoardDisplaySettings, movableOverride?: BoardViewModel['movable']): BoardViewModel {
 	const fen = getNode(session.tree, session.cursor).fen;
 	const status = positionStatus(fen);
-	const movable = movableFor(session);
+	const movable = movableOverride ?? movableFor(session);
 	return {
 		fen,
 		orientation: session.orientation,

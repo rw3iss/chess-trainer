@@ -1,0 +1,93 @@
+@use '@styles/mixins' as *;
+
+.chat-panel {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	border-radius: var(--radius-md);
+	@include surface(1);
+	overflow: hidden;
+
+	&__list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+		max-height: 240px;
+		min-height: 96px;
+		overflow-y: auto;
+		padding: var(--space-3);
+		list-style: none;
+		margin: 0;
+		overscroll-behavior: contain;
+	}
+
+	&__empty {
+		margin: auto;
+		color: var(--color-text-subtle);
+		font-size: var(--text-sm);
+	}
+
+	&__msg {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-0);
+		align-self: flex-start;
+		max-width: 85%;
+		padding: var(--space-1) var(--space-3) var(--space-2);
+		border-radius: var(--radius-md) var(--radius-md) var(--radius-md) var(--radius-xs);
+		background: var(--color-surface-2);
+
+		&--own {
+			align-self: flex-end;
+			border-radius: var(--radius-md) var(--radius-md) var(--radius-xs) var(--radius-md);
+			background: var(--color-accent-softer);
+		}
+	}
+
+	&__meta {
+		display: flex;
+		gap: var(--space-2);
+		align-items: baseline;
+		font-size: var(--text-xs);
+	}
+
+	&__from {
+		font-weight: 600;
+		color: var(--color-text-muted);
+	}
+
+	&__time {
+		color: var(--color-text-subtle);
+		@include tabular;
+	}
+
+	&__text {
+		font-size: var(--text-md);
+		overflow-wrap: anywhere;
+	}
+
+	&__composer {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		padding: var(--space-2);
+		border-top: 1px solid var(--color-border);
+	}
+
+	&__input {
+		flex: 1;
+		min-width: 0;
+		height: var(--control-sm);
+		padding: 0 var(--space-3);
+		border-radius: var(--radius-sm);
+		border: 1px solid var(--color-border);
+		background: var(--color-surface-2);
+		color: var(--color-text);
+		font: inherit;
+
+		&:focus-visible {
+			outline: 2px solid var(--color-focus);
+			outline-offset: 1px;
+		}
+	}
+}

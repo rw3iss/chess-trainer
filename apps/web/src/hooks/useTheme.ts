@@ -13,6 +13,12 @@ export type ResolvedTheme = 'light' | 'dark';
 
 const DARK_QUERY = '(prefers-color-scheme: dark)';
 const LIGHT_QUERY = '(prefers-color-scheme: light)';
+/** Base values of the UI motion tokens (styles/_tokens.scss); scaled by settings.animationScale. */
+const DURATION_TOKENS: [string, number][] = [
+	['--dur-fast', 120],
+	['--dur-med', 200],
+	['--dur-slow', 360],
+];
 
 export function resolveTheme(mode: AppThemeMode, systemPrefersLight: boolean): ResolvedTheme {
 	if (mode === 'system') return systemPrefersLight ? 'light' : 'dark';
@@ -45,6 +51,12 @@ export function useApplyAppearance(): void {
 		if (s.theme.accent) {
 			root.style.setProperty('--color-accent', s.theme.accent);
 			root.style.setProperty('--color-accent-fg', readableOn(s.theme.accent));
+		}
+		// Animation speed: scale the motion duration tokens (settings → app → animation speed).
+		const k = s.animationScale > 0 ? s.animationScale : 1;
+		for (const [name, ms] of DURATION_TOKENS) {
+			if (k === 1) root.style.removeProperty(name);
+			else root.style.setProperty(name, `${Math.round(ms * k)}ms`);
 		}
 		if (s.motion === 'reduced') root.dataset.motion = 'reduced';
 		else delete root.dataset.motion;

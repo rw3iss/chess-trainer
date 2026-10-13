@@ -1,0 +1,353 @@
+@use '@styles/mixins' as *;
+
+// ── Page layout ──────────────────────────────────────────────────────────
+.settings {
+	container-type: inline-size;
+	padding: var(--space-5) var(--gutter-lg) var(--space-10);
+
+	&__title {
+		font-family: var(--font-display);
+		font-size: var(--text-2xl);
+		margin-bottom: var(--space-4);
+	}
+
+	&--split {
+		display: grid;
+		grid-template-columns: 184px minmax(0, 1fr);
+		gap: var(--space-6);
+		align-items: start;
+	}
+
+	&__aside {
+		position: sticky;
+		top: 0;
+		padding-top: var(--space-1);
+	}
+
+	&__content {
+		min-width: 0;
+	}
+
+	&__back {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		margin-bottom: var(--space-3);
+		padding: var(--space-1) var(--space-2) var(--space-1) var(--space-1);
+		border-radius: var(--radius-sm);
+		color: var(--color-text-muted);
+		font-size: var(--text-sm);
+		@include interactive;
+	}
+
+	// Narrow wide-panel (desktop, small window): nav becomes a horizontal strip.
+	@container (max-width: 600px) {
+		&--split {
+			grid-template-columns: minmax(0, 1fr);
+			gap: var(--space-4);
+		}
+
+		&__aside {
+			position: static;
+		}
+
+		.settings-nav--nav ul {
+			flex-direction: row;
+			overflow-x: auto;
+			scrollbar-width: none;
+		}
+
+		.settings-nav--nav .settings-nav__item {
+			white-space: nowrap;
+		}
+	}
+
+	@include stacked {
+		padding: var(--space-4) var(--gutter) var(--space-12);
+	}
+}
+
+// ── Section navigation ──────────────────────────────────────────────────
+.settings-nav {
+	ul {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-0);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	&__item {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+		min-height: var(--control-md);
+		padding: var(--space-2) var(--space-3);
+		border-radius: var(--radius-sm);
+		color: var(--color-text-muted);
+		text-decoration: none;
+		font-size: var(--text-md);
+		@include interactive;
+
+		&--active {
+			background: var(--color-accent-softer, var(--color-hover));
+			color: var(--color-text);
+
+			&::before {
+				content: '';
+				position: absolute;
+				left: 0;
+				top: 8px;
+				bottom: 8px;
+				width: 2px;
+				border-radius: var(--radius-full);
+				background: var(--color-accent);
+			}
+
+			.settings-nav__icon {
+				color: var(--color-accent);
+			}
+		}
+	}
+
+	&__icon {
+		flex: none;
+		color: var(--color-text-subtle);
+	}
+
+	&__text {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	&__label {
+		font-weight: var(--weight-medium);
+	}
+
+	// Mobile list variant: card rows with summary + chevron.
+	&--list {
+		ul {
+			@include surface(1);
+			gap: 0;
+			overflow: hidden;
+		}
+
+		li + li {
+			border-top: 1px solid var(--color-border);
+		}
+
+		.settings-nav__item {
+			min-height: 60px;
+			border-radius: 0;
+			color: var(--color-text);
+		}
+
+		.settings-nav__icon {
+			color: var(--color-accent);
+		}
+	}
+
+	&__summary {
+		font-size: var(--text-sm);
+		color: var(--color-text-subtle);
+		@include truncate;
+	}
+
+	&__chevron {
+		flex: none;
+		color: var(--color-text-subtle);
+	}
+}
+
+// ── Sections ────────────────────────────────────────────────────────────
+.settings-section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-5);
+
+	&__head {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+	}
+
+	&__title {
+		font-family: var(--font-display);
+		font-size: var(--text-2xl);
+	}
+
+	&__desc {
+		margin: 0;
+		color: var(--color-text-muted);
+	}
+}
+
+.settings-group {
+	@include surface(1);
+	border-radius: var(--radius-lg);
+	padding: var(--space-4) var(--space-5) var(--space-5);
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-4);
+
+	&__head {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: var(--space-3);
+	}
+
+	&__titles {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+	}
+
+	&__title {
+		@include eyebrow;
+		color: var(--color-text-muted);
+	}
+
+	&__desc {
+		margin: 0;
+		font-size: var(--text-sm);
+		color: var(--color-text-subtle);
+	}
+
+	&__body {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-4);
+	}
+
+	@include stacked {
+		padding: var(--space-4);
+	}
+}
+
+.settings-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-3) var(--space-4);
+	flex-wrap: wrap;
+
+	&__text {
+		flex: 1 1 200px;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
+	}
+
+	&__label {
+		font-weight: var(--weight-medium);
+		color: var(--color-text);
+	}
+
+	&__hint {
+		font-size: var(--text-sm);
+		color: var(--color-text-subtle);
+	}
+
+	&__control {
+		flex: none;
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		min-width: 0;
+		max-width: 100%;
+	}
+
+	&--stacked {
+		flex-direction: column;
+		align-items: stretch;
+
+		.settings-row__text {
+			flex: none;
+		}
+
+		.settings-row__control {
+			display: block;
+		}
+	}
+}
+
+.settings-inline {
+	display: flex;
+	align-items: flex-end;
+	flex-wrap: wrap;
+	gap: var(--space-3);
+
+	&--grow > :first-child {
+		flex: 1;
+		min-width: 160px;
+	}
+}
+
+.settings-value {
+	font-family: var(--font-mono);
+	font-size: var(--text-sm);
+	color: var(--color-text);
+	@include tabular;
+}
+
+.settings-subgroup {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+
+	&__title {
+		font-size: var(--text-sm);
+		font-weight: var(--weight-semibold);
+		color: var(--color-text);
+	}
+}
+
+.settings-color-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+	gap: var(--space-3);
+}
+
+.settings-pieces-preview {
+	max-width: 360px;
+	border-radius: var(--radius-sm);
+	overflow: hidden;
+	box-shadow: var(--shadow-md);
+}
+
+.settings-clock-preview {
+	display: flex;
+	justify-content: center;
+	gap: var(--space-4);
+	padding: var(--space-4);
+	border-radius: var(--radius-md);
+	background: var(--color-surface-2);
+	border: 1px dashed var(--color-border);
+}
+
+.settings-meter {
+	height: 6px;
+	border-radius: var(--radius-full);
+	background: var(--color-surface-3);
+	overflow: hidden;
+
+	&__fill {
+		display: block;
+		height: 100%;
+		border-radius: inherit;
+		background: var(--color-accent);
+	}
+}
+
+.settings-lazy {
+	display: flex;
+	justify-content: center;
+	padding: var(--space-8);
+}

@@ -35,6 +35,17 @@ async function persist(game: SavedGame): Promise<SavedGame> {
 export interface SaveOptions {
 	name?: string;
 	tags?: string[];
+	/** Free-text notes stored on the game (undefined = keep / none). */
+	notes?: string;
+}
+
+function withNotes(game: SavedGame, notes: string | undefined): SavedGame {
+	if (notes === undefined) return game;
+	const n = notes.trim();
+	const out = { ...game };
+	if (n) out.notes = n;
+	else delete out.notes;
+	return out;
 }
 
 export const savedGamesActions = {
@@ -44,7 +55,7 @@ export const savedGamesActions = {
 		if (!session) return null;
 		const existing = getSavedGame(session.savedGameId);
 		if (!existing) return savedGamesActions.saveAs(session.id, opts);
-		const game = savedGameFromSession(session, { name: opts.name ?? existing.name, tags: opts.tags ?? existing.tags, asNew: false, existing });
+		const game = withNotes(savedGameFromSession(session, { name: opts.name?.trim() || existing.name, tags: opts.tags ?? existing.tags, asNew: false, existing }), opts.notes);
 		await persist(game);
 		sessionsActions.replace(linkSessionToSaved(session, game));
 		return game;
@@ -54,7 +65,7 @@ export const savedGamesActions = {
 	async saveAs(sessionId?: string, opts: SaveOptions = {}): Promise<SavedGame | null> {
 		const session = getSession(sessionId ?? activeId.value);
 		if (!session) return null;
-		const game = savedGameFromSession(session, { name: opts.name?.trim() || session.title, tags: opts.tags ?? [], asNew: true });
+		const game = withNotes(savedGameFromSession(session, { name: opts.name?.trim() || session.title, tags: opts.tags ?? [], asNew: true }), opts.notes);
 		await persist(game);
 		sessionsActions.replace(linkSessionToSaved(session, game));
 		return game;
@@ -67,6 +78,22 @@ export const savedGamesActions = {
 		await persist({ ...g, name: n, updatedAt: Date.now(), revision: g.revision + 1 });
 		// Keep linked open sessions' titles in sync.
 		for (const s of openSessions.value) if (s.savedGameId === id) sessionsActions.update({ title: n }, s.id);
+	},
+
+	/** Add ready-made games (PGN import). Returns the number added. */
+	async addMany(games: readonly SavedGame[]): Promise<number> {
+		if (!games.length) return 0;
+		const ids = new Set(games.map((g) => g.id));
+		_games.value = [..._games.value.filter((g) => !ids.has(g.id)), ...games];
+		const repo = getRepositories().savedGames;
+		await Promise.all(games.map((g) => repo.put(g)));
+		return games.length;
+	},
+
+	async setNotes(id: string, notes: string): Promise<void> {
+		const g = getSavedGame(id);
+		if (!g) return;
+		await persist(withNotes({ ...g, updatedAt: Date.now(), revision: g.revision + 1 }, notes));
 	},
 
 	async setTags(id: string, tags: string[]): Promise<void> {

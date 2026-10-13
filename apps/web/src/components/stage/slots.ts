@@ -4,7 +4,7 @@
 import type { Color } from '@chess/core/chess';
 import type { Session } from '@chess/core/game';
 import { signal } from '@preact/signals';
-import type { Arrow, Mark } from '@/components/board';
+import type { Arrow, BoardViewModel, Mark } from '@/components/board';
 import { createSlot } from '@/app/slots';
 
 export interface StageSlotProps {
@@ -43,4 +43,34 @@ export function setStageShapes(owner: string, shapes: { arrows: Arrow[]; marks: 
 	if (shapes) next[owner] = shapes;
 	else delete next[owner];
 	stageShapes.value = next;
+}
+
+/**
+ * Feature-provided move handling for a session mode (e.g. online play), keyed by owner.
+ * `movable` overrides which side may move; `onMove` returning true means the feature
+ * handled the move (the stage does NOT apply it locally); `playerLabel` names a side.
+ *   setStageMoveHandler('online', { movable: (s) => ..., onMove: (s, uci) => ... });
+ */
+export interface StageMoveHandler {
+	movable?: (session: Session) => BoardViewModel['movable'] | undefined;
+	onMove?: (session: Session, uci: string) => boolean;
+	playerLabel?: (session: Session, color: Color) => string | undefined;
+}
+
+export const stageMoveHandlers = signal<Record<string, StageMoveHandler>>({});
+
+export function setStageMoveHandler(owner: string, handler: StageMoveHandler | null): void {
+	const next = { ...stageMoveHandlers.value };
+	if (handler) next[owner] = handler;
+	else delete next[owner];
+	stageMoveHandlers.value = next;
+}
+
+/** First non-undefined answer from the registered handlers. */
+export function fromMoveHandlers<T>(pick: (h: StageMoveHandler) => T | undefined): T | undefined {
+	for (const h of Object.values(stageMoveHandlers.value)) {
+		const v = pick(h);
+		if (v !== undefined) return v;
+	}
+	return undefined;
 }

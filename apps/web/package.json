@@ -4,7 +4,9 @@
 	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
+		"predev": "node scripts/copy-engines.mjs",
 		"dev": "vite --config config/vite.config.ts",
+		"prebuild": "node scripts/copy-engines.mjs",
 		"build": "pnpm typecheck && vite build --config config/vite.config.ts",
 		"preview": "vite preview --config config/vite.config.ts",
 		"typecheck": "tsc --noEmit -p config/tsconfig.app.json && tsc --noEmit -p config/tsconfig.worker.json",

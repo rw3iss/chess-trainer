@@ -35,6 +35,12 @@
 		@include truncate;
 	}
 
+	&__dirty {
+		margin-left: var(--space-1);
+		color: var(--color-accent);
+		font-weight: var(--weight-semibold);
+	}
+
 	&__count {
 		@include tabular;
 		display: inline-grid;

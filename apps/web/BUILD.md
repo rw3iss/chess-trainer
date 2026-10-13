@@ -50,6 +50,7 @@ src/
     server/        ServerConnector (probe /health, status signal)
     cache/         DataCache (TTL, IndexedDB backend) — used by useCachedResource
     commands/      CommandBus (save, saveAs, focusSearch, …)
+    pgn/           PGN import worker (pgn.worker.ts) + client, import/export helpers
     playback/      PlaybackController (dependency-injected)
     toast/         toast queue (signals)
     sw/            sw.ts (service worker) + register.ts (update signals)
@@ -90,7 +91,7 @@ Every store is `src/state/<name>.ts`:
 Key stores:
 - **sessions** — open tabs; actions `open/newSession/fromOpening/fromSavedGame/fork/close/setActive/reorder/move/goto/step/toStart/toEnd/flip/setMode/update/replace/rename/deleteFrom/promoteVariation/setUserNote/setComment`, all via `@chess/core/game` reducers. Autosave debounced 300 ms; order + active id persisted as meta. `onSessionEvent` emits `user-action` (manual nav — pauses playback), `opened`, `closed`, `activated`. Programmatic navigation passes `{ silent: true }`.
 - **settings** — `settings` signal + `updateSettings(deepPartial)`; persisted (debounced) to SettingsRepository `'app'`; theme mirrored to localStorage for the flash-free boot script in `index.html`.
-- **savedGames** — `save` (overwrite linked / first save = new), `saveAs`, `rename`, `setTags`, `duplicate`, `remove` (returns undo), `setFavorite/toggleFavorite`, `open`.
+- **savedGames** — `save` (overwrite linked / first save = new), `saveAs`, `rename`, `setTags`, `setNotes`, `addMany` (import), `duplicate`, `remove` (returns undo), `setFavorite/toggleFavorite`, `open`. `SaveOptions` = `{ name, tags, notes }`.
 - **favorites** — `isFavorite(kind,id)`, `toggleFavorite`, `setFavorite` (kinds `opening` | `game`).
 - **playback** — `playbackActions.play/pause/toggle/setSpeed`, `activeIsPlaying`; speeds from `settings.playback` (ms).
 - **themes** — built-in + custom board/piece themes, `activeBoardTheme/activePieceTheme/activePieceSet` (with colour overrides).
@@ -113,15 +114,40 @@ Key stores:
 | Board renderer | `BoardRenderer` props (`components/board/types.ts`) | Board2D now, Board3D later; swap in `BoardStage.tsx` only |
 | Engines | `EngineAdapter` (`@chess/core/engine`) | `services/engine/` registry |
 | Themes | `BoardTheme` / `PieceTheme` JSON (`@chess/core/theme`) | `themesActions.saveBoard/savePiece` |
-| WS actions | `RoomActionPayload` (`@chess/core/protocol`) | generic `{ type, payload }` envelope |
+| WS actions | `RoomActionPayload` (`@chess/core/protocol`) | generic `{ type, payload }` envelope; send with `roomsClient().action(roomId, type, payload)`, receive `RoomEvent` `'action'` |
+| Stage move handling | `setStageMoveHandler(owner, handler)` (`components/stage/slots.ts`) | per-mode `movable(session)`, `onMove(session, uci) → true = handled` (not applied locally), `playerLabel(session, color)`; used by online play |
 
-Default `save`/`saveAs`/`fork`/`newGame`/`openBot` handlers live in `components/controls/sessionCommands.ts` (quick save + toast). The SaveModal / BotModal features register their own handlers, which take precedence.
+Default `save`/`saveAs`/`fork`/`newGame`/`openBot` handlers live in `components/controls/sessionCommands.ts` (quick save + toast). The SaveModal (`components/controls/SaveModal`; `SaveModalHost` mounted in AppShell, `registerGamesFeature()` called from `app/boot.ts`) owns `save`/`saveAs`: Ctrl+S on a linked session overwrites directly with a toast; a first save or Ctrl+⇧+S opens the modal (Overwrite vs Save as new copy). Other feature modals register their own handlers; later registrations take precedence.
 
 ## Server (optional) & offline
 
 - `ServerConnector` probes `${settings.server.url}/health` (1.5 s timeout) on boot, every 60 s and on `online`. `serverStatus`: `online | offline | unconfigured`.
 - `api` (services/api) delegates per call: `HttpApiAdapter` while online, else `MockApiAdapter` (fixtures). Features check `serverConnector.status` and degrade — **the app must work fully offline.**
 - `HttpApiAdapter` unwraps the server's `{ data, timestamp }` envelope and maps `{ error }` to `ApiRequestError`.
+
+## Server sync
+
+- **Auth** (`state/auth.ts`): `authActions.login` stores `AuthTokens` in kv `auth:session`; the access token auto-refreshes 60 s before expiry and once on a 401 (`HttpApiAdapter` → `setUnauthorizedHandler`). Concurrent refreshes share one request. A rejected refresh token (401/403) signs out; network errors keep the session.
+- **Sync** (`services/sync`, started by `startSync()` after boot): runs only while `serverConnector.status === 'online'` **and** signed in (non-guest) **and** `settings.server.sync`. Triggers: the gate opening (enable / login / back online), every 2 min, and 3 s after a local change to `savedGames` / `openSessions`.
+- Each pass: `ensureAccessToken()` → `POST /sync` with docs whose `updatedAt ≥ lastPushAt`, tombstones for ids known after the previous sync but now missing, and `since` = last `serverTime`. State lives in kv `sync:state` (`{ account, since, lastPushAt, knownSavedGameIds, knownSessionIds, lastSyncAt }`); another account starts fresh.
+- Merge (`merge.ts`, pure): higher `revision` wins → equal: later `updatedAt` → exact tie keeps local. A remote tombstone deletes locally only if the local doc did not change since the last sync. Applied through store APIs (saved games: repository + `loadSavedGames()`; sessions: `sessionsActions.replace/open({ activate: false })/close`) under an `applying` flag so merges are not seen as local changes. Sessions in mode `online` are never synced.
+- UI: `ServerSettingsSection` (`@/components/server`, lazy in Settings → Server).
+
+| Signed in | Server online | `server.sync` | `syncStatus` |
+|---|---|---|---|
+| no | any | any | `disabled` |
+| yes | any | off | `disabled` |
+| yes | no | on | `offline` |
+| yes | yes | on | `idle` / `syncing` / `error` |
+
+## Online play (rooms)
+
+- `services/realtime/RoomsClient` — socket.io `/play` client (lazy `import('socket.io-client')`), `WsEnvelope` + ack per command (8 s timeout → `RoomError('TIMEOUT')`), server codes → `RoomError.code`. Reconnect: re-joins every room and emits `'resync'` with the fresh `RoomState`. Move envelope id = idempotency key.
+- `services/realtime/roomSession` — pure `syncTree` / `roomSessionPatch` / `localClock` (server clock → local time via skew estimated from `game:moved`), `parseRoomRef`, `roomLink`.
+- `state/rooms` — `roomsActions.create/join/leave/move/resign/offerDraw/answerDraw/chat`; one Session per room (mode `online`, `source.roomId`). **Local moves are never applied locally**: the stage hands them to `roomsActions.move` (pending until the ack/broadcast). Token: user access token, else a cached guest token (`authActions.roomToken()`, guest name from `auth`).
+- Routes: `/play/new` lobby (create: time control from `CLOCK_PRESETS`, colour, name; join by link/code), `/play/:roomId` room. Disabled with an explanation when `serverConnector` is not online or `health.features.rooms` is off. Entry: "Play online" on the StartCard.
+- Clocks: `session.clock` mirrors the server `ClockState`, so the stage clock slot shows it; `OnlineClock` is the fallback when no clock component is registered.
+- E2E against a real server: `e2e/online.spec.ts` (`E2E_SERVER_URL`, skipped when unreachable).
 
 ## Data cache vs. repositories vs. UI state
 
@@ -131,8 +157,30 @@ Default `save`/`saveAs`/`fork`/`newGame`/`openBot` handlers live in `components/
 
 ## PWA
 
-- `vite-plugin-pwa` injectManifest → `src/services/sw/sw.ts` (typechecked by `tsconfig.worker.json`). Precache: app shell, route chunks, icons, fonts, `data/manifest.json`, `data/openings*.json`, `data/graph*.json`. Runtime: `/data/*` SWR, `/pieces/*` CacheFirst, Google Fonts (CSS SWR, files CacheFirst).
-- Registration is hand-rolled (`services/sw/register.ts`, no `workbox-window`): `swNeedRefresh` / `swOfflineReady` signals → toasts via `useServiceWorkerToasts`. No SW in dev.
+- `vite-plugin-pwa` injectManifest → `src/services/sw/sw.ts` (typechecked by `tsconfig.worker.json`). Precache globs live in `config/vite.config.ts`; exclusions in `config/pwa.ts`.
+
+| Asset | Strategy | Cache |
+|---|---|---|
+| `index.html`, `assets/**/*.{js,css,woff,woff2}` (shell + route chunks + workers) | precache | workbox precache |
+| manifest icons, `icon.svg`, `icons/apple-touch-icon.png` | precache | workbox precache |
+| `data/manifest.json`, `data/openings*.json`, `data/graph*.json` | precache | workbox precache |
+| `engines/manifest.json`, `engines/stockfish/*` (sf-lite js + wasm) | precache | workbox precache |
+| `pieces/manifest.json`, default piece set (`DEFAULT_PIECE_THEME_ID`, read from core) | precache | workbox precache |
+| `/data/notes*` | StaleWhileRevalidate | `data-notes` |
+| other `/data/*` | StaleWhileRevalidate | `data` |
+| other `/pieces/*` (non-default sets) | CacheFirst | `pieces` |
+| `/engines/*` (sf-full, maia vocab), `/models/*`, `*.onnx`, `ort-wasm*.wasm`, the pinned Maia-2 model URL | CacheFirst | `chess-engines-v1` (shared with `engine/assetStore`) |
+| server API GETs: `/health /openings /explorer /engines /auth/me /users/me /games /sessions` (any cross-origin host, or same-origin `/api/*`) | NetworkFirst, 3 s timeout, 200 only | `api` |
+| POST/PUT/DELETE, `/sync`, `/socket.io` | network only (never cached) | — |
+| Google Fonts CSS / files | SWR / CacheFirst | `google-fonts-css` / `google-fonts` |
+| navigations | precached `index.html` (denylist `/api`, `/socket.io`, paths with a file extension) | — |
+
+- Never precached (`globIgnores`): `engines/stockfish-full/**`, `engines/maia/**`, `**/ort-wasm*.wasm`, `**/*.onnx`, `**/*.map`, `pieces/preview.html`, non-default piece sets, `data/notes*`.
+- Registration is hand-rolled (`services/sw/register.ts`, no `workbox-window`): `swNeedRefresh` / `swOfflineReady` signals → toasts via `useServiceWorkerToasts` (called in `App.tsx`). "Reload" posts `SKIP_WAITING` and reloads on `controllerchange`. No SW in dev; dev builds expose `window.__pwa` (the signals) to preview the toasts.
+- Install: `services/sw/install.ts` stashes `beforeinstallprompt`; `components/pwa/InstallPrompt` shows the card (iOS Safari → Share hint). Dismissal persists in `uiStorage` (`ui:pwa-install-dismissed`). `registerPwaFeature()` (from `app/boot.ts`) mounts it.
+- Storage: `watchFirstSaveForPersistence()` calls `navigator.storage.persist()` once, after the first save following boot (`ui:storage-persist-requested`).
+- Icons: `node scripts/gen-icons.mjs` regenerates `public/icon.svg`, `public/icons/maskable.svg` and the PNGs (192/512 any + maskable, 180 apple-touch) with Playwright Chromium.
+- Offline e2e: `pnpm exec vite build --config config/vite.config.ts && pnpm exec playwright test --config config/playwright.preview.config.ts` (`e2e/offline.spec.ts`; skips itself under the dev-server config).
 
 ## Code rules
 

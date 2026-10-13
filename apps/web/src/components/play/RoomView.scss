@@ -1,0 +1,121 @@
+@use '@styles/mixins' as *;
+
+.room-view {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-4);
+	padding: var(--space-5) var(--gutter);
+
+	&__header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: var(--space-3);
+	}
+
+	&__heading {
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+	}
+
+	&__eyebrow {
+		@include eyebrow;
+		color: var(--color-accent-text);
+	}
+
+	&__title {
+		font-family: var(--font-display);
+		font-size: var(--text-xl);
+		font-weight: 500;
+		@include truncate;
+	}
+
+	&__share {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+		padding: var(--space-4);
+		border-radius: var(--radius-md);
+		background: var(--color-accent-softer);
+		border: 1px dashed var(--color-accent);
+	}
+
+	&__share-label {
+		font-weight: 500;
+	}
+
+	&__status {
+		font-size: var(--text-md);
+		color: var(--color-text-muted);
+
+		&--turn {
+			color: var(--color-accent-text);
+			font-weight: 600;
+		}
+
+		&--over {
+			font-family: var(--font-display);
+			font-size: var(--text-lg);
+			color: var(--color-text);
+		}
+	}
+
+	&__error {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-2);
+		padding: var(--space-2) var(--space-3);
+		border-radius: var(--radius-sm);
+		background: var(--color-danger-soft);
+		color: var(--color-danger);
+		font-size: var(--text-sm);
+	}
+
+	&__error-close {
+		border: 0;
+		background: transparent;
+		color: inherit;
+		font-size: var(--text-lg);
+		line-height: 1;
+		cursor: pointer;
+	}
+
+	&__offer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		padding: var(--space-3);
+		border-radius: var(--radius-md);
+		background: var(--color-info-soft);
+	}
+
+	&__offer-actions,
+	&__actions {
+		display: flex;
+		gap: var(--space-2);
+	}
+
+	&__moves {
+		max-height: 220px;
+		overflow-y: auto;
+		border-radius: var(--radius-md);
+		@include surface(1);
+	}
+
+	&__footer {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+		padding-top: var(--space-2);
+		border-top: 1px solid var(--color-border);
+
+		> .btn {
+			align-self: flex-start;
+		}
+	}
+}

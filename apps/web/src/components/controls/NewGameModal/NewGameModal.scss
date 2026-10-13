@@ -1,0 +1,57 @@
+@use '@styles/mixins' as *;
+
+.new-game {
+	&__body {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-5);
+	}
+
+	&__field {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+	}
+
+	&__group {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-4);
+		padding-top: var(--space-5);
+		border-top: 1px solid var(--color-border);
+	}
+
+	&__label {
+		@include eyebrow;
+	}
+
+	&__hint {
+		margin: 0;
+		font-size: var(--text-sm);
+		color: var(--color-text-muted);
+	}
+
+	&__fen input {
+		font-family: var(--font-mono);
+		font-size: var(--text-sm);
+	}
+}
+
+.game-end-dialog {
+	&__body {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-4);
+	}
+
+	&__text {
+		margin: 0;
+		color: var(--color-text-muted);
+	}
+
+	&__choices {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--space-3);
+	}
+}

@@ -1,0 +1,34 @@
+@use '@styles/mixins' as *;
+
+// Desktop: beside the board, same height (container-query formula of .stage__column).
+.engine-evalbar {
+	width: 24px;
+	height: min(100cqw - var(--space-12), 100cqh - 2 * var(--strip-h, 40px) - var(--space-8));
+}
+
+// Stacked (< 900 px): the board is full width, so the bar becomes a thin strip on
+// the board's left edge. The slot container leaves the flex flow (no extra gap).
+@include stacked {
+	.stage__evalbar:has(> .engine-evalbar) {
+		position: absolute;
+		left: 0;
+		// Board = full width square centred between two equal player strips.
+		top: calc(var(--space-2) + (100% - var(--space-2) - 100vw) / 2);
+		width: 6px;
+		height: 100vw;
+		z-index: var(--z-sticky);
+	}
+
+	.engine-evalbar {
+		width: 6px;
+		height: 100%;
+
+		.eval-bar {
+			border-radius: 0;
+		}
+
+		.eval-bar__label {
+			display: none;
+		}
+	}
+}

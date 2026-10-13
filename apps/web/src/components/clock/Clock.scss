@@ -1,0 +1,230 @@
+@use '@styles/mixins' as *;
+
+// Chess clock. Idle = quiet surface; running = bright raised tile with an accent
+// dot; low time = danger tint + pulse; flagged = solid danger.
+.clock {
+	--clock-font: var(--text-lg);
+	--clock-pad-x: var(--space-3);
+	--clock-h: 32px;
+
+	display: inline-flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--space-2);
+	height: var(--clock-h);
+	min-width: calc(var(--clock-font) * 4.6);
+	padding: 0 var(--clock-pad-x);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-sm);
+	background: var(--color-surface-2);
+	color: var(--color-text-muted);
+	font-family: var(--font-mono);
+	font-size: var(--clock-font);
+	font-weight: var(--weight-medium);
+	line-height: 1;
+	@include tabular;
+	transition:
+		background-color var(--dur-med) var(--ease-out),
+		color var(--dur-med) var(--ease-out),
+		border-color var(--dur-med) var(--ease-out),
+		box-shadow var(--dur-med) var(--ease-out),
+		transform var(--dur-slow) var(--ease-out);
+
+	&:disabled {
+		cursor: default;
+	}
+
+	&:not(:disabled) {
+		cursor: pointer;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+	}
+
+	&--s {
+		--clock-font: var(--text-md);
+		--clock-h: 28px;
+		--clock-pad-x: var(--space-2);
+	}
+
+	&--l {
+		--clock-font: var(--text-xl);
+		--clock-h: 36px;
+	}
+
+	&__indicator {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 14px;
+		color: var(--color-text-subtle);
+	}
+
+	&__dot {
+		width: 7px;
+		height: 7px;
+		border-radius: var(--radius-full);
+		background: currentColor;
+		opacity: 0.35;
+		transition: opacity var(--dur-med) var(--ease-out), background-color var(--dur-med) var(--ease-out);
+	}
+
+	&__time {
+		white-space: nowrap;
+	}
+
+	&--running {
+		background: var(--color-text);
+		border-color: transparent;
+		color: var(--color-bg);
+		box-shadow: var(--shadow-md);
+
+		.clock__indicator {
+			color: var(--color-accent);
+		}
+
+		.clock__dot {
+			opacity: 1;
+			animation: clock-blink 1s steps(2, jump-none) infinite;
+		}
+	}
+
+	&--paused {
+		border-style: dashed;
+		border-color: var(--color-accent);
+		color: var(--color-text);
+
+		.clock__indicator {
+			color: var(--color-accent);
+		}
+	}
+
+	&--low {
+		color: var(--color-danger);
+		border-color: var(--color-danger);
+		background: var(--color-danger-soft);
+
+		&.clock--running {
+			background: var(--color-danger);
+			color: var(--color-bg);
+			animation: clock-pulse 1s var(--ease-in-out) infinite;
+
+			.clock__indicator {
+				color: var(--color-bg);
+			}
+		}
+	}
+
+	&--flagged {
+		background: var(--color-danger);
+		border-color: transparent;
+		color: var(--color-bg);
+
+		.clock__indicator {
+			color: var(--color-bg);
+		}
+	}
+
+	&--rotated {
+		transform: rotate(180deg);
+	}
+
+	// Side tiles: tall, stacked beside the board.
+	&--side {
+		--clock-h: auto;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-1);
+		padding: var(--space-3) var(--space-3);
+		min-width: calc(var(--clock-font) * 5);
+		--clock-font: var(--text-xl);
+
+		&.clock--s {
+			--clock-font: var(--text-lg);
+		}
+
+		&.clock--l {
+			--clock-font: var(--text-2xl);
+		}
+	}
+
+	// Overlay chips: translucent, blurred, over the board corners.
+	&--overlay {
+		background: var(--color-surface-overlay);
+		backdrop-filter: blur(8px);
+		border-color: var(--color-border-strong);
+		color: var(--color-text);
+		box-shadow: var(--shadow-md);
+
+		&.clock--running {
+			background: var(--color-text);
+			color: var(--color-bg);
+		}
+	}
+
+	@include respect-reduced-motion {
+		&--running .clock__dot,
+		&--low.clock--running {
+			animation: none;
+		}
+	}
+}
+
+[data-motion='reduced'] .clock {
+	&--running .clock__dot,
+	&--low.clock--running {
+		animation: none;
+	}
+}
+
+.clock-side {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	gap: var(--space-4);
+	align-self: stretch;
+	height: min(100cqh - var(--space-8), 100cqw);
+	padding: var(--space-10) 0;
+}
+
+.stage__overlay > .clock-overlay {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+
+	.clock {
+		position: absolute;
+		right: var(--space-2);
+		pointer-events: auto;
+	}
+
+	.clock-overlay__top {
+		top: var(--space-2);
+	}
+
+	.clock-overlay__bottom {
+		bottom: var(--space-2);
+	}
+}
+
+@keyframes clock-blink {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0.25;
+	}
+}
+
+@keyframes clock-pulse {
+	0%,
+	100% {
+		box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-danger) 55%, transparent);
+	}
+	50% {
+		box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-danger) 0%, transparent);
+	}
+}

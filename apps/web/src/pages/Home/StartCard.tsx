@@ -5,6 +5,7 @@ import { Button } from '@/components/common/Button';
 import { Icon } from '@/components/common/Icon';
 import { savedGames } from '@/state/savedGames';
 import { sessionsActions } from '@/state/sessions';
+import { commands } from '@/services/commands';
 import { formatRelativeTime } from '@/lib/format';
 
 const RESUME_MAX = 4;
@@ -22,11 +23,14 @@ export function StartCard(): JSX.Element {
 				<p class="start-card__lead">Load an opening and play it through, analyse your own line, or practise against a bot from any position.</p>
 			</div>
 			<div class="start-card__actions">
-				<Button variant="primary" size="lg" icon="plus" block onClick={() => sessionsActions.newSession()}>
+				<Button variant="primary" size="lg" icon="plus" block onClick={() => commands.dispatch('newGame')}>
 					New game
 				</Button>
 				<Button variant="secondary" size="lg" icon="book" block onClick={() => route('/openings')}>
 					Browse openings
+				</Button>
+				<Button variant="ghost" size="lg" icon="user" block onClick={() => route('/play/new')}>
+					Play online
 				</Button>
 			</div>
 			{recent.length > 0 && (

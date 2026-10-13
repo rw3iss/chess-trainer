@@ -1,0 +1,154 @@
+@use '@styles/mixins' as *;
+
+// Height must match GAME_ROW_HEIGHT (92) in GameRow.tsx: 84 card + 8 gap.
+.game-row {
+	position: relative;
+	display: grid;
+	grid-template-columns: 64px minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--space-3);
+	height: 84px;
+	padding: var(--space-2);
+	@include surface(1);
+	transition: border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-med) var(--ease-out);
+
+	&:hover {
+		border-color: var(--color-border-strong);
+		background: var(--color-surface-2);
+	}
+
+	&--open {
+		box-shadow: inset 3px 0 0 var(--color-accent), var(--shadow-inset);
+	}
+
+	&__hit {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+		border-radius: inherit;
+		cursor: pointer;
+
+		&:focus-visible {
+			outline: 2px solid var(--color-focus);
+			outline-offset: -2px;
+		}
+	}
+
+	&__thumb {
+		position: relative;
+		width: 64px;
+		pointer-events: none;
+	}
+
+	&__body {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+		min-width: 0;
+		pointer-events: none;
+	}
+
+	&--renaming &__body {
+		pointer-events: auto;
+	}
+
+	&__name {
+		font-family: var(--font-display);
+		font-size: var(--text-lg);
+		line-height: var(--leading-tight);
+		@include truncate;
+	}
+
+	&__rename {
+		width: 100%;
+		height: 26px;
+		padding: 0 var(--space-2);
+		margin-left: calc(-1 * var(--space-2));
+		border: 1px solid var(--color-accent);
+		border-radius: var(--radius-xs);
+		background: var(--color-surface-1);
+		color: var(--color-text);
+		font-family: var(--font-display);
+		font-size: var(--text-lg);
+		outline: none;
+		box-shadow: 0 0 0 3px var(--color-accent-soft);
+	}
+
+	&__meta {
+		display: flex;
+		align-items: center;
+		gap: var(--space-1);
+		min-width: 0;
+		font-size: var(--text-sm);
+		color: var(--color-text-muted);
+	}
+
+	&__eco {
+		flex: none;
+	}
+
+	&__opening {
+		min-width: 0;
+		@include truncate;
+	}
+
+	&__dot {
+		flex: none;
+		color: var(--color-text-subtle);
+	}
+
+	&__moves {
+		flex: none;
+		@include tabular;
+		font-size: var(--text-xs);
+	}
+
+	&__foot {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-2);
+		min-width: 0;
+	}
+
+	&__badges {
+		display: flex;
+		align-items: center;
+		gap: var(--space-1);
+		min-width: 0;
+		overflow: hidden;
+	}
+
+	&__tag {
+		flex: none;
+		max-width: 10ch;
+	}
+
+	&__more-tags {
+		flex: none;
+		font-size: var(--text-xs);
+		color: var(--color-text-subtle);
+	}
+
+	&__time {
+		flex: none;
+		font-size: var(--text-xs);
+		color: var(--color-text-subtle);
+		white-space: nowrap;
+	}
+
+	&__actions {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		align-self: stretch;
+		justify-content: space-between;
+	}
+
+	&__fav--on {
+		color: var(--color-accent);
+	}
+}

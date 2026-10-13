@@ -1,0 +1,63 @@
+@use '@styles/mixins' as *;
+
+.bot-status {
+	@include surface(2);
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+	padding: var(--space-3);
+
+	&__head {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		min-width: 0;
+	}
+
+	&__name {
+		@include truncate;
+		flex: 1;
+		font-family: var(--font-display);
+		font-size: var(--text-lg);
+		font-weight: var(--weight-semibold);
+	}
+
+	&__elo {
+		@include tabular;
+		font-size: var(--text-sm);
+		color: var(--color-accent-text);
+	}
+
+	&__meta {
+		margin: 0;
+		font-size: var(--text-sm);
+		color: var(--color-text-muted);
+
+		strong {
+			color: var(--color-text);
+			font-weight: var(--weight-semibold);
+		}
+	}
+
+	&__state {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
+		font-size: var(--text-sm);
+		color: var(--color-text-subtle);
+
+		&--thinking {
+			color: var(--color-accent-text);
+		}
+
+		&--error {
+			color: var(--color-danger);
+		}
+	}
+
+	&__actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+	}
+}

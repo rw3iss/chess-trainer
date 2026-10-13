@@ -1,0 +1,99 @@
+@use '@styles/mixins' as *;
+
+.room-players {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+
+	&__list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	&__row {
+		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+		padding: var(--space-2) var(--space-3);
+		border-radius: var(--radius-md);
+		@include surface(1);
+		position: relative;
+		transition: box-shadow var(--dur-fast) var(--ease-out);
+
+		&--to-move {
+			box-shadow: inset 3px 0 0 var(--color-accent);
+		}
+	}
+
+	&__swatch {
+		flex: none;
+		width: 14px;
+		height: 14px;
+		border-radius: var(--radius-xs);
+		border: 1px solid var(--color-border-strong);
+
+		&--white {
+			background: var(--color-white-adv);
+		}
+
+		&--black {
+			background: var(--color-black-adv);
+		}
+	}
+
+	&__who {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+	}
+
+	&__name {
+		font-weight: 500;
+		@include truncate;
+	}
+
+	&__sub {
+		display: flex;
+		gap: var(--space-2);
+		font-size: var(--text-xs);
+		color: var(--color-text-subtle);
+	}
+
+	&__presence {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+
+		&::before {
+			content: '';
+			width: 6px;
+			height: 6px;
+			border-radius: var(--radius-full);
+			background: currentColor;
+		}
+
+		&--on {
+			color: var(--color-success);
+		}
+
+		&--off {
+			color: var(--color-warn);
+		}
+	}
+
+	&__you {
+		@include eyebrow;
+		color: var(--color-accent-text);
+	}
+
+	&__spectators {
+		font-size: var(--text-xs);
+		color: var(--color-text-subtle);
+		@include truncate;
+	}
+}

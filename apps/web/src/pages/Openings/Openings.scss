@@ -1,0 +1,73 @@
+@use '@styles/mixins' as *;
+
+.openings-page {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+
+	&__head {
+		flex: none;
+		display: flex;
+		align-items: center;
+		padding: var(--space-3) var(--gutter) 0;
+	}
+
+	&__preview {
+		flex: none;
+		padding: 0 var(--gutter) var(--space-3);
+	}
+
+	&__list {
+		position: relative;
+		flex: 1;
+		min-height: 0;
+		border-top: 1px solid var(--color-border);
+	}
+
+	&__list > &__virtual {
+		position: absolute;
+		inset: 0;
+		height: auto;
+	}
+
+	&__inline {
+		position: relative;
+	}
+
+	// The inline preview spans several fixed-height rows: lift its row above the
+	// spacer rows that follow it and let clicks pass through those spacers.
+	.virtual-list__row:has(> &__inline) {
+		z-index: 2;
+	}
+
+	.virtual-list__row:has(> &__spacer) {
+		pointer-events: none;
+	}
+
+	&__scroll {
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		padding-top: var(--space-3);
+	}
+
+	&__loading {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-3);
+		flex: 1;
+		padding: var(--space-10) var(--gutter);
+		font-size: var(--text-sm);
+		color: var(--color-text-muted);
+	}
+
+	> .empty-state {
+		flex: 1;
+		justify-content: center;
+	}
+}

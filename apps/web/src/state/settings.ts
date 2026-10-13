@@ -28,10 +28,16 @@ export interface BoardDisplaySettings {
 	showArrows: boolean;
 	/** Colour-blind-safe highlight palette. */
 	colorBlindHighlights: boolean;
+	/** Arrow colour override ('' = use the board theme's arrow colour). */
+	arrowColor: string;
 }
 
 export interface ClockSettings {
+	/** A CLOCK_PRESETS id, or 'custom' (uses `custom`). */
 	presetId: string;
+	custom: { initialMs: number; incrementMs: number };
+	/** Simple delay added to every time control (0 = none). */
+	delayMs: number;
 	placement: 'side' | 'top-bottom' | 'overlay';
 	size: 'S' | 'M' | 'L';
 	lowTimeMs: number;
@@ -52,12 +58,16 @@ export interface AppSettings {
 	version: 1;
 	theme: AppThemeSettings;
 	motion: 'system' | 'reduced' | 'full';
+	/** UI animation duration multiplier (0.5 = faster, 2 = slower). */
+	animationScale: number;
 	sounds: { enabled: boolean; volume: number };
 	board: BoardDisplaySettings;
 	boardThemeId: string;
 	pieceThemeId: string;
 	/** Per-side overrides layered on top of the piece theme colours. */
 	pieceColorOverrides: Partial<Record<Color, Partial<PieceSideColors>>>;
+	/** Shading / shadow overrides (0..1) layered on top of the piece theme. */
+	pieceDepthOverrides: { shading?: number; shadow?: number };
 	/** ms per move for each playback speed. */
 	playback: Record<PlaybackSpeed, number>;
 	defaultPlaybackSpeed: PlaybackSpeed;
@@ -74,6 +84,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
 	version: 1,
 	theme: { ...DEFAULT_APP_THEME },
 	motion: 'system',
+	animationScale: 1,
 	sounds: { enabled: true, volume: 0.6 },
 	board: {
 		coordinates: 'inside',
@@ -85,13 +96,25 @@ export const DEFAULT_SETTINGS: AppSettings = {
 		showEvalBar: true,
 		showArrows: true,
 		colorBlindHighlights: false,
+		arrowColor: '',
 	},
 	boardThemeId: DEFAULT_BOARD_THEME_ID,
 	pieceThemeId: DEFAULT_PIECE_THEME_ID,
 	pieceColorOverrides: {},
+	pieceDepthOverrides: {},
 	playback: { ...PLAYBACK_INTERVAL_MS },
 	defaultPlaybackSpeed: 'medium',
-	clock: { presetId: '5+3', placement: 'top-bottom', size: 'M', lowTimeMs: 20_000, tenths: true, pauseOnHidden: true, sound: true },
+	clock: {
+		presetId: '5+3',
+		custom: { initialMs: 10 * 60_000, incrementMs: 0 },
+		delayMs: 0,
+		placement: 'top-bottom',
+		size: 'M',
+		lowTimeMs: 20_000,
+		tenths: true,
+		pauseOnHidden: true,
+		sound: true,
+	},
 	engine: { defaultEngineId: 'sf-lite', defaultElo: 1500, think: { preset: 'normal' }, humanDelayMs: 400 },
 	server: { url: DEFAULT_SERVER_URL, sync: false },
 	openings: { loadReusesUntouched: true },

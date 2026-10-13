@@ -45,6 +45,13 @@ export function GameControls({ class: className }: { class?: string }): JSX.Elem
 		{ id: 'fork', label: 'Fork from here', icon: 'fork', disabled: !has, onSelect: () => commands.dispatch('fork') },
 		{ id: 'bot', label: 'Play vs bot…', icon: 'bot', disabled: !has, onSelect: () => commands.dispatch('openBot') },
 		{ id: 'save-as', label: 'Save as…', icon: 'save', shortcut: 'Ctrl ⇧ S', disabled: !has, onSelect: () => commands.dispatch('saveAs') },
+		...(session?.mode === 'local-pvp' && !session.result
+			? [
+					{ separator: true },
+					{ id: 'draw', label: 'Offer draw…', icon: 'minus', onSelect: () => commands.dispatch('offerDraw') },
+					{ id: 'resign', label: 'Resign…', icon: 'warning', danger: true, onSelect: () => commands.dispatch('resign') },
+				] satisfies MenuItem[]
+			: []),
 		{ separator: true },
 		{ id: 'pgn', label: 'Copy PGN', icon: 'copy', disabled: !has, onSelect: copyPgn },
 		{ id: 'fen', label: 'Copy FEN', icon: 'copy', disabled: !has, onSelect: copyFen },

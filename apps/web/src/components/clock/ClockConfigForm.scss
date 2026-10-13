@@ -1,0 +1,42 @@
+@use '@styles/mixins' as *;
+
+.clock-form {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+
+	&__presets {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+	}
+
+	&__preset {
+		justify-content: center;
+		min-width: 58px;
+	}
+
+	&__custom {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+		gap: var(--space-3);
+	}
+
+	&__summary {
+		display: flex;
+		align-items: baseline;
+		gap: var(--space-2);
+		color: var(--color-text-muted);
+		font-size: var(--text-sm);
+	}
+
+	&__summary-tc {
+		font-family: var(--font-mono);
+		color: var(--color-text);
+		@include tabular;
+	}
+
+	&__summary-cat {
+		@include eyebrow;
+	}
+}

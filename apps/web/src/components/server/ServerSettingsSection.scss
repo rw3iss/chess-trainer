@@ -1,0 +1,174 @@
+@use '@styles/mixins' as *;
+@use '@styles/responsive' as *;
+
+.server-settings {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-5);
+	padding: var(--gutter);
+	max-width: 760px;
+
+	&__head {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+	}
+
+	&__title {
+		margin: 0;
+		font-family: var(--font-display);
+		font-size: var(--text-2xl);
+		font-weight: var(--weight-medium);
+		color: var(--color-text);
+	}
+
+	&__lead {
+		margin: 0;
+		font-size: var(--text-sm);
+		line-height: 1.5;
+		color: var(--color-text-muted);
+	}
+
+	&__grid {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-4);
+	}
+
+	&__card {
+		@include surface(2);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-3);
+		padding: var(--space-4);
+		border-radius: var(--radius-lg);
+	}
+
+	&__card-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-2);
+	}
+
+	&__card-title {
+		@include eyebrow;
+		margin: 0;
+	}
+
+	&__text {
+		margin: 0;
+		font-size: var(--text-sm);
+		line-height: 1.5;
+		color: var(--color-text-muted);
+	}
+
+	&__url {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: start;
+		gap: var(--space-2);
+	}
+
+	// Line the button up with the input (label row above it).
+	&__check {
+		margin-top: calc(var(--text-sm) * 1.5 + var(--space-1));
+	}
+
+	&__meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: var(--space-1) var(--space-2);
+		margin: 0;
+		font-size: var(--text-sm);
+		color: var(--color-text-muted);
+	}
+
+	&__strong {
+		font-weight: var(--weight-semibold);
+		color: var(--color-text);
+	}
+
+	&__mono {
+		@include tabular;
+		font-size: var(--text-xs);
+		color: var(--color-text-muted);
+	}
+
+	&__subtle {
+		font-size: var(--text-sm);
+		color: var(--color-text-subtle);
+	}
+
+	&__login {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		gap: var(--space-3);
+
+		@include mobile {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+
+	&__submit {
+		grid-column: 1 / -1;
+		justify-self: start;
+
+		@include mobile {
+			justify-self: stretch;
+		}
+	}
+
+	&__user {
+		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+	}
+
+	&__avatar {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: var(--control-md);
+		height: var(--control-md);
+		border-radius: var(--radius-full);
+		background: var(--color-accent-soft);
+		color: var(--color-accent-text);
+		font-family: var(--font-display);
+		font-size: var(--text-lg);
+		font-weight: var(--weight-semibold);
+	}
+
+	&__user-text {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__user-name {
+		@include truncate;
+		font-family: var(--font-display);
+		font-size: var(--text-lg);
+		color: var(--color-text);
+	}
+
+	&__sync-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-3);
+		padding-top: var(--space-3);
+		border-top: 1px solid var(--color-border);
+	}
+
+	&__error {
+		margin: 0;
+		padding: var(--space-2) var(--space-3);
+		border-radius: var(--radius-sm);
+		background: var(--color-danger-soft);
+		color: var(--color-danger);
+		font-size: var(--text-sm);
+	}
+}

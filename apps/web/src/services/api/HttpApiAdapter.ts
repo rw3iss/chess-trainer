@@ -19,6 +19,8 @@ const DEFAULT_TIMEOUT_MS = 10_000;
 export interface HttpApiOptions {
 	baseUrl: string;
 	getToken?: () => string | null;
+	/** Called once on a 401 when a token was sent; resolve a new token to retry with (null = give up). */
+	onUnauthorized?: () => Promise<string | null>;
 	timeoutMs?: number;
 	fetchImpl?: typeof fetch;
 }
@@ -37,12 +39,23 @@ export class HttpApiAdapter implements ApiClient {
 	}
 
 	private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+		try {
+			return await this.send<T>(method, path, body, this.opts.getToken?.() ?? null);
+		} catch (e) {
+			// Expired access token → refresh once and retry.
+			if (!(e instanceof ApiRequestError) || e.status !== 401 || !this.opts.getToken?.() || !this.opts.onUnauthorized) throw e;
+			const fresh = await this.opts.onUnauthorized();
+			if (!fresh) throw e;
+			return this.send<T>(method, path, body, fresh);
+		}
+	}
+
+	private async send<T>(method: string, path: string, body: unknown, token: string | null): Promise<T> {
 		const fetchImpl = this.opts.fetchImpl ?? fetch;
 		const ctrl = new AbortController();
 		const timer = setTimeout(() => ctrl.abort(), this.opts.timeoutMs ?? DEFAULT_TIMEOUT_MS);
 		const headers: Record<string, string> = { Accept: 'application/json' };
 		if (body !== undefined) headers['Content-Type'] = 'application/json';
-		const token = this.opts.getToken?.();
 		if (token) headers.Authorization = `Bearer ${token}`;
 		try {
 			const res = await fetchImpl(`${this.base}${path}`, {

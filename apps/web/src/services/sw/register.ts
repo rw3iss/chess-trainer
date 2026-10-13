@@ -3,6 +3,7 @@
 // main.tsx calls registerServiceWorker(); useServiceWorkerToasts() turns the
 // signals into "new version — reload" / "ready offline" toasts.
 import { signal } from '@preact/signals';
+import { initInstallState } from './install';
 
 export const SW_URL = '/sw.js';
 
@@ -10,6 +11,12 @@ export const swNeedRefresh = signal(false);
 export const swOfflineReady = signal(false);
 
 let registration: ServiceWorkerRegistration | null = null;
+
+// Dev builds: expose the signals so the update / offline toasts can be previewed without a SW
+// (`window.__pwa.swNeedRefresh.value = true`). Never in production.
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+	(window as unknown as { __pwa?: object }).__pwa = { swNeedRefresh, swOfflineReady };
+}
 
 function track(worker: ServiceWorker | null): void {
 	if (!worker) return;
@@ -22,6 +29,7 @@ function track(worker: ServiceWorker | null): void {
 }
 
 export async function registerServiceWorker(): Promise<void> {
+	initInstallState(); // catch an early beforeinstallprompt, even before <PwaLayer/> mounts
 	if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
 	if (import.meta.env.DEV) return; // no SW in dev (vite-plugin-pwa devOptions.enabled = false)
 	try {
@@ -44,5 +52,6 @@ export function applyServiceWorkerUpdate(): void {
 		return;
 	}
 	navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true });
+	// oxlint-disable-next-line unicorn/require-post-message-target-origin -- ServiceWorker.postMessage has no targetOrigin
 	waiting.postMessage({ type: 'SKIP_WAITING' });
 }

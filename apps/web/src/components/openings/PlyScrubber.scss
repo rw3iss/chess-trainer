@@ -1,0 +1,43 @@
+@use '@styles/mixins' as *;
+
+.ply-scrubber {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+
+	&__buttons {
+		display: flex;
+		align-items: center;
+		gap: var(--space-0);
+	}
+
+	&__label {
+		@include tabular;
+		flex: 1;
+		min-width: 4.5em;
+		text-align: center;
+		font-size: var(--text-sm);
+		color: var(--color-text);
+	}
+
+	&__range {
+		padding: 0 var(--space-1);
+	}
+
+	&--compact {
+		flex-direction: row;
+		align-items: center;
+		gap: var(--space-0);
+	}
+
+	&--compact &__range {
+		flex: 1;
+		min-width: 60px;
+	}
+
+	&--compact &__label {
+		flex: none;
+		min-width: 3.8em;
+		text-align: right;
+	}
+}

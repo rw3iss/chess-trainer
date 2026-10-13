@@ -1,0 +1,68 @@
+@use '@styles/mixins' as *;
+
+.save-modal {
+	&__form {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-4);
+	}
+
+	&__choices {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--space-2);
+
+		@include mobile {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	&__choice {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-3);
+		padding: var(--space-3);
+		min-width: 0;
+		text-align: left;
+		@include surface(2);
+		@include interactive;
+
+		&--on {
+			border-color: var(--color-accent);
+			background: var(--color-accent-softer);
+			box-shadow: 0 0 0 1px var(--color-accent-soft), var(--shadow-inset);
+
+			&:hover:not(:disabled) {
+				background: var(--color-accent-soft);
+			}
+		}
+	}
+
+	&__choice-icon {
+		flex: none;
+		margin-top: 2px;
+		color: var(--color-text-subtle);
+
+		.save-modal__choice--on & {
+			color: var(--color-accent-text);
+		}
+	}
+
+	&__choice-text {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-0);
+		min-width: 0;
+	}
+
+	&__choice-title {
+		font-weight: var(--weight-semibold);
+		overflow-wrap: anywhere;
+	}
+
+	&__choice-desc {
+		font-size: var(--text-xs);
+		color: var(--color-text-muted);
+		line-height: var(--leading-normal);
+	}
+}
