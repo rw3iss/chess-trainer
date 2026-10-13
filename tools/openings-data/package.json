@@ -1,0 +1,23 @@
+{
+	"name": "@chess/openings-data",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"scripts": {
+		"build": "tsx src/build.ts",
+		"popularity": "tsx src/popularity.ts",
+		"notes": "tsx src/notes.ts",
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit -p tsconfig.json"
+	},
+	"devDependencies": {
+		"@types/node": "^22.20.5",
+		"tsx": "^4.23.15",
+		"typescript": "^6.0.3",
+		"vitest": "^5.0.4"
+	},
+	"dependencies": {
+		"@chess/core": "workspace:*",
+		"chessops": "^0.15.1"
+	}
+}

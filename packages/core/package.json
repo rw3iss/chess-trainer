@@ -1,0 +1,32 @@
+{
+	"name": "@chess/core",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"description": "Pure TS chess/game/clock/engine/theme/protocol logic shared by web and server",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+		"./chess": { "types": "./dist/chess/index.d.ts", "default": "./dist/chess/index.js" },
+		"./game": { "types": "./dist/game/index.d.ts", "default": "./dist/game/index.js" },
+		"./clock": { "types": "./dist/clock/index.d.ts", "default": "./dist/clock/index.js" },
+		"./engine": { "types": "./dist/engine/index.d.ts", "default": "./dist/engine/index.js" },
+		"./theme": { "types": "./dist/theme/index.d.ts", "default": "./dist/theme/index.js" },
+		"./protocol": { "types": "./dist/protocol/index.d.ts", "default": "./dist/protocol/index.js" },
+		"./openings": { "types": "./dist/openings/index.d.ts", "default": "./dist/openings/index.js" }
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"typecheck": "tsc --noEmit -p tsconfig.json",
+		"test": "vitest run",
+		"test:watch": "vitest"
+	},
+	"dependencies": {
+		"chessops": "^0.15.1"
+	},
+	"devDependencies": {
+		"typescript": "^6.0.3",
+		"vitest": "^5.0.4"
+	}
+}

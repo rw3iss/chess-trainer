@@ -1,0 +1,21 @@
+{
+	"name": "@chess/piece-assets",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"scripts": {
+		"build": "tsx src/build.ts",
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit -p tsconfig.json"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.5",
+		"tsx": "^4.23.15",
+		"typescript": "^6.0.3",
+		"vitest": "^5.0.4"
+	},
+	"dependencies": {
+		"@chess/core": "workspace:*",
+		"svgo": "^4.1.0"
+	}
+}
