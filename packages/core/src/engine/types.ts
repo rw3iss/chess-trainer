@@ -93,11 +93,20 @@ export interface EngineAdapter {
 	dispose(): void;
 }
 
+/** Search limits for one `go` command. */
+export interface GoLimits {
+	movetimeMs?: number;
+	depth?: number;
+	nodes?: number;
+	/** Search until `stop`. Overrides the other limits. */
+	infinite?: boolean;
+}
+
 /** Output of the strength strategy: what to send the engine for one move. */
 export interface StrengthPlan {
 	/** UCI `setoption` values. Keys are exact option names (e.g. 'UCI_Elo', 'UCI Elo', 'Skill Level'). */
 	options: Record<string, string | number | boolean>;
-	go: { movetimeMs?: number; depth?: number; nodes?: number };
+	go: GoLimits;
 	/** 0..1 probability of replacing the engine move with a random legal non-mating-blunder move. */
 	blunderChance: number;
 	/** Minimum wall time before the bot's move is shown (so instant bots don't feel jarring). */

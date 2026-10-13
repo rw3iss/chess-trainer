@@ -10,7 +10,7 @@ Subpath imports: `@chess/core/chess`, `/game`, `/clock`, `/engine`, `/theme`, `/
 |---|---|---|
 | `INITIAL_FEN`, `ROOT_ID` | consts | |
 | `legalDests` | `(fen) => Map<SquareName, SquareName[]>` | Castling dests use king-two-squares (e1→g1). |
-| `applyUci` | `(fen, uci) => { fen: string; san: string } \| null` | null if illegal. |
+| `applyUci` | `(fen, uci) => { fen: string; san: string; uci: Uci } \| null` | null if illegal. `uci` is canonical (king-takes-rook `e1h1` input → `e1g1`). |
 | `makeUci` | `(from, to, promotion?: PromotionRole) => Uci` | |
 | `isPromotionMove` | `(fen, from, to) => boolean` | |
 | `sanToUci` / `uciToSan` | `(fen, san) => Uci \| null` / `(fen, uci) => string \| null` | |
@@ -22,7 +22,7 @@ Subpath imports: `@chess/core/chess`, `/game`, `/clock`, `/engine`, `/theme`, `/
 | `randomLegalMove` | `(fen, rng?: () => number, opts?: { avoidMateIn1?: boolean }) => Uci \| null` | For blunder blend. |
 | `isRepetition` / `isFiftyMove` | `(fens: string[]) => boolean` / `(fen) => boolean` | |
 | `createTree` | `(fen = INITIAL_FEN) => MoveTree` | |
-| `treeFromUci` | `(uci: Uci[], fen?) => MoveTree` | Mainline only. |
+| `treeFromUci` | `(uci: Uci[], fen?) => MoveTree` | Mainline only. Stops at the first illegal move. |
 | `addMove` | `(tree, parentId, uci) => { tree; nodeId } \| null` | Reuses existing child with same uci. New child appended (becomes variation unless first). |
 | `getNode` | `(tree, id) => MoveNode` | throws if missing |
 | `pathTo` | `(tree, id) => MoveNode[]` | root → id inclusive (root first). |
@@ -31,12 +31,12 @@ Subpath imports: `@chess/core/chess`, `/game`, `/clock`, `/engine`, `/theme`, `/
 | `lineEnd` | `(tree, id) => string` | follow children[0] to leaf. |
 | `nextInLine` / `prevNode` | `(tree, id) => string \| null` | children[0] / parent. |
 | `isOnMainline` | `(tree, id) => boolean` | |
-| `deleteFrom` | `(tree, id) => MoveTree` | removes node + subtree (not root). |
+| `deleteFrom` | `(tree, id) => MoveTree` | removes node + subtree (root → tree returned unchanged). |
 | `promoteVariation` | `(tree, id) => MoveTree` | makes the branch containing id the first child at every ancestor. |
 | `truncateTo` | `(tree, id) => MoveTree` | new tree with only root→id path (node ids preserved). |
-| `setComment` / `setUserNote` / `setNags` | `(tree, id, value) => MoveTree` | |
+| `setComment` / `setUserNote` / `setNags` | `(tree, id, value) => MoveTree` | `''` / `[]` / `undefined` clears the field. |
 | `treeToPgn` | `(tree, headers?: Record<string,string>) => string` | Variations, comments (userNote exported as comment), NAGs. |
-| `pgnToGames` | `(pgn) => PgnGame[]` | Multi-game; FEN/SetUp headers honored. |
+| `pgnToGames` | `(pgn) => PgnGame[]` | Multi-game; FEN/SetUp headers honored. `[%clk]`/`[%eval]`/shape commands stripped from comments; pre-move + post-move comments merge into `comment`. Games with an invalid start position are skipped; an illegal move ends its branch. |
 | `nodeCount` / `maxPly` | `(tree) => number` | |
 
 Node ids: `nanoid`-like short random strings from `newId()` (exported from `chess/id.ts`; uses `crypto.getRandomValues` when present, else Math.random).
@@ -49,21 +49,22 @@ Node ids: `nanoid`-like short random strings from `newId()` (exported from `ches
 | `sessionFromOpening` | `(entry: OpeningEntry, opts?) => Session` — tree = opening line, cursor = root, title = opening name, source {kind:'opening', openingId}, orientation = entry.perspective |
 | `forkSession` | `(session, nodeId, now?) => Session` — tree = truncateTo, cursor = nodeId, source {kind:'fork', parentSessionId, atNodeId}, mode 'analysis', no bot/clock, title `${title} (fork)` |
 | `sessionFromSavedGame` | `(game: SavedGame, now?) => Session` — linked via savedGameId, cursor = lineEnd(root) |
-| `sessionMove` | `(session, uci, now?) => Session \| null` — adds at cursor; cursor → new node; dirty; updates result via positionStatus |
-| `sessionGoto` | `(session, nodeId) => Session` |
+| `sessionMove` | `(session, uci, now?) => Session \| null` — adds at cursor (reuses existing child; dirty only if the tree changed); cursor → new node; result = rule-based `detectResult` (in non-analysis modes a manual result such as resign sticks) |
+| `sessionGoto` | `(session, nodeId) => Session` — throws on unknown id; no revision bump (cursor is view state) |
 | `sessionStep` | `(session, delta: number) => Session` — ±n along current line (forward = children[0]) |
 | `sessionToStart` / `sessionToEnd` | `(session) => Session` |
 | `sessionUpdate` | `(session, patch: Partial<Session>, now?) => Session` — bumps updatedAt + revision |
 | `currentFen` | `(session) => string` |
 | `savedGameFromSession` | `(session, { name, tags?, asNew: boolean, existing?: SavedGame, now? }) => SavedGame` — overwrite keeps id/createdAt/favorite and bumps revision; asNew gets new id and parentGameId = session.savedGameId |
-| `linkSessionToSaved` | `(session, game) => Session` — sets savedGameId, dirty=false |
+| `linkSessionToSaved` | `(session, game) => Session` — sets savedGameId, title = game.name, dirty=false |
 | `detectResult` | `(fen, history fens?) => GameResult \| undefined` |
 | `defaultTitle` | `(session) => string` |
 
 ## clock (`src/clock/`)
 
 `CLOCK_PRESETS: ClockPreset[]` (1+0, 2+1, 3+0, 3+2, 5+0, 5+3, 10+0, 10+5, 15+10, 30+0, 30+20).
-`createClock(config, toMove = 'white')`, `startClock(state, now)`, `pressClock(state, now)` (stop mover, add increment, start other, apply delay), `pauseClock(state, now)`, `resumeClock(state, now)`, `remainingAt(state, color, now)`, `checkFlag(state, now) => ClockState` (sets flagged), `isLowTime(state, color, now, thresholdMs)`, `formatClock(ms, { tenthsUnderMs = 10000 })` → `'4:59'` / `'0:09.3'` / `'1:02:03'`.
+`ClockState.delayRemaining?` holds unused simple-delay ms for the current turn (kept across pause/resume).
+`createClock(config, toMove = 'white')`, `startClock(state, now)`, `pressClock(state, now)` (stop mover, add increment, start other, apply delay; if no clock is running it just starts the opponent — no time/increment; if the mover is out of time it flags), `pauseClock(state, now)`, `resumeClock(state, now)`, `remainingAt(state, color, now)`, `checkFlag(state, now) => ClockState` (sets flagged), `isLowTime(state, color, now, thresholdMs)`, `formatClock(ms, { tenthsUnderMs = 10000 })` → `'4:59'` / `'0:09.3'` / `'1:02:03'`.
 
 ## engine (`src/engine/`)
 
@@ -71,9 +72,22 @@ Node ids: `nanoid`-like short random strings from `newId()` (exported from `ches
 - `THINK_PRESET_MS: Record<ThinkPreset, number>` (instant 50, fast 300, normal 1000, deep 3000).
 - `resolveStrength(meta: EngineMeta, targetElo: number | undefined, think: ThinkSetting) => StrengthPlan` — PLAN §5.3.
 - `MAIA_BUCKETS = [1100..1900 step 100]`, `nearestMaiaBucket(elo)`.
-- UCI helpers: `parseInfoLine(line) => EngineInfo | null`, `parseBestMove(line) => { uci, ponder? } | null`, `buildPositionCommand(pos: EnginePosition) => string`, `buildGoCommand(go, multiPv?) => string`, `setOptionCommands(options) => string[]`.
+- UCI helpers: `parseInfoLine(line) => EngineInfo | null` (null for `info string`, currmove-only and score-less lines), `parseBestMove(line) => { uci, ponder? } | null` (null for `(none)`/`0000`), `buildPositionCommand(pos: EnginePosition) => string`, `buildGoCommand(go: GoLimits) => string` (no limits / `infinite` → `go infinite`; set MultiPV via `setOptionCommands({ MultiPV: n })`), `setOptionCommands(options) => string[]`.
 - `toWhitePov(score, turn: Color) => EngineScore`, `scoreToWinProbability(score) => number` (0..1 for white, logistic on cp), `formatScore(score) => '+1.23' | '#3' | '-#2'`.
 - `pickBlunderMove(fen, bestUci, chance, rng) => Uci` — returns bestUci or a random legal move (never one that allows mate-in-1 when avoidable).
+- Extras: `engineMeta(id)`, `thinkMs(think)`, `lc0Nodes(elo)`, `blendChance(elo, floorElo)`, constants `STOCKFISH_ELO_MIN/MAX`, `MIN_HUMAN_DELAY_MS`, `MAIA_TEMPERATURE`.
+
+Strength truth table (`resolveStrength`):
+
+| Family | Target Elo | Options | go | blunderChance |
+|---|---|---|---|---|
+| stockfish | none or ≥ 3190 | `UCI_LimitStrength=false`, `Skill Level=20` | movetime | 0 |
+| stockfish | 1320–3189 | `UCI_LimitStrength=true`, `UCI_Elo` | movetime | 0 |
+| stockfish | < 1320 | `UCI_LimitStrength=false`, `Skill Level=0` | depth 1–5, nodes 50–5000, movetime ≤ 200 | 0 → 0.5 linearly from 1320 down to 400 |
+| komodo | in range | `UCI LimitStrength=true`, `UCI Elo` (space) | movetime | blend below range min |
+| lc0 | any | — | nodes = 10^((elo−2200)/400) (min 1), movetime | blend below 2200 |
+| maia | any | — (`ratingBucket` = nearest 1100–1900, `temperature` 0.1; 0 when no target) | remote: nodes 1 | blend below 1100 |
+| fairy | any | `Skill Level` 0–20 over eloRange | depth cap when skill < 10 | blend below range min |
 
 ## theme (`src/theme/`) — owned by the board/assets work
 

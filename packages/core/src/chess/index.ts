@@ -1,1 +1,40 @@
 export * from './types.js';
+export { newId } from './id.js';
+export {
+	legalDests,
+	applyUci,
+	makeUci,
+	isPromotionMove,
+	sanToUci,
+	uciToSan,
+	positionStatus,
+	piecesFromFen,
+	turnFromFen,
+	toEpd,
+	validateFen,
+	randomLegalMove,
+	isRepetition,
+	isFiftyMove,
+} from './position.js';
+export {
+	createTree,
+	treeFromUci,
+	addMove,
+	getNode,
+	pathTo,
+	uciPathTo,
+	mainline,
+	lineEnd,
+	nextInLine,
+	prevNode,
+	isOnMainline,
+	deleteFrom,
+	promoteVariation,
+	truncateTo,
+	setComment,
+	setUserNote,
+	setNags,
+	nodeCount,
+	maxPly,
+} from './tree.js';
+export { treeToPgn, pgnToGames } from './pgn.js';

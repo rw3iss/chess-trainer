@@ -22,6 +22,8 @@ export interface ClockState {
 	flagged: Color | null;
 	/** Side to move when paused (so resume knows whose clock to start). */
 	toMove: Color;
+	/** Unused simple-delay ms for the current turn (preserved across pause/resume). */
+	delayRemaining?: number;
 }
 
 export interface ClockPreset {
