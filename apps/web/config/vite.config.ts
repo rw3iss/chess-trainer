@@ -72,5 +72,7 @@ export default defineConfig({
 		outDir: 'dist',
 		sourcemap: true,
 		target: 'es2022',
+		// One stylesheet (~25 KB gzip) instead of a dozen render-blocking chunk files.
+		cssCodeSplit: false,
 	},
 });
