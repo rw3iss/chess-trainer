@@ -107,7 +107,7 @@ Key stores:
 | Clocks / eval bar / board overlays | `stageSlots` (`components/stage/slots.ts`) | `clockTop`, `clockBottom`, `side`, `evalBar`, `overlay` |
 | Dataset notes | `notesSlots.dataset` (`components/moves/notesSlots.ts`) | receives `{ epd, fen }` |
 | Opening name | `setOpeningIdentifier(fn)` (`state/openingIdentity.ts`) | `(uci[], startFen?) => OpeningEntry \| undefined` |
-| Commands | `commands.register(id, fn)` (`services/commands`) | stack: latest wins. Built-ins: `save`, `saveAs`, `focusSearch`, `openBot`, `newGame`, `togglePlay`, `flip`, `fork`, `editNote`; extend `CommandMap` via declaration merging |
+| Commands | `commands.register(id, fn)` (`services/commands`) | stack: latest wins. Built-ins: `save`, `saveAs`, `focusSearch`, `openBot`, `newGame`, `resign`, `offerDraw` (local PvP), `togglePlay`, `flip`, `fork`, `editNote`; extend `CommandMap` via declaration merging |
 | Keyboard shortcuts | `DEFAULT_SHORTCUTS` (`hooks/useKeyboardShortcuts.ts`) | ←/→ Home/End Space F Ctrl+S Ctrl+⇧+S / |
 | Server data | `ApiClient` (`services/api/ApiClient.ts`) | add method to interface + Http + Mock (+ fixture) |
 | Local persistence | `Repositories` (`services/db/repositories/types.ts`) | add interface + Dexie impl + schema version bump |
