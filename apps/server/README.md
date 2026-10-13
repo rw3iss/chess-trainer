@@ -21,6 +21,8 @@ Or from `apps/server`: `make dev` (builds core first), `make build && make start
 
 Optional services (Docker): `make docker-services profiles=postgres` or `profiles=redis` (or both), then set `DB_TYPE=postgres` / `REDIS_HOST=localhost` in `.env`. Full stack in Docker: `make docker-start` (api + SQLite volume), add `profiles="postgres redis"` for the services. The Docker build context is the repo root (see `config/Dockerfile`).
 
+Production (`NODE_ENV=production`, the image default) requires `JWT_SECRET` (32+ random chars) and an `OWNER_PASSWORD`. Example: `docker build -f apps/server/config/Dockerfile -t chess-server .` then `docker run -p 3000:3000 -e JWT_SECRET=… -e OWNER_PASSWORD=… -v chess-data:/app/data chess-server`. Verified with Podman (2026-10-13).
+
 ## Commands
 
 ```bash
@@ -59,7 +61,7 @@ All variables are validated by Joi at boot (`src/config/env.validation.ts`). The
 | `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB` | `6379`, —, `0` | |
 | `JWT_SECRET` | random per process | **required in production** (≥16 chars) |
 | `JWT_ACCESS_TTL` / `JWT_REFRESH_TTL` / `GUEST_TTL` | `900` / `2592000` / `86400` | seconds |
-| `OWNER_USERNAME`, `OWNER_PASSWORD` | — | owner account, created or re-hashed at boot |
+| `OWNER_USERNAME`, `OWNER_PASSWORD` | `owner` / — | owner account, created or re-hashed at boot (no account when the password is unset) |
 | `DATA_DIR` | `../web/public/data` | openings dataset (from `tools/openings-data`) |
 | `LICHESS_TOKEN` | — | enables `/explorer` (Lichess now requires a token) |
 | `EXPLORER_BASE_URL` | `https://explorer.lichess.org` | |

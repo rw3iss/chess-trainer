@@ -11,6 +11,7 @@ export default registerAs('auth', () => ({
 	accessTtl: parseInt(process.env.JWT_ACCESS_TTL ?? '900', 10),
 	refreshTtl: parseInt(process.env.JWT_REFRESH_TTL ?? String(30 * 24 * 3600), 10),
 	guestTtl: parseInt(process.env.GUEST_TTL ?? String(24 * 3600), 10),
-	ownerUsername: process.env.OWNER_USERNAME || undefined,
+	// Username defaults to 'owner' when only a password is given (e.g. container env).
+	ownerUsername: process.env.OWNER_USERNAME || (process.env.OWNER_PASSWORD ? 'owner' : undefined),
 	ownerPassword: process.env.OWNER_PASSWORD || undefined,
 }));
