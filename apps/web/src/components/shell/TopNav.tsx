@@ -1,4 +1,4 @@
-// TopNav — logo · Current ▾ · Openings · Games · Settings · offline · server status.
+// TopNav — logo · Current ▾ · Play · Openings · Games · Settings · offline · server status.
 import type { JSX } from 'preact';
 import { useLocation } from 'preact-iso';
 import { Icon } from '@/components/common/Icon';
@@ -17,6 +17,7 @@ interface NavLink {
 }
 
 const LINKS: NavLink[] = [
+	{ href: '/play', label: 'Play', match: (p) => p === '/play' || p.startsWith('/play/') },
 	{ href: '/openings', label: 'Openings', match: (p) => p.startsWith('/openings') },
 	{ href: '/games', label: 'Games', match: (p) => p.startsWith('/games') },
 	{ href: '/settings/app', label: 'Settings', match: (p) => p.startsWith('/settings') },
@@ -47,11 +48,11 @@ export function TopNav({ compact = false }: { compact?: boolean }): JSX.Element 
 	const theme = useTheme();
 	return (
 		<header class={cx('topnav', compact && 'topnav--compact')}>
-			<a href="/" class="topnav__brand" aria-label="Chess Openings — home">
+			<a href="/" class="topnav__brand" aria-label="Chess Trainer — home">
 				<span class="topnav__logo">
 					<Icon name="logo" size={compact ? 22 : 24} />
 				</span>
-				{!compact && <span class="topnav__wordmark">Openings</span>}
+				{!compact && <span class="topnav__wordmark">Chess Trainer</span>}
 			</a>
 			<SessionSwitcher compact={compact} />
 			{!compact && (
@@ -72,6 +73,7 @@ export function TopNav({ compact = false }: { compact?: boolean }): JSX.Element 
 				)}
 				<ServerStatus />
 				<IconButton icon={theme.resolved === 'dark' ? 'sun' : 'moon'} label={theme.resolved === 'dark' ? 'Light theme' : 'Dark theme'} size="sm" onClick={theme.toggle} />
+				{compact && <IconButton icon="play" label="Play" size="sm" onClick={() => route('/play')} />}
 				{compact && <IconButton icon="settings" label="Settings" size="sm" onClick={() => route('/settings/app')} />}
 			</div>
 		</header>

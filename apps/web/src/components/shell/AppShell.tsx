@@ -23,7 +23,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { cx } from '@/lib/classNames';
 import './AppShell.scss';
 
-const APP_TITLE = 'Chess Openings';
+const APP_TITLE = 'Chess Trainer';
 
 function EnginePanelFallback(): JSX.Element {
 	return (

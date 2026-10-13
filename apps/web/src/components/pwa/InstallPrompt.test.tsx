@@ -31,7 +31,7 @@ describe('InstallPrompt', () => {
 		render(<InstallPrompt />);
 		const { prompt } = fireBeforeInstallPrompt();
 		expect(canInstall.value).toBe(true);
-		expect(screen.getByText('Install Chess Openings')).toBeTruthy();
+		expect(screen.getByText('Install Chess Trainer')).toBeTruthy();
 		await act(async () => void fireEvent.click(screen.getByRole('button', { name: /^install$/i })));
 		expect(prompt).toHaveBeenCalledOnce();
 		expect(canInstall.value).toBe(false);

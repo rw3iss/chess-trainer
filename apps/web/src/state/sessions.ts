@@ -278,7 +278,11 @@ export const sessionsActions = {
 	},
 
 	update(patch: Partial<Session>, id?: string): Session | null {
-		return apply(id, (s) => sessionUpdate(s, patch));
+		return apply(id, (s) => {
+			const next = sessionUpdate(s, patch);
+			// Auto-titled sessions follow mode / bot changes ('Analysis' → 'Bot 1500 — 1.e4'); user titles stick.
+			return !('title' in patch) && s.title === defaultTitle(s) ? { ...next, title: defaultTitle(next) } : next;
+		});
 	},
 
 	/** Replace a session wholesale (e.g. after linking to a saved game). */

@@ -35,6 +35,7 @@ const Games = lazy(() => import('@/pages/Games/Games'));
 const Sessions = lazy(() => import('@/pages/Sessions/Sessions'));
 const Settings = lazy(() => import('@/pages/Settings/Settings'));
 const Play = lazy(() => import('@/pages/Play/Play'));
+const QuickPlay = lazy(() => import('@/pages/QuickPlay/QuickPlay'));
 const NotFound = lazy(() => import('@/pages/NotFound/NotFound'));
 
 export const ROUTES: AppRoute[] = [
@@ -45,6 +46,7 @@ export const ROUTES: AppRoute[] = [
 	{ path: '/sessions', component: Sessions, layout: 'wide', title: 'Open sessions' },
 	{ path: '/settings', component: Settings, layout: 'wide', title: 'Settings' },
 	{ path: '/settings/:section', component: Settings, layout: 'wide', title: 'Settings' },
+	{ path: '/play', component: QuickPlay, layout: 'panel', title: 'Play' },
 	{ path: '/play/:roomId', component: Play, layout: 'panel', title: 'Online game' },
 ];
 

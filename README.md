@@ -10,6 +10,7 @@ Works fully offline. The server is optional and adds sync, live opening statisti
 - **Games** — every open game autosaves and stays open while you browse; Save (overwrite) or Save as new; fork at any move; variations; notes; PGN import/export; saved-games library.
 - **Playback** — auto-play a line at slow / medium / fast; pause and step at any time.
 - **Engines** — Stockfish 19 lite (offline, default), full Stockfish (download on demand), Maia-2 human-like bot (download on demand), and server engines (Stockfish, lc0, Maia, Komodo if you supply the binary). Analysis with eval bar, MultiPV lines and arrows. Play a bot at any Elo from the current position.
+- **Play** — the Play page starts a bot or 2-player game in two clicks (engine, Elo, colour, think time, clock, start position) and shows the live opening name and moves while you play.
 - **Local play + clocks** — 2 players on one device, time controls with increment/delay, clock placement and size options, tabletop mode.
 - **Themes** — 9 board themes (procedural wood/marble/slate/felt textures), 14 recolourable piece sets (incl. two originals, Lux and Sleek), theme editor to clone and recolour anything, light/dark app theme with accent colour.
 - **Server (optional)** — auth, sync across devices, Lichess explorer proxy, native engines, online rooms with chat.

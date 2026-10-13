@@ -17,9 +17,9 @@ export default defineConfig({
 			injectRegister: false,
 			manifest: {
 				id: '/',
-				name: 'Chess Openings',
-				short_name: 'Openings',
-				description: 'Learn chess openings — browse, play through, fork and practise against bots.',
+				name: 'Chess Trainer',
+				short_name: 'Chess Trainer',
+				description: 'Learn chess openings and play — browse, play through, fork, and practise against bots or a friend.',
 				theme_color: '#0e0f12',
 				background_color: '#0e0f12',
 				display: 'standalone',

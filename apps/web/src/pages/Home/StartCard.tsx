@@ -29,8 +29,8 @@ export function StartCard(): JSX.Element {
 				<Button variant="secondary" size="lg" icon="book" block onClick={() => route('/openings')}>
 					Browse openings
 				</Button>
-				<Button variant="ghost" size="lg" icon="user" block onClick={() => route('/play/new')}>
-					Play online
+				<Button variant="ghost" size="lg" icon="play" block onClick={() => route('/play')}>
+					Play a bot or a friend
 				</Button>
 			</div>
 			{recent.length > 0 && (

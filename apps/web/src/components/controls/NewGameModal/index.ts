@@ -6,3 +6,4 @@ export * from './newGameForm';
 export { startNewGame } from './startNewGame';
 export { autoFlipOrientation, startPvpController } from './pvpController';
 export { installNewGameFeature } from './install';
+export { PvpSetupFields, StartPositionField } from './SetupFields';

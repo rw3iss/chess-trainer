@@ -1,4 +1,4 @@
-// Small dismissible "Install Chess Openings" card. Chromium: native prompt via promptInstall().
+// Small dismissible "Install Chess Trainer" card. Chromium: native prompt via promptInstall().
 // iOS Safari: "Tap Share → Add to Home Screen" hint. Hidden when running standalone or after
 // dismissal (remembered). State lives in services/sw/install.ts.
 import type { JSX } from 'preact';
@@ -10,11 +10,11 @@ import './InstallPrompt.scss';
 const APP_ICON = '/icons/icon-192.png';
 
 export interface InstallPromptProps {
-	/** Override the visible title (defaults to "Install Chess Openings"). */
+	/** Override the visible title (defaults to "Install Chess Trainer"). */
 	title?: string;
 }
 
-export function InstallPrompt({ title = 'Install Chess Openings' }: InstallPromptProps): JSX.Element | null {
+export function InstallPrompt({ title = 'Install Chess Trainer' }: InstallPromptProps): JSX.Element | null {
 	useEffect(initInstallState, []);
 	if (!showInstallPrompt.value) return null;
 

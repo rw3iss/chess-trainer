@@ -1,4 +1,4 @@
-# @chess/web — Chess Openings PWA
+# @chess/web — Chess Trainer PWA
 
 Preact + TypeScript + SCSS client. Learn openings: browse, load, play through, fork, analyse, play bots.
 Works fully offline; the NestJS server (`apps/server`) is optional and only adds features.
@@ -24,7 +24,7 @@ pnpm test:e2e     # Playwright, desktop + mobile (starts Vite on :5199)
 ## Architecture in one screen
 
 - **AppShell** — TopNav · persistent **BoardStage** (never unmounts) · SidePanel (route content + Moves/Openings/Games/Engine tabs) · GameControls. Mobile (< 900 px): board on top, panel below, sheets for Openings/Games/Sessions/Settings with a "now playing" chip.
-- **Routes** (`src/app/routes.ts`, preact-iso lazy): `/`, `/openings`, `/openings/:id`, `/games`, `/sessions`, `/settings/:section`, `/play/:roomId`.
+- **Routes** (`src/app/routes.ts`, preact-iso lazy): `/`, `/openings`, `/openings/:id`, `/games`, `/sessions`, `/settings/:section`, `/play` (quick play: bot or 2 players), `/play/new` + `/play/:roomId` (online).
 - **State** (`src/state/`, signals): `sessions` (open tabs, autosave 300 ms, restore on boot), `settings`, `savedGames`, `favorites`, `playback`, `themes`, `notes`, `openingIdentity`. Pattern: `state/registry.ts`.
 - **Services**: `db` (Dexie repositories), `api` (ApiClient → Http or Mock), `server` (ServerConnector), `cache` (IndexedDB TTL cache), `commands` (command bus), `playback`, `toast`, `sw`.
 - **Keyboard**: ←/→ step · Home/End · Space play/pause · F flip · Ctrl+S save · Ctrl+⇧+S save as · / search.
