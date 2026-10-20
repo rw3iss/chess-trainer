@@ -22,6 +22,7 @@ import {
 	type WsEnvelope,
 } from '@chess/core/protocol';
 import type { GameResult, Uci } from '@chess/core/chess';
+import { socketTarget } from '@/services/server/socketTarget';
 
 export const ACK_TIMEOUT_MS = 8000;
 export const PLAY_NAMESPACE = '/play';
@@ -78,7 +79,9 @@ export interface RoomsClientOptions {
 
 const defaultFactory: SocketFactory = async (url, opts) => {
 	const { io } = await import('socket.io-client');
-	return io(`${url}${PLAY_NAMESPACE}`, {
+	const t = socketTarget(`${url}${PLAY_NAMESPACE}`);
+	return io(t.url, {
+		path: t.path,
 		auth: opts.auth,
 		transports: ['websocket', 'polling'],
 		reconnectionDelay: 500,

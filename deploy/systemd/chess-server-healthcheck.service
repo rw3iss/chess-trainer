@@ -1,0 +1,7 @@
+# Restarts chess-server if it runs but /health stops answering (hang).
+[Unit]
+Description=Chess Trainer API health check
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'curl -sf --max-time 10 http://127.0.0.1:4100/health >/dev/null || systemctl restart chess-server'

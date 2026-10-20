@@ -1,0 +1,36 @@
+# /etc/systemd/system/chess-server.service — ryanweiss.net box (162.35.181.92)
+# Chess Trainer API (NestJS + socket.io) on 127.0.0.1:4100. nginx serves the PWA at
+# https://chess.ryanweiss.net and proxies /api/ (prefix stripped) to this service.
+# Installed/refreshed by scripts/deploy/setup-server.sh.
+#   Logs: sudo journalctl -u chess-server -f
+# Self-healing: Restart=always (no start limit) + chess-server-healthcheck.timer.
+
+[Unit]
+Description=Chess Trainer API (chess.ryanweiss.net)
+After=network-online.target postgresql.service valkey.service
+Wants=network-online.target postgresql.service valkey.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=rw3iss
+Group=rw3iss
+WorkingDirectory=/var/www/chess/apps/server
+EnvironmentFile=/etc/chess/chess-server.env
+ExecStart=/usr/local/bin/node dist/main
+Restart=always
+RestartSec=5
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=chess-server
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+ReadWritePaths=/var/lib/chess
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

@@ -18,6 +18,7 @@ import {
 } from '@chess/core';
 import { JobQueue, type Job } from '../jobQueue';
 import { EngineAbortError } from '../types';
+import { socketTarget } from '@/services/server/socketTarget';
 
 /** The slice of a socket.io client socket used here. */
 export interface SocketLike {
@@ -46,7 +47,8 @@ export interface RemoteEngineOptions {
 
 const defaultSocketFactory: SocketFactory = async (url, opts) => {
 	const { io } = await import('socket.io-client');
-	return io(url, { ...opts, transports: ['websocket', 'polling'], reconnection: true }) as unknown as SocketLike;
+	const t = socketTarget(url);
+	return io(t.url, { ...opts, path: t.path, transports: ['websocket', 'polling'], reconnection: true }) as unknown as SocketLike;
 };
 
 interface Pending {

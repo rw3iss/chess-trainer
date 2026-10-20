@@ -7,7 +7,9 @@ import type { HealthDto } from '@chess/core/protocol';
 
 export type ServerStatus = 'online' | 'offline' | 'unconfigured';
 
-export const DEFAULT_SERVER_URL = 'http://localhost:3000';
+/** Build-time default (`VITE_DEFAULT_SERVER_URL`, e.g. https://chess.ryanweiss.net/api in prod). */
+export const DEFAULT_SERVER_URL: string =
+	(import.meta.env?.VITE_DEFAULT_SERVER_URL as string | undefined) || 'http://localhost:3000';
 export const PROBE_TIMEOUT_MS = 1500;
 export const PROBE_INTERVAL_MS = 60_000;
 
