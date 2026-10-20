@@ -18,7 +18,7 @@ Master plan: `docs/plan/PLAN.md`. Architecture: `docs/architecture.md`. Core API
 - Secrets only in root `.env` / `apps/server/.env` (gitignored). `LICHESS_TOKEN` lives in root `.env`.
 - The server is optional: the web app must work fully offline without it.
 
-## Production — https://chess.ryanweiss.net
+## Production — https://chess.ryanweiss.net (alias https://chess.rw3iss.com)
 
 Host: the ryanweiss.net box (InterServer, Fedora 44, `162.35.181.92`). Native services, no Docker.
 
@@ -35,11 +35,11 @@ the alias `rw` (`alias rw='ssh rw3iss@162.35.181.92'`); scripts use the full hos
 | Env (secrets) | `/etc/chess/chess-server.env` (root, 0600; written once, never overwritten). Owner login = `OWNER_USERNAME`/`OWNER_PASSWORD` there |
 | DB / cache | Postgres role+db `chess`; Valkey DB `7` |
 | Native engine | Fedora `stockfish` (`/usr/bin/stockfish`) → engine `sf-native`. lc0/Maia/Komodo not installed |
-| nginx | `/etc/nginx/conf.d/chess.ryanweiss.net.conf`: static PWA, `/api/` → API (prefix stripped), `/api/socket.io/` WebSocket |
+| nginx | `/etc/nginx/conf.d/chess.ryanweiss.net.conf` (`chess.ryanweiss.net` + `chess.rw3iss.com`): static PWA, `/api/` → API (prefix stripped), `/api/socket.io/` WebSocket |
 | TLS | Let's Encrypt `/etc/letsencrypt/live/chess.ryanweiss.net/` (auto-renew) |
 
-The client is built with `VITE_DEFAULT_SERVER_URL=https://chess.ryanweiss.net/api`, so new installs talk to the
-server out of the box. socket.io goes through `services/server/socketTarget.ts` (namespace on the origin,
+The client is built with `VITE_DEFAULT_SERVER_URL=/api` (relative → resolved against the page origin), so new
+installs talk to the same-origin server out of the box on either domain. `CORS_ORIGINS` lists both domains. socket.io goes through `services/server/socketTarget.ts` (namespace on the origin,
 `path: /api/socket.io`).
 
 **Deploy** (the box pulls `origin/main` and builds itself — push first):

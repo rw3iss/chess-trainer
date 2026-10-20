@@ -31,7 +31,7 @@ if ! sudo test -f "$ENV_FILE"; then
 NODE_ENV=production
 PORT=4100
 API_PREFIX=
-CORS_ORIGINS=https://$DOMAIN
+CORS_ORIGINS=https://$DOMAIN,https://chess.rw3iss.com
 LOG_LEVEL=log
 SWAGGER_ENABLED=false
 DB_TYPE=postgres

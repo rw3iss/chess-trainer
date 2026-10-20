@@ -7,9 +7,19 @@ import type { HealthDto } from '@chess/core/protocol';
 
 export type ServerStatus = 'online' | 'offline' | 'unconfigured';
 
-/** Build-time default (`VITE_DEFAULT_SERVER_URL`, e.g. https://chess.ryanweiss.net/api in prod). */
-export const DEFAULT_SERVER_URL: string =
-	(import.meta.env?.VITE_DEFAULT_SERVER_URL as string | undefined) || 'http://localhost:3000';
+/**
+ * Build-time default (`VITE_DEFAULT_SERVER_URL`). A relative value (prod: `/api`) resolves against
+ * the page origin, so every domain the app is served from uses its own same-origin API.
+ */
+export function resolveDefaultServerUrl(raw: string | undefined, origin: string | undefined): string {
+	if (!raw) return 'http://localhost:3000';
+	if (raw.startsWith('/') && origin) return `${origin}${raw}`.replace(/\/+$/, '');
+	return raw;
+}
+export const DEFAULT_SERVER_URL: string = resolveDefaultServerUrl(
+	import.meta.env?.VITE_DEFAULT_SERVER_URL as string | undefined,
+	typeof window !== 'undefined' ? window.location.origin : undefined,
+);
 export const PROBE_TIMEOUT_MS = 1500;
 export const PROBE_INTERVAL_MS = 60_000;
 

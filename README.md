@@ -60,10 +60,11 @@ Then in the app: Settings → Server → URL `http://localhost:3000`, log in, an
 
 ## Production
 
-Live at **https://chess.ryanweiss.net** (PWA + API at `/api` + socket.io at `/api/socket.io`) on the ryanweiss.net
+Live at **https://chess.ryanweiss.net** (alias **https://chess.rw3iss.com**; PWA + API at `/api` + socket.io at `/api/socket.io`) on the ryanweiss.net
 box. Deploy with `bash scripts/deploy/deploy.sh` after pushing to `main`; details, paths and operations are in
 [`CLAUDE.md`](CLAUDE.md#production--httpschessryanweissnet). Build-time default server URL:
-`VITE_DEFAULT_SERVER_URL` (falls back to `http://localhost:3000`).
+`VITE_DEFAULT_SERVER_URL` — absolute, or relative like `/api` (resolved against the page origin); falls back to
+`http://localhost:3000`.
 
 ## Licenses and data
 

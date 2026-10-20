@@ -16,7 +16,7 @@ echo "▶ install + build"
 pnpm install --frozen-lockfile
 pnpm --filter @chess/core build
 pnpm --filter @chess/server build
-VITE_DEFAULT_SERVER_URL=https://chess.ryanweiss.net/api pnpm --filter @chess/web build
+VITE_DEFAULT_SERVER_URL=/api pnpm --filter @chess/web build
 
 echo "▶ host config (idempotent)"
 bash "$APP_DIR/scripts/deploy/setup-server.sh"
