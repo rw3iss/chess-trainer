@@ -2,6 +2,9 @@
 # Runs ON THE SERVER. Pull origin/main, build core + server + web, apply host config
 # (idempotent), restart the API, health-gate.
 #   bash /var/www/chess/scripts/deploy/update.sh
+# Wrapped in main() so bash parses the whole file before running it: the
+# `git reset` below rewrites this very script mid-run.
+main() {
 set -euo pipefail
 APP_DIR="${APP_DIR:-/var/www/chess}"
 HEALTH_URL="http://127.0.0.1:4100/health"
@@ -33,3 +36,5 @@ for i in $(seq 1 40); do
 done
 echo "❌ health check failed — sudo journalctl -u chess-server -n 100 --no-pager"
 exit 1
+}
+main "$@"
