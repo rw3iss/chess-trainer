@@ -58,6 +58,13 @@ Then in the app: Settings → Server → URL `http://localhost:3000`, log in, an
 | `tools/piece-assets` | Piece-set normaliser ([README](tools/piece-assets/README.md)) |
 | `docs/` | [Plan](docs/plan/PLAN.md), [architecture](docs/architecture.md), [engine research](docs/research/engines.md) |
 
+## Production
+
+Live at **https://chess.ryanweiss.net** (PWA + API at `/api` + socket.io at `/api/socket.io`) on the ryanweiss.net
+box. Deploy with `bash scripts/deploy/deploy.sh` after pushing to `main`; details, paths and operations are in
+[`CLAUDE.md`](CLAUDE.md#production--httpschessryanweissnet). Build-time default server URL:
+`VITE_DEFAULT_SERVER_URL` (falls back to `http://localhost:3000`).
+
 ## Licenses and data
 
 Stockfish (GPL-3.0) ships as a separate worker file with its license. Opening data: Lichess chess-openings (CC0), eco.json (MIT), Wikibooks Chess Opening Theory (CC BY-SA 4.0), Lichess explorer statistics — see `apps/web/public/data/ATTRIBUTION.md`. Piece sets keep their own licenses — see `apps/web/public/pieces/LICENSES.md`; four sets are for personal use only. This is a personal-use app.
