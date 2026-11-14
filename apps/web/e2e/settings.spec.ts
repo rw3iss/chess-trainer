@@ -92,3 +92,24 @@ test('board shadow setting toggles the halo behind the board (default on, persis
 	await expect(page.getByRole('switch', { name: 'Board shadow' })).toHaveAttribute('aria-checked', 'false');
 	await expect(page.locator('section.stage')).not.toHaveClass(/stage--halo/);
 });
+
+test('board shadow size, extra top/bottom and color drive the halo; reset restores defaults', async ({ page }) => {
+	await page.goto('/settings/app');
+	const stage = page.locator('section.stage');
+	await expect(stage).toHaveAttribute('style', /--halo-size: 40px/);
+	const size = page.getByRole('slider', { name: 'Shadow size' });
+	await size.focus();
+	await page.keyboard.press('ArrowRight');
+	await expect(stage).toHaveAttribute('style', /--halo-size: 42px/);
+	const extra = page.getByRole('slider', { name: 'Extra top and bottom' });
+	await extra.focus();
+	await page.keyboard.press('ArrowRight');
+	await expect(stage).toHaveAttribute('style', /--halo-extra-y: 2px/);
+	const opacity = page.getByRole('slider', { name: 'Color & opacity opacity' });
+	await opacity.focus();
+	await page.keyboard.press('ArrowRight');
+	await expect(stage).toHaveAttribute('style', /--halo-color: rgba\(/);
+	await page.getByRole('button', { name: 'Reset shadow' }).click();
+	await expect(stage).toHaveAttribute('style', /--halo-size: 40px/);
+	await expect(stage).not.toHaveAttribute('style', /--halo-color/);
+});

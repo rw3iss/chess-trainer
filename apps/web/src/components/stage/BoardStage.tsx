@@ -9,7 +9,7 @@ import { Board2D, MiniBoard, type Arrow, type Mark } from '@/components/board';
 import { Badge } from '@/components/common/Badge';
 import { Icon } from '@/components/common/Icon';
 import { activeSession, sessionsActions } from '@/state/sessions';
-import { settings } from '@/state/settings';
+import { settings, type BoardDisplaySettings } from '@/state/settings';
 import { activeBoardTheme, activePieceSet, activePieceTheme } from '@/state/themes';
 import type { PieceSetAsset, PieceTheme } from '@chess/core/theme';
 import { cx } from '@/lib/classNames';
@@ -17,6 +17,14 @@ import { boardViewModel, lastMoveOf, playerLabel } from './boardModel';
 import { fromMoveHandlers, stageShapes, stageSlots } from './slots';
 import { CapturedPieces } from './CapturedPieces';
 import './BoardStage.scss';
+
+/** CSS vars for the board shadow (see BoardStage.scss `.stage--halo`). */
+function haloStyle(b: BoardDisplaySettings): JSX.CSSProperties | undefined {
+	if (!b.showShadow) return undefined;
+	const vars: Record<string, string> = { '--halo-size': `${b.shadowSize}px`, '--halo-extra-y': `${b.shadowExtraY}px` };
+	if (b.shadowColor) vars['--halo-color'] = b.shadowColor;
+	return vars as JSX.CSSProperties;
+}
 
 const MODE_LABEL: Record<Session['mode'], string> = {
 	analysis: 'Analysis',
@@ -112,7 +120,7 @@ export function BoardStage({ class: className }: { class?: string }): JSX.Elemen
 	};
 
 	return (
-		<section class={cx('stage', s.board.showShadow && 'stage--halo', className)} aria-label="Board">
+		<section class={cx('stage', s.board.showShadow && 'stage--halo', className)} style={haloStyle(s.board)} aria-label="Board">
 			<div class="stage__area">
 				<div class="stage__evalbar">
 					<stageSlots.evalBar.Render session={session} />

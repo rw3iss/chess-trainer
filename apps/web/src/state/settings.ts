@@ -32,7 +32,18 @@ export interface BoardDisplaySettings {
 	arrowColor: string;
 	/** Soft dark halo behind the board and player strips (focus + contrast for captured pieces). */
 	showShadow: boolean;
+	/** Halo center color with alpha (CSS color); '' = theme default (BOARD_SHADOW_THEME_COLORS). */
+	shadowColor: string;
+	/** px the halo reaches past the board column on every side (also drives the blur). */
+	shadowSize: number;
+	/** Extra px added above and below only (player rows / captured pieces). */
+	shadowExtraY: number;
 }
+
+/** Theme default halo colors (keep in sync with --stage-halo in styles/_tokens.scss + _themes.scss). */
+export const BOARD_SHADOW_THEME_COLORS = { dark: 'rgba(0, 0, 0, 0.62)', light: 'rgba(58, 46, 28, 0.34)' } as const;
+export const BOARD_SHADOW_SIZE = { min: 8, max: 120, default: 40 } as const;
+export const BOARD_SHADOW_EXTRA_Y = { min: 0, max: 80, default: 0 } as const;
 
 export interface ClockSettings {
 	/** A CLOCK_PRESETS id, or 'custom' (uses `custom`). */
@@ -100,6 +111,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
 		colorBlindHighlights: false,
 		arrowColor: '',
 		showShadow: true,
+		shadowColor: '',
+		shadowSize: BOARD_SHADOW_SIZE.default,
+		shadowExtraY: BOARD_SHADOW_EXTRA_Y.default,
 	},
 	boardThemeId: DEFAULT_BOARD_THEME_ID,
 	pieceThemeId: DEFAULT_PIECE_THEME_ID,

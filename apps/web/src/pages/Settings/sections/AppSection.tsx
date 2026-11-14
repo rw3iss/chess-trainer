@@ -3,7 +3,17 @@ import type { JSX } from 'preact';
 import { DEFAULT_APP_THEME, type AppThemeMode } from '@chess/core/theme';
 import { Button, ColorPicker, DEFAULT_SWATCHES, SegmentedControl, Slider, Toggle } from '@/components/common';
 import { sound } from '@/services/sound';
-import { settings, updateSettings, type AppSettings } from '@/state/settings';
+import {
+	BOARD_SHADOW_EXTRA_Y,
+	BOARD_SHADOW_SIZE,
+	BOARD_SHADOW_THEME_COLORS,
+	DEFAULT_SETTINGS,
+	settings,
+	updateSettings,
+	type AppSettings,
+} from '@/state/settings';
+import { AlphaColorField } from '@/components/theme/pickers';
+import { useTheme } from '@/hooks/useTheme';
 import { SectionHeader, SettingsGroup, SettingsRow } from '../SettingsLayout';
 
 const MODES: { value: AppThemeMode; label: string; icon: 'sun' | 'moon' | 'monitor' }[] = [
@@ -43,7 +53,7 @@ export function AppSection(): JSX.Element {
 				<SettingsRow label="Theme">
 					<SegmentedControl options={MODES} value={s.theme.mode} onChange={(mode) => updateSettings({ theme: { mode } })} ariaLabel="Theme" size="sm" />
 				</SettingsRow>
-				<SettingsRow label="Accent colour" hint="Buttons, highlights and focus rings." stacked>
+				<SettingsRow label="Accent color" hint="Buttons, highlights and focus rings." stacked>
 					<div class="settings-inline">
 						<ColorPicker value={s.theme.accent} onChange={(accent) => updateSettings({ theme: { accent } })} swatches={DEFAULT_SWATCHES} label="Accent" />
 						{s.theme.accent !== DEFAULT_APP_THEME.accent && (
@@ -65,6 +75,7 @@ export function AppSection(): JSX.Element {
 					label="Board shadow"
 					description="A soft dark glow around the board and player rows: more focus, and captured pieces stand out."
 				/>
+				{s.board.showShadow && <BoardShadowControls />}
 			</SettingsGroup>
 
 			<SettingsGroup title="Sound" description="Synthesized move, capture, check and game-end sounds.">
@@ -101,6 +112,49 @@ export function AppSection(): JSX.Element {
 					<SegmentedControl options={MOTION} value={s.motion} onChange={(motion) => updateSettings({ motion })} ariaLabel="Reduced motion" size="sm" />
 				</SettingsRow>
 			</SettingsGroup>
+		</div>
+	);
+}
+
+/** Board shadow color (with opacity), size and extra top/bottom. Color '' follows the theme. */
+function BoardShadowControls(): JSX.Element {
+	const b = settings.value.board;
+	const { resolved } = useTheme();
+	const themeColor = BOARD_SHADOW_THEME_COLORS[resolved === 'light' ? 'light' : 'dark'];
+	const d = DEFAULT_SETTINGS.board;
+	const isDefault = !b.shadowColor && b.shadowSize === d.shadowSize && b.shadowExtraY === d.shadowExtraY;
+	return (
+		<div class="board-shadow-controls">
+			<SettingsRow label="Shadow color" hint={b.shadowColor ? 'Center color; it fades to transparent.' : 'Theme default. Pick a color to override it.'} stacked>
+				<AlphaColorField label="Color & opacity" value={b.shadowColor || themeColor} onChange={(shadowColor) => updateSettings({ board: { shadowColor } })} />
+			</SettingsRow>
+			<SettingsRow label="Shadow size" hint="How far it reaches past the board; larger is softer." stacked>
+				<Slider
+					min={BOARD_SHADOW_SIZE.min}
+					max={BOARD_SHADOW_SIZE.max}
+					step={2}
+					value={b.shadowSize}
+					onChange={(shadowSize) => updateSettings({ board: { shadowSize } })}
+					format={(v) => `${v}px`}
+					ariaLabel="Shadow size"
+				/>
+			</SettingsRow>
+			<SettingsRow label="Extra top & bottom" hint="Adds to the top and bottom only — more contrast behind the player rows and captured pieces." stacked>
+				<Slider
+					min={BOARD_SHADOW_EXTRA_Y.min}
+					max={BOARD_SHADOW_EXTRA_Y.max}
+					step={2}
+					value={b.shadowExtraY}
+					onChange={(shadowExtraY) => updateSettings({ board: { shadowExtraY } })}
+					format={(v) => `${v}px`}
+					ariaLabel="Extra top and bottom"
+				/>
+			</SettingsRow>
+			<div class="board-shadow-controls__reset">
+				<Button size="sm" variant="ghost" icon="undo" disabled={isDefault} onClick={() => updateSettings({ board: { shadowColor: '', shadowSize: d.shadowSize, shadowExtraY: d.shadowExtraY } })}>
+					Reset shadow
+				</Button>
+			</div>
 		</div>
 	);
 }

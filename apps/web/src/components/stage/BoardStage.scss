@@ -32,16 +32,18 @@
 		max-width: 100%;
 	}
 
-	// Board shadow (setting): a dark field behind the board and both player strips that extends
-	// ~40px past them and is blurred out to fully transparent, so it melts into the app background.
+	// Board shadow (settings): a dark field behind the board and both player strips that reaches
+	// --halo-size past them (plus --halo-extra-y above/below) and is blurred out to fully
+	// transparent, so it melts into the app background. --halo-color overrides the theme color.
 	&--halo &__column::before {
+		--_size: var(--halo-size, 40px);
 		content: '';
 		position: absolute;
-		inset: -40px;
+		inset: calc(-1 * (var(--_size) + var(--halo-extra-y, 0px))) calc(-1 * var(--_size));
 		z-index: -1;
-		border-radius: 48px;
-		background: var(--stage-halo);
-		filter: blur(22px);
+		border-radius: calc(var(--_size) * 1.2);
+		background: var(--halo-color, var(--stage-halo));
+		filter: blur(calc(var(--_size) * 0.55));
 		pointer-events: none;
 	}
 
