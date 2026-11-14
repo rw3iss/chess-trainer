@@ -21,3 +21,23 @@ export function compactCount(n: number): string {
 	if (n >= 1e3) return `${(n / 1e3).toFixed(n >= 1e4 ? 0 : 1)}k`;
 	return String(n);
 }
+
+/** Numbered SAN from ply `from` (0-based): from=4 → '3.d4 cxd4', from=5 → '3…cxd4 4.Nxd4'. */
+export function sanLineFrom(san: readonly string[], from: number, limit = san.length - from): string {
+	const parts: string[] = [];
+	const end = Math.min(san.length, from + limit);
+	for (let i = from; i < end; i++) {
+		const n = Math.floor(i / 2) + 1;
+		if (i % 2 === 0) parts.push(`${n}.${san[i]}`);
+		else parts.push(i === from ? `${n}…${san[i]}` : san[i]!);
+	}
+	return parts.join(' ');
+}
+
+/** Name of `child` relative to `parent`: 'Sicilian Defense: Najdorf Variation, English Attack' under '…Najdorf Variation' → 'English Attack'. Empty when the names match. */
+export function relativeName(child: string, parent: string | undefined): string {
+	if (!parent || child === parent) return parent ? '' : child;
+	if (child.startsWith(parent)) return child.slice(parent.length).replace(/^[\s,:]+/, '');
+	const colon = child.indexOf(':');
+	return colon > 0 && parent.startsWith(child.slice(0, colon)) ? child.slice(colon + 1).trim() : child;
+}

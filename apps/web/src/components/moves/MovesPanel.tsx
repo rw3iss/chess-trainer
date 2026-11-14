@@ -1,4 +1,4 @@
-// MovesPanel — the '/' panel for the active session: OpeningHeader · MoveList · NotesCard.
+// MovesPanel — the '/' panel for the active session: OpeningHeader · MoveList · movesSlots.afterList (variations) · NotesCard.
 import { useState } from 'preact/hooks';
 import type { JSX } from 'preact';
 import { getNode } from '@chess/core/chess';
@@ -10,6 +10,7 @@ import { MoveList, type MoveListActions } from './MoveList';
 import { OpeningHeader } from './OpeningHeader';
 import { NotesCard } from './NotesCard';
 import { NoteEditorModal } from './NoteEditorModal';
+import { movesSlots } from './movesSlots';
 import './MovesPanel.scss';
 
 export function MovesPanel({ session }: { session: Session }): JSX.Element {
@@ -40,6 +41,7 @@ export function MovesPanel({ session }: { session: Session }): JSX.Element {
 			<div class="moves-panel__list">
 				<MoveList session={session} actions={actions} />
 			</div>
+			<movesSlots.afterList.Render session={session} />
 			<NotesCard fen={fen} />
 			<NoteEditorModal
 				open={!!noteNode}

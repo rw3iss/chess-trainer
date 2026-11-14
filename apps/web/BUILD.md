@@ -106,6 +106,7 @@ Key stores:
 | Engine panel | `panelSlots.engine` (`components/shell/panelSlots.ts`) | `panelSlots.engine.register(EnginePanel)` |
 | Clocks / eval bar / board overlays | `stageSlots` (`components/stage/slots.ts`) | `clockTop`, `clockBottom`, `side`, `evalBar`, `overlay` |
 | Dataset notes | `notesSlots.dataset` (`components/moves/notesSlots.ts`) | receives `{ epd, fen }` |
+| Moves panel sections | `movesSlots.afterList` (`components/moves/movesSlots.ts`) | receives `{ session }`; renders under the move list (openings feature: `OpeningVariations`) |
 | Opening name | `setOpeningIdentifier(fn)` (`state/openingIdentity.ts`) | `(uci[], startFen?) => OpeningEntry \| undefined` |
 | Commands | `commands.register(id, fn)` (`services/commands`) | stack: latest wins. Built-ins: `save`, `saveAs`, `focusSearch`, `openBot`, `newGame`, `resign`, `offerDraw` (local PvP), `togglePlay`, `flip`, `fork`, `editNote`; extend `CommandMap` via declaration merging |
 | Keyboard shortcuts | `DEFAULT_SHORTCUTS` (`hooks/useKeyboardShortcuts.ts`) | ←/→ Home/End Space F Ctrl+S Ctrl+⇧+S / |

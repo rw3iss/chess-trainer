@@ -28,6 +28,8 @@ export class OpeningIndex {
 	private readonly endsAt = new Map<number, OpeningEntry[]>();
 	/** node → openings whose line passes through or ends at it. */
 	private readonly through = new Map<number, OpeningEntry[]>();
+	/** Opening family tree by move-line prefix (built on first use). */
+	private family?: { parent: Map<string, OpeningEntry>; children: Map<string, OpeningEntry[]>; total: Map<string, number> };
 
 	private constructor(
 		openings: OpeningsFile,
@@ -54,6 +56,67 @@ export class OpeningIndex {
 				arr.push(e);
 			}
 		}
+	}
+
+	/**
+	 * Openings this one is built on: named openings whose move line is a strict prefix of it,
+	 * shortest first (e.g. Sicilian Defense → Sicilian Defense: Open → this).
+	 */
+	lineage(id: string): OpeningEntry[] {
+		const { parent } = this.familyTree();
+		const out: OpeningEntry[] = [];
+		for (let p = parent.get(id); p; p = parent.get(p.id)) out.unshift(p);
+		return out;
+	}
+
+	/** Named openings that extend this one directly (nearest named extension), most popular first. */
+	variations(id: string): OpeningEntry[] {
+		return this.familyTree().children.get(id) ?? [];
+	}
+
+	/** Number of named openings that extend this one (all depths). */
+	variationCount(id: string): number {
+		return this.familyTree().total.get(id) ?? 0;
+	}
+
+	/** Openings that extend no other named opening (first level of the family tree). */
+	rootOpenings(): OpeningEntry[] {
+		return this.familyTree().children.get('') ?? [];
+	}
+
+	private familyTree(): NonNullable<OpeningIndex['family']> {
+		if (this.family) return this.family;
+		// One canonical opening per move line (others with the same line hang under it as aliases).
+		const byLine = new Map<string, OpeningEntry>();
+		for (const e of [...this.entries].sort(compareSamePosition)) {
+			const key = e.uci.join(' ');
+			if (!byLine.has(key)) byLine.set(key, e);
+		}
+		const parent = new Map<string, OpeningEntry>();
+		const children = new Map<string, OpeningEntry[]>();
+		for (const e of this.entries) {
+			const key = e.uci.join(' ');
+			let p: OpeningEntry | undefined = byLine.get(key) !== e ? byLine.get(key) : undefined;
+			for (let k = e.uci.length - 1; !p && k > 0; k--) p = byLine.get(e.uci.slice(0, k).join(' '));
+			if (p) parent.set(e.id, p);
+			const pid = p?.id ?? '';
+			let arr = children.get(pid);
+			if (!arr) children.set(pid, (arr = []));
+			arr.push(e);
+		}
+		for (const arr of children.values()) arr.sort((a, b) => score(b) - score(a) || a.plies - b.plies || a.name.localeCompare(b.name));
+		const total = new Map<string, number>();
+		const count = (id: string): number => {
+			const known = total.get(id);
+			if (known !== undefined) return known;
+			let n = 0;
+			for (const c of children.get(id) ?? []) n += 1 + count(c.id);
+			total.set(id, n);
+			return n;
+		};
+		for (const e of this.entries) count(e.id);
+		this.family = { parent, children, total };
+		return this.family;
 	}
 
 	static fromData(openings: OpeningsFile, graph: GraphFile): OpeningIndex {

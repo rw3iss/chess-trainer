@@ -109,6 +109,7 @@ Strength truth table (`resolveStrength`):
   `continuations(fen) => Continuation[]`, `openingsThrough(fen) => OpeningEntry[]`.
 - `openingId(uci: Uci[]) => string` (stable short hash), `splitName(name) => { family, variation? }`.
 - `OpeningIndex.notesChunk(fenOrEpd) => string | undefined` — ECO letter of the notes file for a position (smallest ECO letter of openings through it); `notesChunkOf(openings) => string`.
+- Family tree (by move-line prefix, built on first use): `lineage(id)` — openings this one is built on, shortest first; `variations(id)` — nearest named extensions, most popular first; `variationCount(id)` — extensions at all depths; `rootOpenings()` — openings that extend nothing.
 
 ## protocol (`src/protocol/`)
 

@@ -12,3 +12,4 @@ export { ContinuationsList, mergeContinuations, explorerEnabled, type Continuati
 export { DatasetNotes, NoteBody, useDatasetNote } from './DatasetNotes';
 export { OpeningsTree } from './OpeningsTree';
 export { registerOpeningsFeature, consumePendingSearchFocus } from './register';
+export { OpeningVariations, baseOpening, collapseLineage } from './OpeningVariations';

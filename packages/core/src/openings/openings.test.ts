@@ -102,3 +102,31 @@ describe('OpeningIndex', () => {
 		expect(notesChunkOf([])).toBeUndefined();
 	});
 });
+
+describe('OpeningIndex family tree', () => {
+	it('lineage lists the openings a line is built on, shortest first', () => {
+		expect(idx.lineage(byName('Ruy Lopez: Berlin Defense, Rio Gambit Accepted').id).map((e) => e.name)).toEqual([
+			"King's Pawn Game",
+			"King's Knight Opening",
+			'Ruy Lopez',
+			'Ruy Lopez: Berlin Defense',
+		]);
+		expect(idx.lineage(byName('Sicilian Defense').id)).toEqual([]);
+	});
+
+	it('variations are the nearest named extensions; counts include all depths', () => {
+		const kpg = byName("King's Pawn Game").id;
+		const names = idx.variations(kpg).map((e) => e.name);
+		expect(names).toEqual(expect.arrayContaining(['Vienna Game', "King's Knight Opening"]));
+		expect(names).not.toContain('Ruy Lopez'); // nested under King's Knight Opening
+		expect(idx.variations(byName("King's Knight Opening").id).map((e) => e.name)).toContain('Ruy Lopez');
+		expect(idx.variationCount(byName('Ruy Lopez').id)).toBe(2);
+		expect(idx.variationCount(byName('Ruy Lopez: Berlin Defense, Rio Gambit Accepted').id)).toBe(0);
+	});
+
+	it('root openings extend nothing', () => {
+		const roots = idx.rootOpenings().map((e) => e.name);
+		expect(roots).toEqual(expect.arrayContaining(['Sicilian Defense', "King's Pawn Game"]));
+		expect(roots).not.toContain('Vienna Game');
+	});
+});
