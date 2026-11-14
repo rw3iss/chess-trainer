@@ -32,3 +32,10 @@ export function figurineSan(san: string): string {
 export function describeMove(ply: number, san: string): string {
 	return `${moveNumberLabel(ply)} ${san}`;
 }
+
+/** Short label for moves past the named opening, e.g. "custom +2". */
+export function extraLabel(status: { extra: number; inBook: boolean }): { text: string; title: string } | null {
+	if (status.extra <= 0) return null;
+	const moves = `${status.extra} move${status.extra === 1 ? '' : 's'} past the named opening`;
+	return { text: `custom +${status.extra}`, title: status.inBook ? `${moves}, still in book` : `${moves}, out of book` };
+}

@@ -124,6 +124,28 @@ describe('OpeningIndex family tree', () => {
 		expect(idx.variationCount(byName('Ruy Lopez: Berlin Defense, Rio Gambit Accepted').id)).toBe(0);
 	});
 
+	it('matchLine reports the deepest opening, its ply and whether the line is still in book', () => {
+		const between = idx.matchLine(['e2e4', 'e7e5', 'g1f3', 'b8c6']);
+		expect(between.opening?.name).toBe("King's Knight Opening");
+		expect([between.openingPly, between.plies, between.inBook]).toEqual([3, 4, true]);
+		const off = idx.matchLine(['e2e4', 'e7e5', 'g1f3', 'b8c6', 'f1b5', 'a7a6']);
+		expect(off.opening?.name).toBe('Ruy Lopez');
+		expect([off.openingPly, off.plies, off.inBook]).toEqual([5, 6, false]);
+		expect(idx.matchLine(['e2e4', 'e7e5']).openingPly).toBe(2);
+		expect(idx.matchLine([]).plies).toBe(0);
+	});
+
+	it('nextOpenings lists the nearest named openings that continue a position', () => {
+		const afterNc6 = 'r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3';
+		expect(idx.nextOpenings(afterNc6).map((n) => [n.entry.name, n.fromPly])).toEqual([['Ruy Lopez', 4]]);
+		const afterD5 = 'rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 0 2';
+		const names = idx.nextOpenings(afterD5).map((n) => n.entry.name);
+		expect(names[0]).toBe("Queen's Gambit"); // most popular first
+		expect(names).toContain("Queen's Pawn Game: Zukertort Variation");
+		expect(names).not.toContain("Queen's Gambit Declined"); // nested under Queen's Gambit
+		expect(idx.nextOpenings('8/8/8/8/8/8/8/K6k w - - 0 1')).toEqual([]);
+	});
+
 	it('root openings extend nothing', () => {
 		const roots = idx.rootOpenings().map((e) => e.name);
 		expect(roots).toEqual(expect.arrayContaining(['Sicilian Defense', "King's Pawn Game"]));

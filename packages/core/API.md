@@ -106,6 +106,8 @@ Strength truth table (`resolveStrength`):
 - `OpeningIndex` class: `static fromData(openings: OpeningsFile, graph: GraphFile)`;
   `byId(id)`, `all()`, `identify(fenOrEpd) => OpeningEntry | undefined` (deepest opening ending at this position),
   `identifyLine(uci: Uci[], startFen?) => OpeningEntry | undefined` (deepest named opening along the line),
+  `matchLine(uci, startFen?) => LineMatch` (`{ opening?, openingPly, plies, inBook, fen }`: deepest named opening, the ply it is reached at, moves replayed, final position still in book; `plies > openingPly` = own moves past it),
+  `nextOpenings(fen) => NextOpening[]` (`{ entry, fromPly }`: nearest named openings that continue from a position, by position so transpositions count, most popular first; `entry.uci.slice(fromPly)` = moves still to play),
   `continuations(fen) => Continuation[]`, `openingsThrough(fen) => OpeningEntry[]`.
 - `openingId(uci: Uci[]) => string` (stable short hash), `splitName(name) => { family, variation? }`.
 - `OpeningIndex.notesChunk(fenOrEpd) => string | undefined` — ECO letter of the notes file for a position (smallest ECO letter of openings through it); `notesChunkOf(openings) => string`.

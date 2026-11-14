@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { relativeName, sanLineFrom } from '../format';
-import { collapseLineage, keptPly } from '../OpeningVariations';
+import { collapseLineage, crumbLabel, keptPly } from '../OpeningVariations';
+import { openingTitle } from '../lineStatus';
+import { extraLabel } from '@/lib/format';
 import { ROOT_ID, mainline, treeFromUci } from '@chess/core/chess';
 import { createSession } from '@chess/core/game';
 import type { OpeningEntry } from '@chess/core/openings';
@@ -50,5 +52,37 @@ describe('keptPly', () => {
 
 	it('falls back to the last shared move when the lines differ', () => {
 		expect(keptPly(sessionAt(base, 4), entry(['e2e4', 'c7c5', 'b1c3']))).toBe(2);
+	});
+
+	it('matches the position across a transposition', () => {
+		// 1.Nf3 d5 2.d4 reaches the same position as 1.d4 d5 2.Nf3.
+		expect(keptPly(sessionAt(['g1f3', 'd7d5', 'd2d4'], 3), entry(['d2d4', 'd7d5', 'g1f3', 'c7c5']))).toBe(3);
+	});
+
+	it('playNext plays the next move only at the end of the line', () => {
+		expect(keptPly(sessionAt(base, 4), entry([...base, 'd2d4']), { playNext: true })).toBe(5);
+		expect(keptPly(sessionAt(base, 3), entry([...base, 'd2d4']), { playNext: true })).toBe(3);
+		expect(keptPly(sessionAt(base, 4), entry(base), { playNext: true })).toBe(4);
+	});
+});
+
+describe('openingTitle / extraLabel', () => {
+	const o = { name: 'Sicilian Defense' } as OpeningEntry;
+	it('marks own moves past the named opening', () => {
+		expect(openingTitle({ base: o, extra: 0, inBook: true, fen: '' })).toBe('Sicilian Defense');
+		expect(openingTitle({ base: o, extra: 2, inBook: false, fen: '' })).toBe('Sicilian Defense (custom)');
+		expect(openingTitle({ extra: 0, inBook: false, fen: '' })).toBeUndefined();
+		expect(extraLabel({ extra: 0, inBook: true })).toBeNull();
+		expect(extraLabel({ extra: 1, inBook: true })).toEqual({ text: 'custom +1', title: '1 move past the named opening, still in book' });
+		expect(extraLabel({ extra: 3, inBook: false })?.title).toContain('out of book');
+	});
+});
+
+describe('crumbLabel', () => {
+	const e = { name: 'Sicilian Defense: Najdorf Variation', san: ['e4', 'c5', 'Nf3', 'd6', 'd4', 'cxd4', 'Nxd4', 'Nf6', 'Nc3', 'a6', 'Bg5'], plies: 11 };
+	it('is relative to the previous crumb, or the last move when the name repeats', () => {
+		expect(crumbLabel(e, 'Sicilian Defense')).toBe('Najdorf Variation');
+		expect(crumbLabel(e, 'Sicilian Defense: Najdorf Variation')).toBe('6.Bg5');
+		expect(crumbLabel(e, undefined)).toBe('Sicilian Defense: Najdorf Variation');
 	});
 });

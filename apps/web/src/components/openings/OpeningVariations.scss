@@ -58,6 +58,18 @@
 			color: var(--color-text);
 			cursor: default;
 		}
+
+		// Own moves past the named opening.
+		&--custom {
+			border-style: dashed;
+			font-style: italic;
+		}
+	}
+
+	&__empty {
+		margin: 0;
+		font-size: var(--text-xs);
+		color: var(--color-text-subtle);
 	}
 
 	// ── Variations ──

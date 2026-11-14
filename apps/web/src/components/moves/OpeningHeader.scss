@@ -45,4 +45,18 @@
 		color: var(--color-text-muted);
 		letter-spacing: 0;
 	}
+
+	// Own moves past the named opening.
+	&__custom {
+		align-self: flex-start;
+		padding: 1px var(--space-2);
+		border: 1px dashed var(--color-border-strong);
+		border-radius: var(--radius-full);
+		font-family: var(--font-body);
+		font-size: var(--text-xs);
+		font-style: italic;
+		font-weight: var(--weight-regular);
+		color: var(--color-text-muted);
+		letter-spacing: 0;
+	}
 }

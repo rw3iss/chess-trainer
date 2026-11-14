@@ -1,5 +1,5 @@
 // OpeningHeader — live opening name for the session's cursor: ECO chip + family /
-// variation, W/D/L bar when popularity is known, or 'Starting position'.
+// variation (+ "custom +N" after moves past it), W/D/L bar when popularity is known, or 'Starting position'.
 // `identify` overrides the app-wide identifier (state/openingIdentity).
 import { useMemo } from 'preact/hooks';
 import type { JSX } from 'preact';
@@ -8,6 +8,8 @@ import type { Session } from '@chess/core/game';
 import type { OpeningEntry } from '@chess/core/openings';
 import { Chip } from '@/components/common/Chip';
 import { openingIdentifier, type OpeningIdentifier } from '@/state/openingIdentity';
+import { openingIndex } from '@/state/openings';
+import { extraLabel } from '@/lib/format';
 import { moveNumber } from './moveLayout';
 import { WdlBar } from './WdlBar';
 import './OpeningHeader.scss';
@@ -30,6 +32,14 @@ export function OpeningHeader({ session, identify }: OpeningHeaderProps): JSX.El
 		}
 	}, [fn, session.tree, session.cursor, rootFen]);
 
+	// Moves played past the named opening → "custom +N".
+	const index = openingIndex.value;
+	const extra = useMemo(() => {
+		if (!entry || !index) return null;
+		const m = index.matchLine(uciPathTo(session.tree, session.cursor), rootFen);
+		return m.opening?.id === entry.id ? extraLabel({ extra: m.plies - m.openingPly, inBook: m.inBook }) : null;
+	}, [entry, index, session.tree, session.cursor, rootFen]);
+
 	const atRoot = session.cursor === ROOT_ID;
 	const standardStart = rootFen.split(' ').slice(0, 4).join(' ') === INITIAL_FEN.split(' ').slice(0, 4).join(' ');
 	const turn = turnFromFen(node.fen) === 'white' ? 'White' : 'Black';
@@ -41,6 +51,11 @@ export function OpeningHeader({ session, identify }: OpeningHeaderProps): JSX.El
 			<h2 class="opening-header__name">
 				<span class="opening-header__family">{entry.family}</span>
 				{entry.variation && <span class="opening-header__variation">{entry.variation}</span>}
+				{extra && (
+					<span class="opening-header__custom" title={extra.title}>
+						{extra.text}
+					</span>
+				)}
 			</h2>
 		);
 	} else if (atRoot) {

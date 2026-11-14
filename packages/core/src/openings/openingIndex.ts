@@ -3,7 +3,7 @@ import { makeFen, parseFen } from 'chessops/fen';
 import { parseUci } from 'chessops/util';
 import { INITIAL_FEN, type Uci } from '../chess/types.js';
 import { epdOf } from './id.js';
-import type { Continuation, GraphFile, OpeningEntry, OpeningsFile } from './types.js';
+import type { Continuation, GraphFile, LineMatch, NextOpening, OpeningEntry, OpeningsFile } from './types.js';
 
 /** Order for openings that share a final position: Lichess first, then shorter lines, then name. */
 function compareSamePosition(a: OpeningEntry, b: OpeningEntry): number {
@@ -28,6 +28,8 @@ export class OpeningIndex {
 	private readonly endsAt = new Map<number, OpeningEntry[]>();
 	/** node → openings whose line passes through or ends at it. */
 	private readonly through = new Map<number, OpeningEntry[]>();
+	/** node → nextOpenings result. */
+	private readonly nextCache = new Map<number, NextOpening[]>();
 	/** Opening family tree by move-line prefix (built on first use). */
 	private family?: { parent: Map<string, OpeningEntry>; children: Map<string, OpeningEntry[]>; total: Map<string, number> };
 
@@ -147,22 +149,88 @@ export class OpeningIndex {
 	 * Accepts standard (e1g1) or king-takes-rook (e1h1) castling UCI. Stops at the first illegal move.
 	 */
 	identifyLine(uci: Uci[], startFen: string = INITIAL_FEN): OpeningEntry | undefined {
+		return this.matchLine(uci, startFen).opening;
+	}
+
+	/**
+	 * Where a move sequence stands against the book: the deepest named opening along it
+	 * (`opening`, reached at `openingPly`), how many legal moves were replayed (`plies`), and
+	 * whether the final position is still a book position (`inBook`). `plies > openingPly`
+	 * means moves were played after the last named opening.
+	 */
+	matchLine(uci: Uci[], startFen: string = INITIAL_FEN): LineMatch {
+		const out: LineMatch = { openingPly: 0, plies: 0, inBook: false, fen: startFen };
 		const setup = parseFen(startFen);
-		if (setup.isErr) return undefined;
+		if (setup.isErr) return out;
 		const chess = Chess.fromSetup(setup.value);
-		if (chess.isErr) return undefined;
+		if (chess.isErr) return out;
 		const pos = chess.value;
-		let best = this.identify(startFen);
+		const first = this.identify(startFen);
+		if (first) out.opening = first;
+		out.inBook = this.node(startFen) !== undefined;
 		for (const u of uci) {
 			const parsed = parseUci(u);
 			if (!parsed) break;
 			const move = normalizeMove(pos, parsed);
 			if (!pos.isLegal(move)) break;
 			pos.play(move);
-			const hit = this.identify(makeFen(pos.toSetup()));
-			if (hit) best = hit;
+			out.plies++;
+			const fen = makeFen(pos.toSetup());
+			out.fen = fen;
+			const n = this.node(fen);
+			out.inBook = n !== undefined;
+			const hit = n === undefined ? undefined : this.endsAt.get(n)?.[0];
+			if (hit) {
+				out.opening = hit;
+				out.openingPly = out.plies;
+			}
 		}
-		return best;
+		return out;
+	}
+
+	/**
+	 * Named openings that continue from this position (the nearest named opening down each
+	 * line), most popular first. `fromPly` is the ply in the opening's own line where it
+	 * reaches this position, so `entry.uci.slice(fromPly)` are the moves still to play.
+	 * Matches by position, so lines reached by a transposition are found too.
+	 */
+	nextOpenings(fenOrEpd: string): NextOpening[] {
+		const n = this.node(fenOrEpd);
+		if (n === undefined) return [];
+		const cached = this.nextCache.get(n);
+		if (cached) return cached;
+		const cands = n === 0 ? this.entries : (this.through.get(n) ?? []);
+		// One canonical opening per remaining line.
+		const byRest = new Map<string, NextOpening>();
+		for (const e of [...cands].sort(compareSamePosition)) {
+			const k = this.plyOf(e, n);
+			if (k < 0 || k >= e.uci.length) continue;
+			const rest = e.uci.slice(k).join(' ');
+			if (!byRest.has(rest)) byRest.set(rest, { entry: e, fromPly: k });
+		}
+		const out: NextOpening[] = [];
+		for (const [rest, item] of byRest) {
+			const moves = rest.split(' ');
+			let nearest = true;
+			for (let j = 1; j < moves.length && nearest; j++) if (byRest.has(moves.slice(0, j).join(' '))) nearest = false;
+			if (nearest) out.push(item);
+		}
+		out.sort((a, b) => score(b.entry) - score(a.entry) || a.entry.plies - b.entry.plies || a.entry.name.localeCompare(b.entry.name));
+		this.nextCache.set(n, out);
+		return out;
+	}
+
+	/** Ply at which opening `e`'s line first reaches graph node `n` (-1 if it never does). */
+	private plyOf(e: OpeningEntry, n: number): number {
+		if (n === 0) return 0;
+		let node = 0;
+		for (let i = 0; i < e.uci.length; i++) {
+			const edge = this.graph.edges[node]?.find((ed) => ed[0] === e.uci[i]);
+			if (!edge) return -1;
+			node = edge[2];
+			if (node === n) return i + 1;
+		}
+		return -1;
 	}
 
 	/** Book moves from this position, most popular first. */

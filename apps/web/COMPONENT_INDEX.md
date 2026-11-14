@@ -76,7 +76,7 @@ Routes + layouts + panel tabs: `src/app/routes.ts`.
 | MovesPanel | feature | `src/components/moves/MovesPanel.tsx` | OpeningHeader + MoveList + NotesCard + NoteEditorModal for a session | `/` panel |
 | MoveList | feature | `src/components/moves/MoveList.tsx` | SAN pairs, figurines, variations, comments/notes, current + auto-scroll, context menu (fork/delete/promote/note) | any move tree display (pass `actions`) |
 | moveLayout | util | `src/components/moves/moveLayout.ts` | pure tree → rows/variation blocks/line tokens; `moveNumber`, `isWhiteMove` | move lists, PGN previews |
-| OpeningHeader | feature | `src/components/moves/OpeningHeader.tsx` | live opening name (ECO chip, family/variation, W/D/L) via `identify` prop or `openingIdentifier` | opening preview headers |
+| OpeningHeader | feature | `src/components/moves/OpeningHeader.tsx` | live opening name (ECO chip, family/variation, "custom +N" badge after moves past it, W/D/L) via `identify` prop or `openingIdentifier` | opening preview headers |
 | WdlBar | feature | `src/components/moves/WdlBar.tsx` | white/draw/black % bar + game count | popularity, explorer |
 | NotesCard | feature | `src/components/moves/NotesCard.tsx` | per-position (EPD) user note editor (debounced autosave) + dataset notes slot | opening detail |
 | notesSlots | slot | `src/components/moves/notesSlots.ts` | `notesSlots.dataset` ({ epd, fen }) | Wikibooks notes |
@@ -107,7 +107,8 @@ Routes + layouts + panel tabs: `src/app/routes.ts`.
 | StartPositionField / PvpSetupFields | feature | `src/components/controls/NewGameModal/SetupFields.tsx` | start position (initial/current/FEN) and local 2-player options (clock, tabletop, flip); used by NewGameModal and the Play page | any new-game UI |
 | QuickPlay page | page | `src/pages/QuickPlay/` | `/play`: current bot/local game (status, bot card, local actions, MovesPanel) or New game setup; resume list | — |
 | CapturedPieces | feature | `src/components/stage/CapturedPieces.tsx` | captured pieces + material lead in a player strip (core `capturedPieces`) | — |
-| OpeningVariations | feature | `src/components/openings/OpeningVariations.tsx` | Moves-panel section: "Built on" chain + expandable variations tree with popularity; click loads; "Keep position" switch (UI setting `openings.keepPosition`, default on) steps the loaded line to the current ply (`keptPly`) (registered into `movesSlots.afterList`) | — |
+| OpeningVariations | feature | `src/components/openings/OpeningVariations.tsx` | Moves-panel section, live with manual moves: "Built on" chain (+ "custom +N" crumb) + openings that continue from the line's end (`OpeningIndex.nextOpenings`; "Variations" / "Next openings", expandable, popularity; out-of-book note); click loads; "Keep position" switch (UI setting `openings.keepPosition`, default on) steps the loaded line to the current position, plus its next move when at the line's end (`keptPly`) (registered into `movesSlots.afterList`) | — |
+| lineStatus / sessionLineStatus / openingTitle | util | `src/components/openings/lineStatus.ts` | where a line stands vs the book (base opening, own moves past it, in book); opening-session title ("<name>" / "<name> (custom)"), kept in sync by `registerOpeningsFeature` while the title is automatic | OpeningVariations, title sync |
 | movesSlots | util | `src/components/moves/movesSlots.ts` | `afterList` slot under the Moves panel move list | add Moves panel sections |
 | ServerSettingsSection | feature | `src/components/server/` | Settings → Server: URL + status badge + Check, sign-in / account + sign out, sync toggle + status + Sync now, guest name. Lazy: `import('@/components/server')` (named + default export) | server/account UI |
 | OpeningRow / FamilyRow | feature | `src/components/openings/OpeningRow.tsx` | fixed-height (`OPENING_ROW_HEIGHT` 64) opening row: ★, name, ECO chip, SAN preview, popularity + W/D/L mini bars, side dot; collapsible family header | opening lists |
@@ -193,7 +194,7 @@ Routes + layouts + panel tabs: `src/app/routes.ts`.
 | useLongPress | `src/hooks/useLongPress.ts` | touch long-press handlers (500 ms, 8 px) | mobile context menus |
 | throttle / debounce | `src/lib/throttle.ts` | 100 ms default throttle; debounce with flush/cancel/pending | input/scroll handlers, autosave |
 | cx | `src/lib/classNames.ts` | class-name joiner | all components |
-| formatRelativeTime / moveNumberLabel / figurineSan / describeMove | `src/lib/format.ts` | display formatting | lists, cards |
+| formatRelativeTime / moveNumberLabel / figurineSan / describeMove / extraLabel | `src/lib/format.ts` | display formatting | lists, cards |
 | isHexColor / normalizeHex / luminance / readableOn | `src/lib/color.ts` | colour math | pickers, accent fg |
 | uiStorage / cacheStorage / Storage | `src/lib/storage.ts` | sync key/value over localStorage | UI state |
 

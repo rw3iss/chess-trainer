@@ -67,7 +67,69 @@ test('keep position (default on, persisted): a variation loads at the same move;
 	await section.locator('.opening-vars__load').first().click();
 	await expect.poll(cursorPly).toBe(0);
 
-	// The choice is saved and restored after a reload.
+	// The choice is saved and restored after a reload (wait out the session-persist debounce).
+	await page.waitForTimeout(500);
 	await page.reload();
 	await expect(page.getByRole('region', { name: 'Opening variations' }).getByRole('switch', { name: 'Keep position' })).toHaveAttribute('aria-checked', 'false');
+});
+
+test('the Moves panel follows manual moves: title, built-on, next openings, custom', async ({ page }) => {
+	type Node = { id: string; ply: number; children: string[] };
+	type S = { title: string; cursor: string; tree: { nodes: Record<string, Node> } };
+	type Handle = {
+		openingIndex: { value: { all(): { name: string; uci: string[]; source: string }[] } | null };
+		activeSession: { value: S | null };
+		sessionsActions: { fromOpening(e: unknown): S; goto(id: string): unknown; move(u: string): unknown };
+	};
+	const najdorf = 'e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 a7a6';
+	await page.goto('/');
+	await page.waitForFunction(() => !!(window as unknown as { __chess?: Handle }).__chess?.openingIndex.value, null, { timeout: 30_000 });
+	await page.evaluate((line) => {
+		const c = (window as unknown as { __chess: Handle }).__chess;
+		const e = c.openingIndex.value!.all().find((o) => o.source === 'lichess' && o.uci.join(' ') === line)!;
+		const s = c.sessionsActions.fromOpening(e);
+		let n = s.tree.nodes.root!;
+		while (n.children.length) n = s.tree.nodes[n.children[0]!]!;
+		c.sessionsActions.goto(n.id);
+	}, najdorf);
+	const state = () =>
+		page.evaluate(() => {
+			const s = (window as unknown as { __chess: Handle }).__chess.activeSession.value!;
+			return { title: s.title, ply: s.tree.nodes[s.cursor]!.ply };
+		});
+	const move = (u: string) => page.evaluate((m) => (window as unknown as { __chess: Handle }).__chess.sessionsActions.move(m), u);
+	const header = page.locator('.opening-header');
+	const section = page.getByRole('region', { name: 'Opening variations' });
+
+	await expect.poll(async () => (await state()).title).toBe('Sicilian Defense: Najdorf Variation');
+	await expect(section.locator('.opening-vars__head')).toContainText('Variations');
+
+	// A move into another named line: title, header and built-on chain follow it.
+	await move('h2h3');
+	await expect.poll(async () => (await state()).title).toBe('Sicilian Defense: Najdorf Variation, Adams Attack');
+	await expect(header).toContainText('Adams Attack');
+	await expect(section.locator('.opening-vars__crumb--current')).toContainText('Adams Attack');
+	await expect(section.locator('.opening-vars__crumb').filter({ hasText: 'Najdorf Variation' }).first()).toBeVisible();
+
+	// An own move out of book: marked custom everywhere.
+	await move('h8g8');
+	await expect.poll(async () => (await state()).title).toBe('Sicilian Defense: Najdorf Variation, Adams Attack (custom)');
+	await expect(header.locator('.opening-header__custom')).toHaveText('custom +1');
+	await expect(section.locator('.opening-vars__crumb--custom')).toHaveText('custom +1');
+	await expect(section.locator('.opening-vars__empty')).toContainText('Out of book');
+
+	// Back at move 6, a different named move (6.Bg5): its variations are listed;
+	// clicking one at the end of the line loads it and plays its next move.
+	const back = await page.evaluate(() => {
+		const s = (window as unknown as { __chess: Handle }).__chess.activeSession.value!;
+		return Object.values(s.tree.nodes).find((n) => n.ply === 10)!.id;
+	});
+	await page.evaluate((id) => (window as unknown as { __chess: Handle }).__chess.sessionsActions.goto(id), back);
+	await move('c1g5');
+	const rows = section.locator('.opening-vars__list').first().locator(':scope > .opening-vars__item');
+	await expect(section.locator('.opening-vars__head')).toContainText('Variations');
+	await expect(rows.first()).toBeVisible();
+	const before = (await state()).ply;
+	await section.locator('.opening-vars__load').first().click();
+	await expect.poll(async () => (await state()).ply).toBe(before + 1);
 });

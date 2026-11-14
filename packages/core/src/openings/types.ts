@@ -89,3 +89,24 @@ export interface Continuation {
 	name?: string;
 	popularity?: number;
 }
+
+/** Result of `OpeningIndex.matchLine`: where a move sequence stands against the book. */
+export interface LineMatch {
+	/** Deepest named opening along the line. */
+	opening?: OpeningEntry;
+	/** Ply where `opening` is reached (0 = start position). */
+	openingPly: number;
+	/** Legal moves replayed (stops at the first illegal move). */
+	plies: number;
+	/** The final position is a book position. */
+	inBook: boolean;
+	/** FEN of the final position. */
+	fen: string;
+}
+
+/** Result row of `OpeningIndex.nextOpenings`. */
+export interface NextOpening {
+	entry: OpeningEntry;
+	/** Ply in `entry`'s own line where it reaches the queried position. */
+	fromPly: number;
+}
