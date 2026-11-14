@@ -39,3 +39,32 @@ test('variations section: built-on chain, expand, load a variation', async ({ pa
 	// The new opening's section now shows the Najdorf in its built-on chain.
 	await expect(section.locator('.opening-vars__crumb').filter({ hasText: 'Najdorf' }).first()).toBeVisible();
 });
+
+test('keep position: a variation loads at the same move; off loads at the start', async ({ page }) => {
+	const cursorPly = () =>
+		page.evaluate(() => {
+			const c = (window as unknown as { __chess: { activeSession: { value: { cursor: string; tree: { nodes: Record<string, { ply: number }> } } | null } } }).__chess;
+			const s = c.activeSession.value;
+			return s ? s.tree.nodes[s.cursor]!.ply : -1;
+		});
+	await page.goto('/openings?q=sicilian%20najdorf');
+	await page.locator('.opening-row__main').first().click({ timeout: 30_000 });
+	await page.getByRole('button', { name: 'Load', exact: true }).click();
+	await expect(page).toHaveURL(/\/$/);
+	const section = page.getByRole('region', { name: 'Opening variations' });
+	const keep = section.getByRole('switch', { name: 'Keep position' });
+
+	// Step to move 7 (ply 7) of the Najdorf line, then load a variation with "Keep position" on.
+	for (let i = 0; i < 7; i++) await page.getByRole('button', { name: 'Next (→)' }).click();
+	expect(await cursorPly()).toBe(7);
+	await keep.click();
+	await expect(keep).toHaveAttribute('aria-checked', 'true');
+	await section.locator('.opening-vars__load').first().click();
+	await expect.poll(cursorPly).toBe(7);
+
+	// Off: the next variation loads at the start.
+	await keep.click();
+	await expect(keep).toHaveAttribute('aria-checked', 'false');
+	await section.locator('.opening-vars__load').first().click();
+	await expect.poll(cursorPly).toBe(0);
+});

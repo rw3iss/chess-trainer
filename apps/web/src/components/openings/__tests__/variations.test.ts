@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { relativeName, sanLineFrom } from '../format';
-import { collapseLineage } from '../OpeningVariations';
+import { collapseLineage, keptPly } from '../OpeningVariations';
+import { ROOT_ID, mainline, treeFromUci } from '@chess/core/chess';
+import { createSession } from '@chess/core/game';
 import type { OpeningEntry } from '@chess/core/openings';
 
 describe('sanLineFrom', () => {
@@ -29,5 +31,24 @@ describe('collapseLineage', () => {
 	it('prefers Lichess-named openings when there are any', () => {
 		expect(collapseLineage([e('a', 'KPG'), e('b', 'Sicilian: Modern', 'eco.json'), e('c', 'Sicilian')]).map((x) => x.id)).toEqual(['a', 'c']);
 		expect(collapseLineage([e('x', 'Only', 'eco.json')]).map((x) => x.id)).toEqual(['x']);
+	});
+});
+
+describe('keptPly', () => {
+	const entry = (uci: string[]) => ({ uci }) as OpeningEntry;
+	const sessionAt = (moves: string[], ply: number) => {
+		const s = createSession({ tree: treeFromUci(moves) });
+		return { ...s, cursor: ply === 0 ? ROOT_ID : mainline(s.tree)[ply - 1]!.id };
+	};
+	const base = ['e2e4', 'c7c5', 'g1f3', 'd7d6'];
+
+	it('keeps the cursor ply when the new line extends the current position', () => {
+		expect(keptPly(sessionAt(base, 3), entry([...base, 'd2d4']))).toBe(3);
+		expect(keptPly(sessionAt(base, 0), entry([...base, 'd2d4']))).toBe(0);
+		expect(keptPly(sessionAt(base, 4), entry([...base, 'd2d4']))).toBe(4);
+	});
+
+	it('falls back to the last shared move when the lines differ', () => {
+		expect(keptPly(sessionAt(base, 4), entry(['e2e4', 'c7c5', 'b1c3']))).toBe(2);
 	});
 });
