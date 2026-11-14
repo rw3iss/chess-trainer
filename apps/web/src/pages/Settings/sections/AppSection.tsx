@@ -73,7 +73,7 @@ export function AppSection(): JSX.Element {
 					checked={s.board.showShadow}
 					onChange={(showShadow) => updateSettings({ board: { showShadow } })}
 					label="Board shadow"
-					description="A soft dark glow around the board and player rows: more focus, and captured pieces stand out."
+					description="A soft dark glow around the board for more focus. Add extra top & bottom to darken the player rows and captured pieces."
 				/>
 				{s.board.showShadow && <BoardShadowControls />}
 			</SettingsGroup>

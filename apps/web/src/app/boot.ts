@@ -8,6 +8,7 @@ import { flushStores, initStores } from '@/state';
 import { settings } from '@/state/settings';
 import { serverConnector } from '@/services/server';
 import { registerDefaultSessionCommands } from '@/components/controls/sessionCommands';
+import { registerGamesFeature } from '@/components/controls/SaveModal';
 import { installNewGameFeature } from '@/components/controls/NewGameModal/install';
 import { installClockFeature } from '@/components/clock/install';
 
@@ -28,8 +29,10 @@ export async function boot(): Promise<void> {
 	void import('@/components/server').then((m) => m.registerServerFeature());
 	// PWA: install prompt layer + persistent-storage request after the first save.
 	void import('@/components/pwa').then((m) => m.registerPwaFeature());
-	// Saved games: 'save' / 'saveAs' → SaveModal (quick overwrite when linked).
-	void import('@/components/controls/SaveModal').then((m) => m.registerGamesFeature());
+	// Saved games: 'save' / 'saveAs' → SaveModal (quick overwrite when linked). Registered
+	// synchronously (the module is in the shell bundle via AppShell) so Ctrl+S right after load
+	// opens the modal instead of falling back to the default quick-save.
+	registerGamesFeature();
 	void import('@/components/openings').then((m) => m.registerOpeningsFeature());
 
 	// Re-probe whenever the configured server URL changes.

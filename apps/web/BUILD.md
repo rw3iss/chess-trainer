@@ -118,7 +118,7 @@ Key stores:
 | WS actions | `RoomActionPayload` (`@chess/core/protocol`) | generic `{ type, payload }` envelope; send with `roomsClient().action(roomId, type, payload)`, receive `RoomEvent` `'action'` |
 | Stage move handling | `setStageMoveHandler(owner, handler)` (`components/stage/slots.ts`) | per-mode `movable(session)`, `onMove(session, uci) → true = handled` (not applied locally), `playerLabel(session, color)`; used by online play |
 
-Default `save`/`saveAs`/`fork`/`newGame`/`openBot` handlers live in `components/controls/sessionCommands.ts` (quick save + toast). The SaveModal (`components/controls/SaveModal`; `SaveModalHost` mounted in AppShell, `registerGamesFeature()` called from `app/boot.ts`) owns `save`/`saveAs`: Ctrl+S on a linked session overwrites directly with a toast; a first save or Ctrl+⇧+S opens the modal (Overwrite vs Save as new copy). Other feature modals register their own handlers; later registrations take precedence.
+Default `save`/`saveAs`/`fork`/`newGame`/`openBot` handlers live in `components/controls/sessionCommands.ts` (quick save + toast). The SaveModal (`components/controls/SaveModal`; `SaveModalHost` mounted in AppShell, `registerGamesFeature()` called synchronously from `app/boot.ts`, so Ctrl+S right after load opens the modal) owns `save`/`saveAs`: Ctrl+S on a linked session overwrites directly with a toast; a first save or Ctrl+⇧+S opens the modal (Overwrite vs Save as new copy). Other feature modals register their own handlers; later registrations take precedence.
 
 ## Server (optional) & offline
 
