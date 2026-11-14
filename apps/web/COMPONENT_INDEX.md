@@ -107,7 +107,7 @@ Routes + layouts + panel tabs: `src/app/routes.ts`.
 | StartPositionField / PvpSetupFields | feature | `src/components/controls/NewGameModal/SetupFields.tsx` | start position (initial/current/FEN) and local 2-player options (clock, tabletop, flip); used by NewGameModal and the Play page | any new-game UI |
 | QuickPlay page | page | `src/pages/QuickPlay/` | `/play`: current bot/local game (status, bot card, local actions, MovesPanel) or New game setup; resume list | — |
 | CapturedPieces | feature | `src/components/stage/CapturedPieces.tsx` | captured pieces + material lead in a player strip (core `capturedPieces`) | — |
-| OpeningVariations | feature | `src/components/openings/OpeningVariations.tsx` | Moves-panel section: "Built on" chain + expandable variations tree with popularity; click loads; "Keep position" switch (`useUIState` key `openings:keepPosition`) steps the loaded line to the current ply (`keptPly`) (registered into `movesSlots.afterList`) | — |
+| OpeningVariations | feature | `src/components/openings/OpeningVariations.tsx` | Moves-panel section: "Built on" chain + expandable variations tree with popularity; click loads; "Keep position" switch (UI setting `openings.keepPosition`, default on) steps the loaded line to the current ply (`keptPly`) (registered into `movesSlots.afterList`) | — |
 | movesSlots | util | `src/components/moves/movesSlots.ts` | `afterList` slot under the Moves panel move list | add Moves panel sections |
 | ServerSettingsSection | feature | `src/components/server/` | Settings → Server: URL + status badge + Check, sign-in / account + sign out, sync toggle + status + Sync now, guest name. Lazy: `import('@/components/server')` (named + default export) | server/account UI |
 | OpeningRow / FamilyRow | feature | `src/components/openings/OpeningRow.tsx` | fixed-height (`OPENING_ROW_HEIGHT` 64) opening row: ★, name, ECO chip, SAN preview, popularity + W/D/L mini bars, side dot; collapsible family header | opening lists |
@@ -186,7 +186,8 @@ Routes + layouts + panel tabs: `src/app/routes.ts`.
 | useKeyboardShortcuts / DEFAULT_SHORTCUTS / comboFromEvent | `src/hooks/useKeyboardShortcuts.ts` | global shortcuts (ignores inputs, modals, key-owning widgets) | new shortcuts |
 | useCachedResource | `src/hooks/useCachedResource.ts` | SWR resource over dataCache `{ data, loading, error, refresh }` | server data in components |
 | useServiceWorkerToasts | `src/hooks/useServiceWorkerToasts.ts` | SW signals → toasts | — |
-| useUIState | `src/hooks/useUIState.ts` | persisted UI state (localStorage) | view prefs |
+| useUIState | `src/hooks/useUIState.ts` | persisted UI state (localStorage), any key | dynamic keys only |
+| useUISetting / uiSettings | `src/hooks/useUISetting.ts`, `src/lib/uiSettings.ts` | typed registry of persisted view preferences + defaults; `get/set/resetUISettings` | every app-view preference |
 | useFocusTrap | `src/hooks/useFocusTrap.ts` | trap Tab, initial focus, restore | custom dialogs |
 | useClickOutside | `src/hooks/useClickOutside.ts` | pointerdown outside refs | popovers |
 | useLongPress | `src/hooks/useLongPress.ts` | touch long-press handlers (500 ms, 8 px) | mobile context menus |

@@ -54,7 +54,7 @@ src/
     playback/      PlaybackController (dependency-injected)
     toast/         toast queue (signals)
     sw/            sw.ts (service worker) + register.ts (update signals)
-  hooks/           useTheme, useMediaQuery, useKeyboardShortcuts, useCachedResource, useUIState, useFocusTrap, …
+  hooks/           useTheme, useMediaQuery, useKeyboardShortcuts, useCachedResource, useUIState, useUISetting, useFocusTrap, …
   lib/             pure helpers: throttle/debounce, cx, format, color, storage
   mock/data/       JSON fixtures for MockApiAdapter
 styles/            _variables (Sass-only), _tokens (CSS vars, emitted once), _themes, _mixins, _responsive, _reset, global
@@ -155,7 +155,17 @@ Default `save`/`saveAs`/`fork`/`newGame`/`openBot` handlers live in `components/
 
 - **Repositories** (`services/db`): user data — sessions, saved games, favorites, themes, notes, settings, kv.
 - **DataCache** (`services/cache`, IndexedDB `chess-cache`): fetched/derived data with TTL — read via `useCachedResource(key, loader, ttl)` (stale-while-revalidate).
-- **uiStorage / useUIState**: small view state (open panels, sort order).
+- **UI settings** (`lib/uiSettings.ts` + `useUISetting(key)`): every persisted app-view preference (open panels, toggles like "Keep position", last-used choices) is registered there with its type and default, and read with `useUISetting`. Stored in localStorage (`uiStorage`, prefix `ui:`); unchanged keys read the default; Settings → Data → Reset clears them (`resetUISettings`). Use `useUIState` directly only for dynamic keys. Domain settings that sync (themes, engine, clock…) stay in `state/settings`.
+
+  | Key | Default | Where |
+  |---|---|---|
+  | `openings.keepPosition` | `true` | Moves panel → Variations switch |
+  | `openings.expandedFamilies` | `[]` | Openings browser family groups |
+  | `openings.showFilters` | `false` | Openings browser filter panel |
+  | `notes.expandTheory` | `false` | Theory notes "Read more" |
+  | `games.showFilters` | `false` | Saved games filter panel (also open when filters are active) |
+  | `play.opponent` | `'bot'` | Play page opponent |
+  | `engines.compareTable` | `false` | Settings → Engines comparison table |
 
 ## PWA
 

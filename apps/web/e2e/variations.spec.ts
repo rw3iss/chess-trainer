@@ -40,7 +40,7 @@ test('variations section: built-on chain, expand, load a variation', async ({ pa
 	await expect(section.locator('.opening-vars__crumb').filter({ hasText: 'Najdorf' }).first()).toBeVisible();
 });
 
-test('keep position: a variation loads at the same move; off loads at the start', async ({ page }) => {
+test('keep position (default on, persisted): a variation loads at the same move; off loads at the start', async ({ page }) => {
 	const cursorPly = () =>
 		page.evaluate(() => {
 			const c = (window as unknown as { __chess: { activeSession: { value: { cursor: string; tree: { nodes: Record<string, { ply: number }> } } | null } } }).__chess;
@@ -57,8 +57,7 @@ test('keep position: a variation loads at the same move; off loads at the start'
 	// Step to move 7 (ply 7) of the Najdorf line, then load a variation with "Keep position" on.
 	for (let i = 0; i < 7; i++) await page.getByRole('button', { name: 'Next (→)' }).click();
 	expect(await cursorPly()).toBe(7);
-	await keep.click();
-	await expect(keep).toHaveAttribute('aria-checked', 'true');
+	await expect(keep).toHaveAttribute('aria-checked', 'true'); // on by default
 	await section.locator('.opening-vars__load').first().click();
 	await expect.poll(cursorPly).toBe(7);
 
@@ -67,4 +66,8 @@ test('keep position: a variation loads at the same move; off loads at the start'
 	await expect(keep).toHaveAttribute('aria-checked', 'false');
 	await section.locator('.opening-vars__load').first().click();
 	await expect.poll(cursorPly).toBe(0);
+
+	// The choice is saved and restored after a reload.
+	await page.reload();
+	await expect(page.getByRole('region', { name: 'Opening variations' }).getByRole('switch', { name: 'Keep position' })).toHaveAttribute('aria-checked', 'false');
 });

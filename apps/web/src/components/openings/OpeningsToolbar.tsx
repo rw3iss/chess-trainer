@@ -16,6 +16,7 @@ import { ECO_LETTERS, defaultSort, type OpeningSort } from '@/services/openings/
 import type { OpeningFamily } from '@/state/openings';
 import { activeFilterCount, clearFilters, type OpeningsViewState } from './urlState';
 import './OpeningsToolbar.scss';
+import { useUISetting } from '@/hooks/useUISetting';
 
 export const MAX_LENGTH_FILTER = 30;
 
@@ -43,7 +44,7 @@ export interface OpeningsToolbarProps {
 
 export function OpeningsToolbar({ state, onChange, families, resultCount, inputRef, onSearchKeyDown }: OpeningsToolbarProps): JSX.Element {
 	const [text, setText] = useState(state.q);
-	const [open, setOpen] = useState(false);
+	const [open, setOpen] = useUISetting('openings.showFilters');
 	const lastPushed = useRef(state.q);
 	const stateRef = useRef(state);
 	stateRef.current = state;

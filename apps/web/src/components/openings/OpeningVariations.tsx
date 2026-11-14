@@ -9,7 +9,7 @@ import type { Session } from '@chess/core/game';
 import type { OpeningEntry, OpeningIndex } from '@chess/core/openings';
 import { Icon } from '@/components/common/Icon';
 import { Toggle } from '@/components/common/Toggle';
-import { useUIState } from '@/hooks/useUIState';
+import { useUISetting } from '@/hooks/useUISetting';
 import { sessionsActions } from '@/state/sessions';
 import { openingIndex } from '@/state/openings';
 import { cx } from '@/lib/classNames';
@@ -19,8 +19,6 @@ import './OpeningVariations.scss';
 
 /** Rows shown before "Show all" at each level. */
 const PAGE = 8;
-/** UI-state key: keep the board position when loading a variation. */
-export const KEEP_POSITION_KEY = 'openings:keepPosition';
 
 /**
  * Ply to show after loading `entry` when "Keep position" is on: the user's position in the current
@@ -148,7 +146,7 @@ export function OpeningVariations({ session }: { session: Session }): JSX.Elemen
 	const index = openingIndex.value;
 	const lineKey = useMemo(() => uciPathTo(session.tree, lineEnd(session.tree, session.cursor)).join(' '), [session.tree, session.cursor]);
 	const base = useMemo(() => (index ? baseOpening(index, session) : undefined), [index, lineKey, session.source.openingId]);
-	const [keep, setKeep] = useUIState<boolean>(KEEP_POSITION_KEY, false);
+	const [keep, setKeep] = useUISetting('openings.keepPosition');
 	if (!index || !base) return null;
 	const onLoad = (entry: OpeningEntry) => loadFromPanel(entry, session, keep);
 	const lineage = collapseLineage(index.lineage(base.id));

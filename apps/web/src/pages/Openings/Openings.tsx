@@ -30,7 +30,7 @@ import { favoriteOpeningIds, toggleFavorite } from '@/state/favorites';
 import { loadOpenings, openingFamilies, openingIndex, openingSearch, openingsError, openingsStatus, recentOpeningIds, retryLoadOpenings } from '@/state/openings';
 import { commands } from '@/services/commands';
 import { useIsStacked } from '@/hooks/useMediaQuery';
-import { useUIState } from '@/hooks/useUIState';
+import { useUISetting } from '@/hooks/useUISetting';
 import { defaultSort } from '@/services/openings/searchCore';
 import './Openings.scss';
 
@@ -82,7 +82,7 @@ export default function Openings(): JSX.Element {
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [selectedId, setSelectedId] = useState<string | null>(null);
 	const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-	const [expandedList, setExpandedList] = useUIState<string[]>('openings.expandedFamilies', []);
+	const [expandedList, setExpandedList] = useUISetting('openings.expandedFamilies');
 	const expanded = useMemo(() => new Set(expandedList), [expandedList]);
 
 	useEffect(() => {

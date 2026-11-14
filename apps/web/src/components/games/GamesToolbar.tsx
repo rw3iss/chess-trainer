@@ -19,6 +19,7 @@ import {
 	type ResultFilter,
 } from './gamesQuery';
 import './GamesToolbar.scss';
+import { useUISetting } from '@/hooks/useUISetting';
 
 const SORT_OPTIONS: SelectOption<GamesSort>[] = [
 	{ value: 'updated', label: 'Updated' },
@@ -58,7 +59,9 @@ export interface GamesToolbarProps {
 
 export function GamesToolbar({ query, onChange, openings, autoFocusSearch }: GamesToolbarProps): JSX.Element {
 	const filterCount = activeFilterCount(query);
-	const [showFilters, setShowFilters] = useState(filterCount > 0);
+	// Open when the user left it open, or when filters are active (e.g. from a link).
+	const [panelPref, setShowFilters] = useUISetting('games.showFilters');
+	const showFilters = panelPref || filterCount > 0;
 	const [text, setText] = useState(query.q);
 
 	// External URL changes (back/forward, clear) → field.

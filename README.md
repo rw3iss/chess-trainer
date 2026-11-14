@@ -6,7 +6,7 @@ Works fully offline. The server is optional and adds sync, live opening statisti
 
 ## Features
 
-- **Openings** — 12,322 openings (Lichess + eco.json), fuzzy search by name / ECO / moves (`e4 c5 Nf3`), White/Black focus, filters, 8 sorts, family groups, ★ favorites, popularity + W/D/L, Wikibooks theory notes per position, continuations tree. The Moves panel shows the openings a line is built on and all its named variations (expandable, with popularity) — load any of them in one click. "Keep position" loads a variation at the move you are on.
+- **Openings** — 12,322 openings (Lichess + eco.json), fuzzy search by name / ECO / moves (`e4 c5 Nf3`), White/Black focus, filters, 8 sorts, family groups, ★ favorites, popularity + W/D/L, Wikibooks theory notes per position, continuations tree. The Moves panel shows the openings a line is built on and all its named variations (expandable, with popularity) — load any of them in one click. "Keep position" (on by default) loads a variation at the move you are on.
 - **Games** — every open game autosaves and stays open while you browse; Save (overwrite) or Save as new; fork at any move; variations; notes; PGN import/export; saved-games library.
 - **Playback** — auto-play a line at slow / medium / fast; pause and step at any time.
 - **Engines** — Stockfish 19 lite (offline, default), full Stockfish (download on demand), Maia-2 human-like bot (download on demand), and server engines (Stockfish, lc0, Maia, Komodo if you supply the binary). Analysis with eval bar, MultiPV lines and arrows. Play a bot at any Elo from the current position.

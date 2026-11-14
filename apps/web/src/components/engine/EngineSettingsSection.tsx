@@ -1,6 +1,6 @@
 // Settings → Engines (mounted lazily by the Settings page): default engine,
 // analysis defaults, bot human delay, engine cards and a comparison table.
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useRef } from 'preact/hooks';
 import type { JSX } from 'preact';
 import { Button, SegmentedControl, Select, Slider, Toggle } from '@/components/common';
 import { toast } from '@/services/toast';
@@ -17,6 +17,7 @@ import {
 } from '@/state';
 import { EngineCard } from './EngineCard';
 import './EngineSettingsSection.scss';
+import { useUISetting } from '@/hooks/useUISetting';
 
 const MULTIPV_OPTIONS = Array.from({ length: MULTIPV_MAX }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }));
 
@@ -69,7 +70,7 @@ export function EngineSettingsSection(): JSX.Element {
 	const prefs = analysisPrefs.value;
 	const entries = engineEntries.value;
 	const dl = downloads.value;
-	const [compare, setCompare] = useState(false);
+	const [compare, setCompare] = useUISetting('engines.compareTable');
 	const fileRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {

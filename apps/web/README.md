@@ -36,7 +36,7 @@ pnpm test:e2e     # Playwright, desktop + mobile (starts Vite on :5199)
 | Sessions, saved games, favorites, themes, notes, settings | `services/db` repositories (IndexedDB `chess-openings`) | the only path for user data |
 | Server-only data (health, auth, explorer, engines, sync, rooms) | `services/api` `ApiClient` | `HttpApiAdapter` while the server is online, else `MockApiAdapter` + `src/mock/data/*.json` |
 | Fetched/derived data with TTL | `services/cache` (IndexedDB `chess-cache`) | `useCachedResource(key, loader, ttl)` |
-| UI view state | `lib/storage` / `useUIState` | localStorage |
+| UI view preferences | `lib/uiSettings` registry + `useUISetting` (over `lib/storage`) | localStorage |
 
 **Connecting the server:** set the URL in settings (`settings.server.url`, default `http://localhost:3000`).
 `ServerConnector` probes `GET /health` (1.5 s timeout) on boot, every 60 s and when the browser comes online;

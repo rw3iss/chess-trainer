@@ -9,6 +9,7 @@ import { Icon } from '@/components/common/Icon';
 import { loadDatasetNote, openingIndex } from '@/state/openings';
 import { cx } from '@/lib/classNames';
 import './DatasetNotes.scss';
+import { useUISetting } from '@/hooks/useUISetting';
 
 const COLLAPSE_CHARS = 420;
 
@@ -32,7 +33,7 @@ export function useDatasetNote(epd: string): OpeningNote | null | undefined {
 }
 
 export function NoteBody({ note, collapsible = true }: { note: OpeningNote; collapsible?: boolean }): JSX.Element {
-	const [expanded, setExpanded] = useState(false);
+	const [expanded, setExpanded] = useUISetting('notes.expandTheory');
 	const long = collapsible && note.text.length > COLLAPSE_CHARS;
 	const paragraphs = note.text.split(/\n{1,}/).map((p) => p.trim()).filter(Boolean);
 	return (

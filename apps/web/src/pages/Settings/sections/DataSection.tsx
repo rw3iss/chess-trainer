@@ -9,6 +9,7 @@ import { getRepositories } from '@/services/db';
 import { toast } from '@/services/toast';
 import { flushStores } from '@/state';
 import { resetSettings, SETTINGS_KEY } from '@/state/settings';
+import { resetUISettings } from '@/lib/uiSettings';
 import { SectionHeader, SettingsGroup, SettingsRow } from '../SettingsLayout';
 import {
 	buildBackup,
@@ -132,7 +133,7 @@ export function DataSection(): JSX.Element {
 			</SettingsGroup>
 
 			<SettingsGroup title="Reset">
-				<SettingsRow label="Reset all settings" hint="Restores defaults. Games, sessions and themes are kept.">
+				<SettingsRow label="Reset all settings" hint="Restores defaults, including view preferences. Games, sessions and themes are kept.">
 					<Button size="sm" variant="danger" onClick={() => setConfirmReset(true)}>
 						Reset settings
 					</Button>
@@ -154,6 +155,7 @@ export function DataSection(): JSX.Element {
 							variant="danger"
 							onClick={() => {
 								resetSettings();
+								resetUISettings();
 								setConfirmReset(false);
 								toast.success('Settings reset');
 							}}

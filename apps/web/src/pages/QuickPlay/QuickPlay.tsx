@@ -24,7 +24,7 @@ import { activeSession, openSessions, sessionsActions } from '@/state/sessions';
 import { botActions, isBotThinking } from '@/state/engines';
 import { settings } from '@/state/settings';
 import { formatRelativeTime } from '@/lib/format';
-import { useUIState } from '@/hooks/useUIState';
+import { useUISetting } from '@/hooks/useUISetting';
 import './QuickPlay.scss';
 
 type Opponent = 'bot' | 'local';
@@ -108,7 +108,7 @@ function NewGameSetup({ onStarted, onCancel }: SetupProps): JSX.Element {
 	const { route } = useLocation();
 	const current = activeSession.value;
 	const currentFen = current ? (current.tree.nodes[current.cursor]?.fen ?? null) : null;
-	const [opponent, setOpponent] = useUIState<Opponent>('play:opponent', 'bot');
+	const [opponent, setOpponent] = useUISetting('play.opponent');
 	const [form, setForm] = useState<NewGameForm>(() => initialNewGameForm(settings.value.clock, 'local-pvp'));
 	const [touched, setTouched] = useState(false);
 	const bot = useBotSetupForm(null, true, 'play');
