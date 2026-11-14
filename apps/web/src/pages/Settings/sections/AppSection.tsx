@@ -59,6 +59,12 @@ export function AppSection(): JSX.Element {
 				<SettingsRow label="Text size" stacked>
 					<Slider min={85} max={130} step={5} value={Math.round(s.theme.fontScale * 100)} onChange={(v) => updateSettings({ theme: { fontScale: v / 100 } })} format={(v) => `${v}%`} ariaLabel="Text size" />
 				</SettingsRow>
+				<Toggle
+					checked={s.board.showShadow}
+					onChange={(showShadow) => updateSettings({ board: { showShadow } })}
+					label="Board shadow"
+					description="A soft dark glow around the board and player rows: more focus, and captured pieces stand out."
+				/>
 			</SettingsGroup>
 
 			<SettingsGroup title="Sound" description="Synthesized move, capture, check and game-end sounds.">

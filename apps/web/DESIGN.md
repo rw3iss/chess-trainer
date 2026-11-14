@@ -29,6 +29,7 @@ with `color-mix()` from it; `--color-accent-fg` is set by `useApplyAppearance()`
 | `--color-accent` | brass | `#c9a45c` | `#a27a2e` |
 | `--color-success/warn/danger/info` (+ `-soft`) | semantic, only for real states | | |
 | `--color-white-adv` / `--color-black-adv` / `--color-draw` | eval bar, W/D/L bars, player swatches | | |
+| `--stage-halo` | board shadow centre colour (Settings → App → Board shadow); blurred to 0 around the board column | black 62% | ink 34% |
 
 Board and piece colours are **separate token sets owned by the theme system** (`@chess/core/theme`
 → `--pc-*`, board vars); app tokens never style squares or pieces.

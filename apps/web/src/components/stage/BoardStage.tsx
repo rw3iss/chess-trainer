@@ -112,7 +112,7 @@ export function BoardStage({ class: className }: { class?: string }): JSX.Elemen
 	};
 
 	return (
-		<section class={cx('stage', className)} aria-label="Board">
+		<section class={cx('stage', s.board.showShadow && 'stage--halo', className)} aria-label="Board">
 			<div class="stage__area">
 				<div class="stage__evalbar">
 					<stageSlots.evalBar.Render session={session} />

@@ -110,6 +110,8 @@
 	--shadow-md: 0 6px 18px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.3);
 	--shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
 	--shadow-board: 0 24px 60px rgba(0, 0, 0, 0.55), 0 6px 16px rgba(0, 0, 0, 0.35);
+	// Board halo (Settings → App → Board shadow): colour at the centre, blurred out to 0.
+	--stage-halo: rgba(0, 0, 0, 0.62);
 	--shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 
 	// ── Motion ────────────────────────────────────────────────────────────

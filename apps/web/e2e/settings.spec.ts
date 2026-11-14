@@ -78,3 +78,17 @@ test('local 2-player game with a clock: moves press the clock, flag ends the gam
 	await expect(page.getByRole('status').filter({ hasText: 'White wins' })).toContainText('timeout');
 	await expect(page.getByRole('button', { name: /Black clock 0:00\.0, flagged/ })).toBeVisible();
 });
+
+test('board shadow setting toggles the halo behind the board (default on, persisted)', async ({ page }) => {
+	await page.goto('/settings/app');
+	const stage = page.locator('section.stage');
+	await expect(stage).toHaveClass(/stage--halo/);
+	const toggle = page.getByRole('switch', { name: 'Board shadow' });
+	await expect(toggle).toHaveAttribute('aria-checked', 'true');
+	await toggle.click();
+	await expect(stage).not.toHaveClass(/stage--halo/);
+	await page.waitForTimeout(500); // settings persist debounce
+	await page.reload();
+	await expect(page.getByRole('switch', { name: 'Board shadow' })).toHaveAttribute('aria-checked', 'false');
+	await expect(page.locator('section.stage')).not.toHaveClass(/stage--halo/);
+});

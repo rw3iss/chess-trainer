@@ -30,6 +30,8 @@ export interface BoardDisplaySettings {
 	colorBlindHighlights: boolean;
 	/** Arrow colour override ('' = use the board theme's arrow colour). */
 	arrowColor: string;
+	/** Soft dark halo behind the board and player strips (focus + contrast for captured pieces). */
+	showShadow: boolean;
 }
 
 export interface ClockSettings {
@@ -97,6 +99,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
 		showArrows: true,
 		colorBlindHighlights: false,
 		arrowColor: '',
+		showShadow: true,
 	},
 	boardThemeId: DEFAULT_BOARD_THEME_ID,
 	pieceThemeId: DEFAULT_PIECE_THEME_ID,
