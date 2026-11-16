@@ -3,14 +3,24 @@
 import { lineEnd, ROOT_ID, treeFromUci } from '@chess/core/chess';
 import { createSession, type Session } from '@chess/core/game';
 import type { OpeningEntry } from '@chess/core/openings';
-import { sessionsActions } from '@/state/sessions';
+import { activeSession, sessionsActions } from '@/state/sessions';
+import { getUISetting } from '@/lib/uiSettings';
 import { settings } from '@/state/settings';
 import { markOpeningViewed } from '@/state/openings';
 import { toast } from '@/services/toast';
 
-/** Load an opening: new session, or reuse the active untouched opening session (setting). */
+/**
+ * Load an opening: new session, or reuse the active untouched opening session (setting).
+ * The board turns to the opening's side unless "Flip board" (UI setting) is off: then it keeps
+ * the active session's orientation.
+ */
 export function loadOpening(entry: OpeningEntry): Session {
-	const s = sessionsActions.fromOpening(entry, { reuseUntouched: settings.value.openings.loadReusesUntouched });
+	const active = activeSession.value;
+	const keepSide = !getUISetting('openings.flipBoard') && active;
+	const s = sessionsActions.fromOpening(entry, {
+		reuseUntouched: settings.value.openings.loadReusesUntouched,
+		...(keepSide ? { orientation: active.orientation } : {}),
+	});
 	markOpeningViewed(entry.id);
 	toast.info(`Loaded ${entry.name}`, { id: 'opening-load' });
 	return s;

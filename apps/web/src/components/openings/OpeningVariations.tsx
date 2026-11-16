@@ -3,6 +3,7 @@
 // named openings that continue from the end of the line ("Variations", or "Next openings" after
 // own moves; most popular first, expandable). Click one to load it and play it. "Keep position"
 // loads it at the user's current position (plus its next move when playing at the line's end).
+// "Flip board" off keeps the board's orientation when an opening loads (see loadOpening).
 import { useMemo, useState } from 'preact/hooks';
 import type { JSX } from 'preact';
 import { ROOT_ID, getNode, lineEnd, mainline, toEpd, treeFromUci, uciPathTo } from '@chess/core/chess';
@@ -171,6 +172,7 @@ export function OpeningVariations({ session }: { session: Session }): JSX.Elemen
 	const status = useMemo(() => (index ? sessionLineStatus(index, session) : undefined), [index, lineKey, session.source.openingId]);
 	const next = useMemo(() => (index && status ? index.nextOpenings(status.fen) : []), [index, status]);
 	const [keep, setKeep] = useUISetting('openings.keepPosition');
+	const [flip, setFlip] = useUISetting('openings.flipBoard');
 	const base = status?.base;
 	if (!index || !status || !base) return null;
 	const onLoad = (entry: OpeningEntry) => loadFromPanel(entry, session, keep);
@@ -218,12 +220,10 @@ export function OpeningVariations({ session }: { session: Session }): JSX.Elemen
 					<div class="opening-vars__head">
 						<span class="opening-vars__eyebrow">{extra ? 'Next openings' : 'Variations'}</span>
 						<span class="opening-vars__total">{count} lines</span>
-						<Toggle
-							class="opening-vars__keep"
-							checked={keep}
-							onChange={setKeep}
-							label="Keep position"
-						/>
+						<div class="opening-vars__switches">
+							<Toggle class="opening-vars__switch" checked={flip} onChange={setFlip} label="Flip board" />
+							<Toggle class="opening-vars__switch" checked={keep} onChange={setKeep} label="Keep position" />
+						</div>
 					</div>
 					<VariationList key={status.fen} index={index} parent={base} depth={0} onLoad={onLoad} items={next} />
 				</div>

@@ -11,6 +11,8 @@ import { uiStorage } from './storage';
 export interface UISettings {
 	/** Moves panel → Variations: load a variation at the current move. */
 	'openings.keepPosition': boolean;
+	/** Loading an opening turns the board to its side (White/Black); off keeps the current orientation. */
+	'openings.flipBoard': boolean;
 	/** Openings browser: family groups the user expanded. */
 	'openings.expandedFamilies': string[];
 	/** Openings browser: filter panel open. */
@@ -29,6 +31,7 @@ export type UISettingKey = keyof UISettings;
 
 export const UI_SETTING_DEFAULTS: UISettings = {
 	'openings.keepPosition': true,
+	'openings.flipBoard': true,
 	'openings.expandedFamilies': [],
 	'openings.showFilters': false,
 	'notes.expandTheory': false,

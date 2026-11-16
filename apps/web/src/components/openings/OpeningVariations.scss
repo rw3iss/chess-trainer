@@ -75,6 +75,7 @@
 	// ── Variations ──
 	&__head {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-2);
 		margin-bottom: var(--space-2);
@@ -85,9 +86,16 @@
 		color: var(--color-text-subtle);
 	}
 
-	// Compact switch at the right of the header row.
-	&__keep.toggle {
+	// Compact switches at the right of the header row (wrap under it when narrow).
+	&__switches {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: var(--space-1) var(--space-4);
 		margin-left: auto;
+	}
+
+	&__switch.toggle {
 		gap: var(--space-2);
 		min-height: 0;
 

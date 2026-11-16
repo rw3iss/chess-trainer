@@ -160,6 +160,7 @@ Default `save`/`saveAs`/`fork`/`newGame`/`openBot` handlers live in `components/
   | Key | Default | Where |
   |---|---|---|
   | `openings.keepPosition` | `true` | Moves panel → Variations switch |
+  | `openings.flipBoard` | `true` | Moves panel → Variations switch; off = loading an opening keeps the board orientation (`loadOpening`) |
   | `openings.expandedFamilies` | `[]` | Openings browser family groups |
   | `openings.showFilters` | `false` | Openings browser filter panel |
   | `notes.expandTheory` | `false` | Theory notes "Read more" |

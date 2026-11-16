@@ -133,3 +133,36 @@ test('the Moves panel follows manual moves: title, built-on, next openings, cust
 	await section.locator('.opening-vars__load').first().click();
 	await expect.poll(async () => (await state()).ply).toBe(before + 1);
 });
+
+test('flip board (default on, persisted): off keeps the board side when a variation loads', async ({ page }) => {
+	const orientation = () =>
+		page.evaluate(() => (window as unknown as { __chess: { activeSession: { value: { orientation: string } | null } } }).__chess.activeSession.value?.orientation);
+	await page.goto('/openings?q=sicilian%20najdorf');
+	await page.locator('.opening-row__main').first().click({ timeout: 30_000 });
+	await page.getByRole('button', { name: 'Load', exact: true }).click();
+	await expect(page).toHaveURL(/\/$/);
+	expect(await orientation()).toBe('black'); // the Najdorf is a Black opening
+	const section = page.getByRole('region', { name: 'Opening variations' });
+	const flip = section.getByRole('switch', { name: 'Flip board' });
+	await expect(flip).toHaveAttribute('aria-checked', 'true');
+
+	// Off: a White variation (6.Bg5 lines are White's) still loads with Black at the bottom.
+	await flip.click();
+	await expect(flip).toHaveAttribute('aria-checked', 'false');
+	const white = section.locator('.opening-vars__load').filter({ hasText: 'Bg5' }).first();
+	await white.click();
+	await expect.poll(orientation).toBe('black');
+
+	// On again: loading turns the board to the opening's side.
+	await flip.click();
+	await page.goto('/openings?q=ruy%20lopez');
+	await page.locator('.opening-row__main').first().click({ timeout: 30_000 });
+	await page.getByRole('button', { name: 'Load', exact: true }).click();
+	await expect.poll(orientation).toBe('white');
+
+	// Off is saved and restored after a reload.
+	await page.getByRole('region', { name: 'Opening variations' }).getByRole('switch', { name: 'Flip board' }).click();
+	await page.waitForTimeout(500);
+	await page.reload();
+	await expect(page.getByRole('region', { name: 'Opening variations' }).getByRole('switch', { name: 'Flip board' })).toHaveAttribute('aria-checked', 'false');
+});
