@@ -47,7 +47,14 @@ export const FIXTURE_OPENINGS: OpeningsFile = {
 				"white": 50,
 				"draws": 20,
 				"black": 30,
-				"score": 95
+				"score": 95,
+				"masters": {
+					"games": 20000,
+					"white": 36,
+					"draws": 34,
+					"black": 30,
+					"score": 90
+				}
 			}
 		},
 		{
@@ -171,7 +178,14 @@ export const FIXTURE_OPENINGS: OpeningsFile = {
 				"white": 50,
 				"draws": 20,
 				"black": 30,
-				"score": 80
+				"score": 80,
+				"masters": {
+					"games": 25000,
+					"white": 38,
+					"draws": 44,
+					"black": 18,
+					"score": 92
+				}
 			}
 		},
 		{
@@ -277,7 +291,14 @@ export const FIXTURE_OPENINGS: OpeningsFile = {
 				"white": 50,
 				"draws": 20,
 				"black": 30,
-				"score": 70
+				"score": 70,
+				"masters": {
+					"games": 60000,
+					"white": 40,
+					"draws": 42,
+					"black": 18,
+					"score": 98
+				}
 			}
 		},
 		{
@@ -345,7 +366,14 @@ export const FIXTURE_OPENINGS: OpeningsFile = {
 				"white": 45,
 				"draws": 10,
 				"black": 45,
-				"score": 88
+				"score": 88,
+				"masters": {
+					"games": 30000,
+					"white": 34,
+					"draws": 40,
+					"black": 26,
+					"score": 99
+				}
 			}
 		},
 		{

@@ -10,6 +10,7 @@ export type {
 	OpeningEntry,
 	OpeningNote,
 	OpeningPopularity,
+	ProviderStats,
 	OpeningsFile,
 	OpeningsManifest,
 } from '../../../packages/core/src/openings/types.js';

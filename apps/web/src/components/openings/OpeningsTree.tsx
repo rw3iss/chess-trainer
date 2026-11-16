@@ -4,9 +4,11 @@ import type { JSX } from 'preact';
 import { useMemo } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { INITIAL_FEN, getNode } from '@chess/core/chess';
+import { statsScore } from '@chess/core/openings';
 import { OpeningHeader } from '@/components/moves/OpeningHeader';
 import { activeSession, sessionsActions } from '@/state/sessions';
 import { openingIndex } from '@/state/openings';
+import { useUISetting } from '@/hooks/useUISetting';
 import { ContinuationsList, type ContinuationItem } from './ContinuationsList';
 import { sanLine } from './format';
 import './OpeningsTree.scss';
@@ -18,15 +20,16 @@ export function OpeningsTree(): JSX.Element {
 	const session = activeSession.value;
 	const fen = session ? getNode(session.tree, session.cursor).fen : INITIAL_FEN;
 	const index = openingIndex.value;
+	const [source] = useUISetting('openings.statsSource');
 	const lines = useMemo(() => {
 		if (!index) return [];
 		const ply = session ? getNode(session.tree, session.cursor).ply : 0;
 		return index
 			.openingsThrough(fen)
 			.filter((e) => e.plies > ply)
-			.sort((a, b) => (b.popularity?.score ?? -1) - (a.popularity?.score ?? -1) || a.plies - b.plies)
+			.sort((a, b) => statsScore(b, source) - statsScore(a, source) || a.plies - b.plies)
 			.slice(0, LINES_LIMIT);
-	}, [index, fen]);
+	}, [index, fen, source]);
 
 	const play = (c: ContinuationItem) => {
 		if (!session) sessionsActions.newSession();

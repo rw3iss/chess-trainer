@@ -6,6 +6,7 @@
 // Outside components:           getUISetting('play.opponent') / setUISetting(…)
 // To add a setting: add the key + type to `UISettings` and its default to `UI_SETTING_DEFAULTS`.
 // App settings that sync or belong to the domain (themes, engine, clock…) stay in `state/settings`.
+import type { StatsSource } from '@chess/core/openings';
 import { uiStorage } from './storage';
 
 export interface UISettings {
@@ -13,6 +14,8 @@ export interface UISettings {
 	'openings.keepPosition': boolean;
 	/** Loading an opening turns the board to its side (White/Black); off keeps the current orientation. */
 	'openings.flipBoard': boolean;
+	/** Game-stats database for every count / W-D-L / popularity bar / popularity sort (never mixed). */
+	'openings.statsSource': StatsSource;
 	/** Openings browser: family groups the user expanded. */
 	'openings.expandedFamilies': string[];
 	/** Openings browser: filter panel open. */
@@ -32,6 +35,7 @@ export type UISettingKey = keyof UISettings;
 export const UI_SETTING_DEFAULTS: UISettings = {
 	'openings.keepPosition': true,
 	'openings.flipBoard': true,
+	'openings.statsSource': 'lichess',
 	'openings.expandedFamilies': [],
 	'openings.showFilters': false,
 	'notes.expandTheory': false,

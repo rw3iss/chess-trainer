@@ -134,6 +134,18 @@
 		@include eyebrow;
 	}
 
+	&__section-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-2);
+		flex-wrap: wrap;
+	}
+
+	&__other-stats {
+		font-size: var(--text-xs);
+	}
+
 	&__note {
 		@include surface(2);
 		display: flex;
@@ -169,7 +181,7 @@
 
 	&__facts {
 		display: grid;
-		grid-template-columns: repeat(4, 1fr);
+		grid-template-columns: repeat(3, 1fr);
 		gap: var(--space-2);
 
 		dt {

@@ -23,6 +23,15 @@ describe('uiSettings', () => {
 		expect(uiStorage.get('openings.keepPosition')).toBe(false);
 	});
 
+	it("stats source defaults to 'lichess' and persists", () => {
+		expect(UI_SETTING_DEFAULTS['openings.statsSource']).toBe('lichess');
+		expect(getUISetting('openings.statsSource')).toBe('lichess');
+		setUISetting('openings.statsSource', 'masters');
+		expect(getUISetting('openings.statsSource')).toBe('masters');
+		resetUISettings();
+		expect(getUISetting('openings.statsSource')).toBe('lichess');
+	});
+
 	it('reset restores every default', () => {
 		setUISetting('play.opponent', 'local');
 		setUISetting('games.showFilters', true);

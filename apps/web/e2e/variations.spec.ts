@@ -166,3 +166,31 @@ test('flip board (default on, persisted): off keeps the board side when a variat
 	await page.reload();
 	await expect(page.getByRole('region', { name: 'Opening variations' }).getByRole('switch', { name: 'Flip board' })).toHaveAttribute('aria-checked', 'false');
 });
+
+test('clear board: start position, no moves, no opening; variations list the openings from the start; undo', async ({ page }) => {
+	type S = { title: string; source: { kind: string }; tree: { nodes: Record<string, { children: string[] }> } };
+	const state = () =>
+		page.evaluate(() => {
+			const s = (window as unknown as { __chess: { activeSession: { value: S | null } } }).__chess.activeSession.value!;
+			return { kind: s.source.kind, moves: s.tree.nodes.root!.children.length, title: s.title };
+		});
+	await page.goto('/openings?q=sicilian%20najdorf');
+	await page.locator('.opening-row__main').first().click({ timeout: 30_000 });
+	await page.getByRole('button', { name: 'Load', exact: true }).click();
+	await expect(page).toHaveURL(/\/$/);
+	const clear = page.getByRole('button', { name: 'Clear board' });
+	await expect(clear).toBeEnabled();
+
+	await clear.click();
+	await expect.poll(state).toMatchObject({ kind: 'new', moves: 0 });
+	await expect(page.locator('.opening-header')).toContainText('Starting position');
+	await expect(clear).toBeDisabled();
+	const section = page.getByRole('region', { name: 'Opening variations' });
+	await expect(section.locator('.opening-vars__head')).toContainText('Openings');
+	await expect(section.locator('.opening-vars__crumb')).toHaveCount(0);
+	expect(await section.locator('.opening-vars__list').first().locator(':scope > .opening-vars__item').count()).toBeGreaterThanOrEqual(5);
+
+	// Undo brings the opening back.
+	await page.getByRole('button', { name: 'Undo' }).click();
+	await expect.poll(state).toMatchObject({ kind: 'opening', title: 'Sicilian Defense: Najdorf Variation' });
+});

@@ -85,3 +85,19 @@ test('openings: SAN search, URL state survives back/forward, detail page', async
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 	await expect(page.getByRole('region', { name: 'Continuations' }).or(page.locator('.continuations')).first()).toBeVisible();
 });
+
+test('openings: stats database switch (Lichess | Masters) persists after reload', async ({ page }) => {
+	await page.goto('/openings');
+	await expect(page.locator('.opening-row').first()).toBeVisible({ timeout: 30_000 });
+	const group = page.getByRole('radiogroup', { name: 'Opening stats database' });
+	await expect(group.getByRole('radio', { name: 'Lichess' })).toHaveAttribute('aria-checked', 'true');
+	await group.getByRole('radio', { name: 'Masters' }).click();
+	await expect(group.getByRole('radio', { name: 'Masters' })).toHaveAttribute('aria-checked', 'true');
+	await page.waitForTimeout(500); // settings persist debounce
+	await page.reload();
+	await expect(page.locator('.opening-row').first()).toBeVisible({ timeout: 30_000 });
+	await expect(page.getByRole('radiogroup', { name: 'Opening stats database' }).getByRole('radio', { name: 'Masters' })).toHaveAttribute('aria-checked', 'true');
+	// The same setting shows in Settings → App.
+	await page.goto('/settings/app');
+	await expect(page.getByRole('radiogroup', { name: 'Opening stats database' }).getByRole('radio', { name: 'Masters' })).toHaveAttribute('aria-checked', 'true');
+});

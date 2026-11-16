@@ -2,12 +2,13 @@
 // ★ · name (display serif) + ECO chip · SAN preview · popularity + W/D/L · side.
 import { memo } from 'preact/compat';
 import type { JSX } from 'preact';
-import type { OpeningEntry } from '@chess/core/openings';
+import { statsFor, type OpeningEntry, type StatsSource } from '@chess/core/openings';
 import { IconButton } from '@/components/common/IconButton';
 import { Chip } from '@/components/common/Chip';
 import { Icon } from '@/components/common/Icon';
 import { cx } from '@/lib/classNames';
-import { compactCount, sanLine } from './format';
+import { useUISetting } from '@/hooks/useUISetting';
+import { sanLine, statsLabel } from './format';
 import './OpeningRow.scss';
 
 export const OPENING_ROW_HEIGHT = 64;
@@ -29,11 +30,11 @@ function SideMark({ side }: { side: OpeningEntry['perspective'] }): JSX.Element 
 	return <span class={cx('opening-row__side', `opening-row__side--${side}`)} role="img" aria-label={label} title={label} />;
 }
 
-function Stats({ entry }: { entry: OpeningEntry }): JSX.Element | null {
-	const p = entry.popularity;
+function Stats({ entry, source }: { entry: OpeningEntry; source: StatsSource }): JSX.Element | null {
+	const p = statsFor(entry, source);
 	if (!p) return null;
 	const total = p.white + p.draws + p.black || 1;
-	const label = `Popularity ${p.score}/100 · ${compactCount(p.games)} games · White ${Math.round(p.white)}% · Draw ${Math.round(p.draws)}% · Black ${Math.round(p.black)}%`;
+	const label = statsLabel(p, source);
 	return (
 		<span class="opening-row__stats" title={label} role="img" aria-label={label}>
 			<span class="opening-row__pop">
@@ -51,6 +52,7 @@ function Stats({ entry }: { entry: OpeningEntry }): JSX.Element | null {
 export const OpeningRow = memo(function OpeningRow({ entry, selected, favorite, compact, onSelect, onHover, onToggleFavorite }: OpeningRowProps): JSX.Element {
 	const title = compact ? (entry.variation ?? 'Main line') : entry.family;
 	const sub = compact ? undefined : entry.variation;
+	const [source] = useUISetting('openings.statsSource');
 	return (
 		<div class={cx('opening-row', { 'opening-row--selected': !!selected, 'opening-row--compact': !!compact })} data-opening-id={entry.id}>
 			<IconButton
@@ -82,7 +84,7 @@ export const OpeningRow = memo(function OpeningRow({ entry, selected, favorite, 
 						{entry.san.length > PREVIEW_PLIES ? ' …' : ''}
 					</span>
 					{entry.hasNotes && <span class="opening-row__notes" title="Has notes" aria-label="Has notes" />}
-					<Stats entry={entry} />
+					<Stats entry={entry} source={source} />
 					<SideMark side={entry.perspective} />
 				</span>
 			</button>

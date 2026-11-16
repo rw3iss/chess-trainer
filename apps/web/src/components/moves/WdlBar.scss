@@ -44,4 +44,9 @@
 		color: var(--color-text-subtle);
 		white-space: nowrap;
 	}
+
+	&__source {
+		font-weight: var(--weight-medium);
+		color: var(--color-text-muted);
+	}
 }

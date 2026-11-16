@@ -1,4 +1,4 @@
-// Settings → App: theme, accent, density, font scale, sounds, animation, motion.
+// Settings → App: theme, accent, density, font scale, opening stats database, sounds, animation, motion.
 import type { JSX } from 'preact';
 import { DEFAULT_APP_THEME, type AppThemeMode } from '@chess/core/theme';
 import { Button, ColorPicker, DEFAULT_SWATCHES, SegmentedControl, Slider, Toggle } from '@/components/common';
@@ -13,6 +13,7 @@ import {
 	type AppSettings,
 } from '@/state/settings';
 import { AlphaColorField } from '@/components/theme/pickers';
+import { STATS_SOURCE_HINTS, StatsSourceControl } from '@/components/openings/StatsSourceControl';
 import { useTheme } from '@/hooks/useTheme';
 import { SectionHeader, SettingsGroup, SettingsRow } from '../SettingsLayout';
 
@@ -76,6 +77,12 @@ export function AppSection(): JSX.Element {
 					description="A soft dark glow around the board for more focus. Add extra top & bottom to darken the player rows and captured pieces."
 				/>
 				{s.board.showShadow && <BoardShadowControls />}
+			</SettingsGroup>
+
+			<SettingsGroup title="Openings">
+				<SettingsRow label="Opening stats" hint={`Game counts, W/D/L and popularity come from one database. ${STATS_SOURCE_HINTS.lichess}. ${STATS_SOURCE_HINTS.masters}.`}>
+					<StatsSourceControl />
+				</SettingsRow>
 			</SettingsGroup>
 
 			<SettingsGroup title="Sound" description="Synthesized move, capture, check and game-end sounds.">

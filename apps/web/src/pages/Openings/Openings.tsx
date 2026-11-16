@@ -45,10 +45,11 @@ function useOpeningResults(state: OpeningsViewState): Int32Array | null {
 	const recent = recentOpeningIds.value;
 	const [results, setResults] = useState<Int32Array | null>(null);
 	const seq = useRef(0);
+	const [stats] = useUISetting('openings.statsSource');
 	const sort = state.sort ?? defaultSort(state);
 	const favKey = state.fav ? [...favs].join(',') : '';
 	const recentKey = sort === 'recent' ? recent.join(',') : '';
-	const queryKey = JSON.stringify([state.q.trim(), state.color, state.eco, state.family, state.minPlies, state.maxPlies, state.notes, state.fav, sort, favKey, recentKey]);
+	const queryKey = JSON.stringify([state.q.trim(), state.color, state.eco, state.family, state.minPlies, state.maxPlies, state.notes, state.fav, sort, stats, favKey, recentKey]);
 
 	useEffect(() => {
 		const search = openingSearch();
@@ -56,7 +57,7 @@ function useOpeningResults(state: OpeningsViewState): Int32Array | null {
 		const id = ++seq.current;
 		search
 			.query(
-				{ q: state.q, color: state.color, eco: state.eco, family: state.family, minPlies: state.minPlies, maxPlies: state.maxPlies, notes: state.notes, fav: state.fav, sort },
+				{ q: state.q, color: state.color, eco: state.eco, family: state.family, minPlies: state.minPlies, maxPlies: state.maxPlies, notes: state.notes, fav: state.fav, sort, stats },
 				{ favoriteIds: [...favs], recentIds: recent },
 			)
 			.then(

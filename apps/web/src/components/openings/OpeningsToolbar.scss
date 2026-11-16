@@ -21,6 +21,13 @@
 		flex: 1;
 	}
 
+	// Narrow phones: drop the "Stats" prefix; the segments keep their tooltips.
+	@media (max-width: 400px) {
+		&__stats .stats-source__label {
+			display: none;
+		}
+	}
+
 	&__sort {
 		width: auto;
 		max-width: 11rem;

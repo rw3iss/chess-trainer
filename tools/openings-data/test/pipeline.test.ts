@@ -49,7 +49,8 @@ describe('merge / dedupe', () => {
 		expect(stats).toMatchObject({ lichess: 11, failed: 1, ecoMergedAsAlias: 1, ecoNew: 1 });
 		const kk = openings.find((o) => o.entry.name === "King's Knight Opening")!.entry;
 		expect(kk.source).toBe('lichess');
-		expect(kk.aliases).toEqual(['Open Game: 2.Nf3']);
+		// 'Open Game: 2.Nf3' (eco.json, same EPD) is move text, not an alternative name → dropped.
+		expect(kk.aliases).toBeUndefined();
 		const vienna = openings.find((o) => o.entry.name === 'Vienna Game')!.entry;
 		expect(vienna).toMatchObject({ source: 'eco.json', eco: 'C25' });
 		expect(vienna.aliases).toBeUndefined(); // 'Vienna game' is a case-only duplicate

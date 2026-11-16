@@ -5,7 +5,7 @@
 // Filters + sort run over the whole set; results are indices into `entries`.
 import MiniSearch from 'minisearch';
 import type { Color } from '@chess/core/chess';
-import type { OpeningEntry } from '@chess/core/openings';
+import { statsFor, statsScore, type OpeningEntry, type StatsSource } from '@chess/core/openings';
 
 export const OPENING_SORTS = ['relevance', 'popularity', 'name', 'eco', 'length', 'white', 'black', 'recent'] as const;
 export type OpeningSort = (typeof OPENING_SORTS)[number];
@@ -23,6 +23,8 @@ export interface OpeningQuery {
 	fav?: boolean;
 	/** Default: 'relevance' with a query, else 'popularity'. */
 	sort?: OpeningSort;
+	/** Stats provider for popularity / white / black sorts and the relevance boost. Default 'lichess'. */
+	stats?: StatsSource;
 }
 
 /** Per-query user context (favorites, recently viewed — newest first). */
@@ -45,6 +47,11 @@ const ECO_RE = /^[a-e]\d\d$/i;
 const ECO_SHORT_RE = /^[A-E]\d?$/;
 
 /** Normalise one SAN token for matching: lower-case, no check/annotation glyphs, 0-0 → o-o, no '='. */
+/** Words in a name, ignoring "Variation"/"Line" filler. */
+function wordCount(s: string): number {
+	return s.split(/[^\p{L}\p{N}']+/u).filter((w) => w && !/^(variation|line)$/i.test(w)).length;
+}
+
 export function normalizeSan(san: string): string {
 	return san
 		.toLowerCase()
@@ -88,7 +95,6 @@ export interface SearchEngine {
 	query(q: OpeningQuery, ctx?: QueryContext): Int32Array;
 }
 
-const pop = (e: OpeningEntry): number => e.popularity?.score ?? -1;
 /** Lower-case, letters/digits/spaces only ("King's" → "kings"). */
 const squash = (s: string): string => s.toLowerCase().replace(/[^a-z0-9 ]+/g, '').replace(/\s+/g, ' ').trim();
 
@@ -97,7 +103,8 @@ export function createSearchEngine(entries: readonly OpeningEntry[]): SearchEngi
 	const mini = new MiniSearch<Doc>({
 		fields: ['name', 'aliases', 'family'],
 		idField: 'id',
-		searchOptions: { prefix: true, fuzzy: 0.2, combineWith: 'AND', boost: { name: 3, family: 2, aliases: 1 } },
+		// Aliases count little: many lines carry several alternative names that repeat the query words.
+		searchOptions: { prefix: true, fuzzy: 0.2, combineWith: 'AND', boost: { name: 3, family: 2, aliases: 0.3 } },
 	});
 	mini.addAll(entries.map((e, i) => ({ id: i, name: e.name, aliases: (e.aliases ?? []).join(' · '), family: e.family })));
 
@@ -107,11 +114,16 @@ export function createSearchEngine(entries: readonly OpeningEntry[]): SearchEngi
 	const nameRank = new Int32Array(entries.length);
 	byName.forEach((idx, rank) => (nameRank[idx] = rank));
 
-	// Default tie-break: popular first, then shorter (more fundamental) lines, then name.
-	const base = (a: number, b: number): number => {
-		const ea = entries[a]!;
-		const eb = entries[b]!;
-		return pop(eb) - pop(ea) || ea.plies - eb.plies || nameRank[a]! - nameRank[b]!;
+	// Popularity score per provider (−1 = unknown), computed once.
+	const popBy: Record<StatsSource, Float64Array> = {
+		lichess: Float64Array.from(entries, (e) => statsScore(e, 'lichess')),
+		masters: Float64Array.from(entries, (e) => statsScore(e, 'masters')),
+	};
+
+	// Default tie-break: popular first (in the selected provider), then shorter (more fundamental) lines, then name.
+	const baseFor = (src: StatsSource) => {
+		const pop = popBy[src];
+		return (a: number, b: number): number => pop[b]! - pop[a]! || entries[a]!.plies - entries[b]!.plies || nameRank[a]! - nameRank[b]!;
 	};
 
 	function matchesSan(i: number, seq: string[]): boolean {
@@ -152,13 +164,15 @@ export function createSearchEngine(entries: readonly OpeningEntry[]): SearchEngi
 		if (candidates) for (const i of candidates) consider(i);
 		else for (let i = 0; i < entries.length; i++) consider(i);
 
-		const cmp = comparator(sort, parsed, relevance, ctx);
+		const cmp = comparator(sort, q.stats ?? 'lichess', parsed, relevance, ctx);
 		out.sort(cmp);
 		return Int32Array.from(out);
 	}
 
-	function comparator(sort: OpeningSort, parsed: ParsedSearch, relevance: Map<number, number>, ctx: QueryContext): (a: number, b: number) => number {
+	function comparator(sort: OpeningSort, src: StatsSource, parsed: ParsedSearch, relevance: Map<number, number>, ctx: QueryContext): (a: number, b: number) => number {
 		const e = (i: number) => entries[i]!;
+		const pop = popBy[src];
+		const base = baseFor(src);
 		switch (sort) {
 			case 'name':
 				return (a, b) => nameRank[a]! - nameRank[b]!;
@@ -169,7 +183,7 @@ export function createSearchEngine(entries: readonly OpeningEntry[]): SearchEngi
 			case 'white':
 			case 'black': {
 				const key = (i: number) => {
-					const p = e(i).popularity;
+					const p = statsFor(e(i), src);
 					return p ? p[sort] : -1;
 				};
 				return (a, b) => key(b) - key(a) || base(a, b);
@@ -186,10 +200,13 @@ export function createSearchEngine(entries: readonly OpeningEntry[]): SearchEngi
 					// A name/family containing the whole phrase ('kings indian' ⊂ "King's Indian Defense") wins.
 					const phrase = squash(parsed.text);
 					const scores = new Map<number, number>();
+					const queryWords = wordCount(parsed.text);
 					for (const [i, r] of relevance) {
 						const x = e(i);
 						const exact = squash(x.family).startsWith(phrase) ? 1.6 : squash(x.name).includes(phrase) ? 1.3 : 1;
-						scores.set(i, r * exact * (1 + Math.max(0, pop(x)) / 200) * (x.source === 'lichess' ? 1.25 : 1) * (1 + 2 / (x.plies + 4)));
+						// Fewer name words beyond the query = closer match ('ruy lopez' → "Ruy Lopez", not "Ruy Lopez: Bird Variation").
+						const extraWords = Math.max(0, wordCount(x.name) - queryWords);
+						scores.set(i, (r * exact * (1 + Math.max(0, pop[i]!) / 200) * (x.source === 'lichess' ? 1.6 : 1) * (1 + 2 / (x.plies + 4))) / (1 + 0.15 * extraWords));
 					}
 					const score = (i: number) => scores.get(i) ?? 0;
 					return (a, b) => score(b) - score(a) || e(a).plies - e(b).plies || base(a, b);

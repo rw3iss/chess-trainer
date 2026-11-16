@@ -8,7 +8,7 @@ import { useMemo, useState } from 'preact/hooks';
 import type { JSX } from 'preact';
 import { ROOT_ID, getNode, lineEnd, mainline, toEpd, treeFromUci, uciPathTo } from '@chess/core/chess';
 import type { Session } from '@chess/core/game';
-import type { NextOpening, OpeningEntry, OpeningIndex } from '@chess/core/openings';
+import { statsFor, type NextOpening, type OpeningEntry, type OpeningIndex } from '@chess/core/openings';
 import { Icon } from '@/components/common/Icon';
 import { Toggle } from '@/components/common/Toggle';
 import { useUISetting } from '@/hooks/useUISetting';
@@ -16,10 +16,13 @@ import { sessionsActions } from '@/state/sessions';
 import { openingIndex } from '@/state/openings';
 import { cx } from '@/lib/classNames';
 import { loadOpening } from './actions';
-import { compactCount, relativeName, sanLineFrom } from './format';
+import { relativeName, sanLineFrom, statsLabel } from './format';
 import { extraLabel } from '@/lib/format';
 import { sessionLineStatus } from './lineStatus';
 import './OpeningVariations.scss';
+
+/** Parent for the list at the start position (no opening yet): names show in full. */
+const START = { id: '', name: '', plies: 0 } as OpeningEntry;
 
 /** Rows shown before "Show all" at each level. */
 const PAGE = 8;
@@ -80,9 +83,10 @@ export function crumbLabel(e: Pick<OpeningEntry, 'name' | 'san' | 'plies'>, prev
 }
 
 function Popularity({ entry }: { entry: OpeningEntry }): JSX.Element | null {
-	const p = entry.popularity;
+	const [source] = useUISetting('openings.statsSource');
+	const p = statsFor(entry, source);
 	if (!p) return null;
-	const label = `Popularity ${Math.round(p.score)}/100 · ${compactCount(p.games)} games · White ${Math.round(p.white)}% · Draw ${Math.round(p.draws)}% · Black ${Math.round(p.black)}%`;
+	const label = statsLabel(p, source);
 	return (
 		<span class="opening-vars__pop" title={label} role="img" aria-label={label}>
 			<span class="opening-vars__pop-fill" style={{ width: `${Math.max(4, p.score)}%` }} />
@@ -174,8 +178,30 @@ export function OpeningVariations({ session }: { session: Session }): JSX.Elemen
 	const [keep, setKeep] = useUISetting('openings.keepPosition');
 	const [flip, setFlip] = useUISetting('openings.flipBoard');
 	const base = status?.base;
-	if (!index || !status || !base) return null;
+	if (!index || !status) return null;
 	const onLoad = (entry: OpeningEntry) => loadFromPanel(entry, session, keep);
+	const switches = (
+		<div class="opening-vars__switches">
+			<Toggle class="opening-vars__switch" checked={flip} onChange={setFlip} label="Flip board" />
+			<Toggle class="opening-vars__switch" checked={keep} onChange={setKeep} label="Keep position" />
+		</div>
+	);
+	if (!base) {
+		// No moves yet (e.g. after "Clear board"): the openings that start from here.
+		if (lineKey !== '' || !next.length) return null;
+		return (
+			<section class="opening-vars" aria-label="Opening variations">
+				<div class="opening-vars__vars">
+					<div class="opening-vars__head">
+						<span class="opening-vars__eyebrow">Openings</span>
+						<span class="opening-vars__total">{next.length} openings</span>
+						{switches}
+					</div>
+					<VariationList key="start" index={index} parent={START} depth={0} onLoad={onLoad} items={next} />
+				</div>
+			</section>
+		);
+	}
 	const lineage = collapseLineage(index.lineage(base.id));
 	const count = next.reduce((n, v) => n + 1 + index.variationCount(v.entry.id), 0);
 	const extra = extraLabel(status);
@@ -220,10 +246,7 @@ export function OpeningVariations({ session }: { session: Session }): JSX.Elemen
 					<div class="opening-vars__head">
 						<span class="opening-vars__eyebrow">{extra ? 'Next openings' : 'Variations'}</span>
 						<span class="opening-vars__total">{count} lines</span>
-						<div class="opening-vars__switches">
-							<Toggle class="opening-vars__switch" checked={flip} onChange={setFlip} label="Flip board" />
-							<Toggle class="opening-vars__switch" checked={keep} onChange={setKeep} label="Keep position" />
-						</div>
+						{switches}
 					</div>
 					<VariationList key={status.fen} index={index} parent={base} depth={0} onLoad={onLoad} items={next} />
 				</div>

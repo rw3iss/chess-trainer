@@ -16,6 +16,7 @@ import {
 	promoteVariation,
 	setComment,
 	setUserNote,
+	type Color,
 	type Uci,
 } from '@chess/core/chess';
 import {
@@ -289,6 +290,19 @@ export const sessionsActions = {
 	replace(session: Session): void {
 		if (!_sessions.value[session.id]) return;
 		put(session);
+	},
+
+	/**
+	 * Clear the board: the start position with no moves and no opening, in the same tab
+	 * (analysis mode; bot, clock and result dropped; unlinked from its saved game).
+	 * Board orientation: `opts.orientation`, else kept.
+	 */
+	clear(id?: string, opts: { orientation?: Color } = {}): Session | null {
+		userAction(id, 'edit');
+		return apply(id, (s) => {
+			const fresh = createSession({ id: s.id, orientation: opts.orientation ?? s.orientation });
+			return { ...fresh, createdAt: s.createdAt, revision: s.revision + 1 };
+		});
 	},
 
 	rename(title: string, id?: string): Session | null {

@@ -1,15 +1,27 @@
 import type { Color, Uci } from '../chess/types.js';
 
-export interface OpeningPopularity {
-	/** Lichess games (blitz/rapid/classical, 1600–2500) reaching the final position. */
+/**
+ * Game statistics from ONE provider database for the final position of an opening.
+ * Counts from different providers are never added up or compared with each other.
+ */
+export interface ProviderStats {
+	/** Games reaching the final position. */
 	games: number;
 	/** Percentages 0..100 of those games. */
 	white: number;
 	draws: number;
 	black: number;
-	mastersGames?: number;
-	/** Log-scaled percentile 0..100. */
+	/** Popularity 0..100 within this provider (log-scaled percentile). */
 	score: number;
+}
+
+/** Stats providers. 'lichess' = Lichess online games (blitz/rapid/classical, 1600–2500); 'masters' = Lichess masters (OTB, 2200+). */
+export const STATS_SOURCES = ['lichess', 'masters'] as const;
+export type StatsSource = (typeof STATS_SOURCES)[number];
+
+/** Top-level fields are the Lichess stats (the default provider); `masters` is the masters database. */
+export interface OpeningPopularity extends ProviderStats {
+	masters?: ProviderStats;
 }
 
 export interface OpeningEntry {
@@ -31,7 +43,7 @@ export interface OpeningEntry {
 	epd: string;
 	popularity?: OpeningPopularity;
 	hasNotes?: boolean;
-	/** Data source tag: 'lichess' | 'eco.json' | … */
+	/** Data source of the name and line: 'lichess' | 'eco.json' | 'scid' | 'wikibooks'. */
 	source: string;
 }
 

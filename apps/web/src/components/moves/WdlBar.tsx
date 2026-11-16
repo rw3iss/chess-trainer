@@ -8,6 +8,8 @@ export interface WdlBarProps {
 	draws: number;
 	black: number;
 	games?: number;
+	/** Provider label shown before the game count ('Lichess', 'Masters'). */
+	source?: string;
 }
 
 function compact(n: number): string {
@@ -16,10 +18,10 @@ function compact(n: number): string {
 	return String(n);
 }
 
-export function WdlBar({ white, draws, black, games }: WdlBarProps): JSX.Element {
+export function WdlBar({ white, draws, black, games, source }: WdlBarProps): JSX.Element {
 	const total = white + draws + black || 1;
 	const pct = (v: number) => (v / total) * 100;
-	const label = `White ${Math.round(pct(white))}%, draw ${Math.round(pct(draws))}%, black ${Math.round(pct(black))}%`;
+	const label = `${source ? `${source}: ` : ''}White ${Math.round(pct(white))}%, draw ${Math.round(pct(draws))}%, black ${Math.round(pct(black))}%`;
 	return (
 		<div class="wdl" role="img" aria-label={label}>
 			<div class="wdl__bar">
@@ -27,7 +29,13 @@ export function WdlBar({ white, draws, black, games }: WdlBarProps): JSX.Element
 				<span class="wdl__seg wdl__seg--draw" style={{ width: `${pct(draws)}%` }}>{pct(draws) >= 12 ? `${Math.round(pct(draws))}%` : ''}</span>
 				<span class="wdl__seg wdl__seg--black" style={{ width: `${pct(black)}%` }}>{pct(black) >= 12 ? `${Math.round(pct(black))}%` : ''}</span>
 			</div>
-			{games !== undefined && <span class="wdl__games">{compact(games)} games</span>}
+			{(games !== undefined || source) && (
+				<span class="wdl__games">
+					{source && <span class="wdl__source">{source}</span>}
+					{source && games !== undefined && ' · '}
+					{games !== undefined && `${compact(games)} games`}
+				</span>
+			)}
 		</div>
 	);
 }

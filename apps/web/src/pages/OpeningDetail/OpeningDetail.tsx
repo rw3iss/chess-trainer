@@ -5,7 +5,7 @@ import type { JSX } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { useLocation, useRoute } from 'preact-iso';
 import { ROOT_ID, getNode } from '@chess/core/chess';
-import { openingId, type OpeningEntry, type OpeningNote } from '@chess/core/openings';
+import { STATS_SOURCE_LABELS, openingId, statsFor, type OpeningEntry, type OpeningNote, type StatsSource } from '@chess/core/openings';
 import { Button } from '@/components/common/Button';
 import { IconButton } from '@/components/common/IconButton';
 import { Chip } from '@/components/common/Chip';
@@ -14,10 +14,11 @@ import { Spinner } from '@/components/common/Spinner';
 import { StageMiniBoard } from '@/components/stage/BoardStage';
 import { MoveList, type MoveListActions } from '@/components/moves/MoveList';
 import { WdlBar } from '@/components/moves/WdlBar';
-import { ContinuationsList, NoteBody, PlyScrubber, compactCount, forkOpeningAt, loadOpening, plyLabel, usePreviewLine, type ContinuationItem } from '@/components/openings';
+import { ContinuationsList, NoteBody, PlyScrubber, StatsSourceControl, compactCount, forkOpeningAt, loadOpening, plyLabel, usePreviewLine, type ContinuationItem } from '@/components/openings';
 import { isFavorite, toggleFavorite } from '@/state/favorites';
 import { loadDatasetNote, loadOpenings, markOpeningViewed, openingIndex, openingsManifest, openingsStatus, retryLoadOpenings } from '@/state/openings';
 import { cx } from '@/lib/classNames';
+import { useUISetting } from '@/hooks/useUISetting';
 import './OpeningDetail.scss';
 
 interface LineNote {
@@ -89,6 +90,7 @@ export default function OpeningDetail(): JSX.Element {
 function OpeningDetailView({ entry }: { entry: OpeningEntry }): JSX.Element {
 	const { route } = useLocation();
 	const preview = usePreviewLine(entry);
+	const [source] = useUISetting('openings.statsSource');
 	const session = preview.session!;
 	const fens = useMemo(() => {
 		const out: string[] = [];
@@ -121,7 +123,9 @@ function OpeningDetailView({ entry }: { entry: OpeningEntry }): JSX.Element {
 		if (target) route(`/openings/${target.id}`);
 	};
 
-	const p = entry.popularity;
+	const p = statsFor(entry, source);
+	const other: StatsSource = source === 'lichess' ? 'masters' : 'lichess';
+	const otherStats = statsFor(entry, other);
 	return (
 		<article class="opening-detail">
 			<nav class="opening-detail__nav">
@@ -195,21 +199,18 @@ function OpeningDetailView({ entry }: { entry: OpeningEntry }): JSX.Element {
 			</section>
 
 			<section class="opening-detail__section" aria-label="Popularity">
-				<h2 class="opening-detail__title">Popularity</h2>
+				<div class="opening-detail__section-head">
+					<h2 class="opening-detail__title">Popularity</h2>
+					<StatsSourceControl />
+				</div>
 				{p ? (
 					<div class="opening-detail__stats">
-						<WdlBar white={p.white} draws={p.draws} black={p.black} games={p.games} />
+						<WdlBar white={p.white} draws={p.draws} black={p.black} games={p.games} source={STATS_SOURCE_LABELS[source]} />
 						<dl class="opening-detail__facts">
 							<div>
-								<dt>Games</dt>
+								<dt>{STATS_SOURCE_LABELS[source]} games</dt>
 								<dd>{compactCount(p.games)}</dd>
 							</div>
-							{p.mastersGames !== undefined && (
-								<div>
-									<dt>Masters</dt>
-									<dd>{compactCount(p.mastersGames)}</dd>
-								</div>
-							)}
 							<div>
 								<dt>Popularity</dt>
 								<dd>{p.score}/100</dd>
@@ -221,7 +222,12 @@ function OpeningDetailView({ entry }: { entry: OpeningEntry }): JSX.Element {
 						</dl>
 					</div>
 				) : (
-					<p class="opening-detail__muted">No game statistics for this line. Rare lines have no explorer data.</p>
+					<p class="opening-detail__muted">No {STATS_SOURCE_LABELS[source]} statistics for this line. Rare lines have no explorer data.</p>
+				)}
+				{otherStats && (
+					<p class="opening-detail__muted opening-detail__other-stats">
+						{STATS_SOURCE_LABELS[other]} database (separate): {compactCount(otherStats.games)} games
+					</p>
 				)}
 			</section>
 

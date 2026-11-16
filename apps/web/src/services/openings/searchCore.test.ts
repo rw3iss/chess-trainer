@@ -73,6 +73,16 @@ describe('search engine', () => {
 		expect(names({ sort: 'black' })[0]).toBe('Sicilian Defense: Najdorf Variation');
 		expect(names({ sort: 'recent' }, { recentIds: ['16y3vpktp2q', 'italian0001'] }).slice(0, 2)).toEqual(["Queen's Gambit", 'Italian Game']);
 	});
+
+	it('popularity / white / black sorts use ONE stats provider (lichess vs masters)', () => {
+		expect(names({ stats: 'lichess' }).slice(0, 4)).toEqual(names({}).slice(0, 4));
+		expect(names({ stats: 'lichess' }).slice(0, 4)).toEqual(['Italian Game', 'Sicilian Defense', "King's Knight Opening", 'Sicilian Defense: Najdorf Variation']);
+		// Masters: only entries with masters stats rank by score; Italian / King's Knight (no masters data) drop below.
+		expect(names({ stats: 'masters' }).slice(0, 4)).toEqual(['Sicilian Defense: Najdorf Variation', "Queen's Gambit", 'Ruy Lopez', 'Sicilian Defense']);
+		expect(names({ stats: 'masters', sort: 'white' })[0]).toBe("Queen's Gambit");
+		expect(names({ stats: 'masters', sort: 'black' })[0]).toBe('Sicilian Defense');
+		expect(names({ stats: 'lichess', sort: 'white' })[0]).toBe('Italian Game');
+	});
 });
 
 describe('createOpeningSearch (no Worker in jsdom → local engine)', () => {

@@ -161,6 +161,7 @@ Default `save`/`saveAs`/`fork`/`newGame`/`openBot` handlers live in `components/
   |---|---|---|
   | `openings.keepPosition` | `true` | Moves panel → Variations switch |
   | `openings.flipBoard` | `true` | Moves panel → Variations switch; off = loading an opening keeps the board orientation (`loadOpening`) |
+  | `openings.statsSource` | `'lichess'` | `StatsSourceControl` (Openings toolbar, opening detail, Settings → App → Openings). `'lichess'` \| `'masters'`: the ONE provider every game count, W/D/L bar, popularity bar and popularity / white / black sort shows (`statsFor` / `statsScore` from `@chess/core/openings`; passed to search as `OpeningQuery.stats`). Never sum or mix providers |
   | `openings.expandedFamilies` | `[]` | Openings browser family groups |
   | `openings.showFilters` | `false` | Openings browser filter panel |
   | `notes.expandTheory` | `false` | Theory notes "Read more" |

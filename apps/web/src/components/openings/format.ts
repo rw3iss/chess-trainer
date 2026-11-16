@@ -1,4 +1,5 @@
 // Pure display helpers for opening lines.
+import { STATS_SOURCE_LABELS, type ProviderStats, type StatsSource } from '@chess/core/openings';
 
 /** '1.e4 c5 2.Nf3 d6' — numbered SAN line (first `limit` plies). */
 export function sanLine(san: readonly string[], limit = san.length): string {
@@ -40,4 +41,9 @@ export function relativeName(child: string, parent: string | undefined): string 
 	if (child.startsWith(parent)) return child.slice(parent.length).replace(/^[\s,:]+/, '');
 	const colon = child.indexOf(':');
 	return colon > 0 && parent.startsWith(child.slice(0, colon)) ? child.slice(colon + 1).trim() : child;
+}
+
+/** 'Lichess · popularity 72/100 · 1.2M games · White 50% · Draw 20% · Black 30%' — always names the provider. */
+export function statsLabel(p: ProviderStats, source: StatsSource): string {
+	return `${STATS_SOURCE_LABELS[source]} · popularity ${Math.round(p.score)}/100 · ${compactCount(p.games)} games · White ${Math.round(p.white)}% · Draw ${Math.round(p.draws)}% · Black ${Math.round(p.black)}%`;
 }

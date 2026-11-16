@@ -10,4 +10,11 @@
 		background: var(--color-surface-1);
 		overflow: hidden;
 	}
+
+	// Small actions under the move list.
+	&__actions {
+		display: flex;
+		justify-content: flex-end;
+		margin: var(--space-1) var(--gutter) 0;
+	}
 }

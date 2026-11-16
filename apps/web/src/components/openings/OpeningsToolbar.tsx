@@ -1,4 +1,4 @@
-// Search box + side / ★ / filters / sort / grouping controls for the openings browser.
+// Search box + side / ★ / filters / stats database / sort / grouping controls for the openings browser.
 // The search input is local state, pushed to the URL through a 100 ms throttle.
 import type { JSX, Ref } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
@@ -15,6 +15,7 @@ import { cx } from '@/lib/classNames';
 import { ECO_LETTERS, defaultSort, type OpeningSort } from '@/services/openings/searchCore';
 import type { OpeningFamily } from '@/state/openings';
 import { activeFilterCount, clearFilters, type OpeningsViewState } from './urlState';
+import { StatsSourceControl } from './StatsSourceControl';
 import './OpeningsToolbar.scss';
 import { useUISetting } from '@/hooks/useUISetting';
 
@@ -139,6 +140,7 @@ export function OpeningsToolbar({ state, onChange, families, resultCount, inputR
 				<IconButton icon={state.fav ? 'star-filled' : 'star'} label="Favorites only" size="sm" active={!!state.fav} class={cx({ 'openings-toolbar__fav--on': !!state.fav })} onClick={() => set({ fav: state.fav ? undefined : true })} />
 				<IconButton icon="filter" label="Filters" size="sm" active={open} badge={filters || undefined} aria-expanded={open} aria-controls="openings-filters" onClick={() => setOpen((o) => !o)} />
 				<span class="openings-toolbar__spacer" />
+				<StatsSourceControl showLabel class="openings-toolbar__stats" />
 				<IconButton
 					icon={state.group === 'family' ? 'grid' : 'list'}
 					label={state.group === 'family' ? 'Grouped by family (show flat list)' : 'Flat list (group by family)'}

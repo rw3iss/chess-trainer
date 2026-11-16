@@ -14,6 +14,8 @@
 		"data:openings": "pnpm --filter @chess/openings-data build",
 		"data:popularity": "pnpm --filter @chess/openings-data popularity",
 		"data:notes": "pnpm --filter @chess/openings-data notes",
-		"assets:pieces": "pnpm --filter @chess/piece-assets build"
+		"assets:pieces": "pnpm --filter @chess/piece-assets build",
+		"data:ingest": "pnpm --filter @chess/openings-data ingest",
+		"data:wikibooks": "pnpm --filter @chess/openings-data wikibooks"
 	}
 }

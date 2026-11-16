@@ -6,7 +6,7 @@ Works fully offline. The server is optional and adds sync, live opening statisti
 
 ## Features
 
-- **Openings** — 12,322 openings (Lichess + eco.json), fuzzy search by name / ECO / moves (`e4 c5 Nf3`), White/Black focus, filters, 8 sorts, family groups, ★ favorites, popularity + W/D/L, Wikibooks theory notes per position, continuations tree. The Moves panel shows the openings a line is built on and the named openings that continue from it (expandable, with popularity) — load any of them in one click. It follows the moves you play: the name, title, "Built on" and variations update live, and own moves past a named opening show as "custom +N". "Keep position" (on by default) loads a variation at the move you are on (and plays its next move when you are at the end of the line). "Flip board" (on by default) turns the board to the loaded opening's side; turn it off to keep the board as it is.
+- **Openings** — 12,322 openings (Lichess + eco.json), fuzzy search by name / ECO / moves (`e4 c5 Nf3`), White/Black focus, filters, 8 sorts, family groups, ★ favorites, popularity + W/D/L from one database at a time ("Stats: Lichess | Masters" switch — Lichess online games or over-the-board master games, never mixed), Wikibooks theory notes per position, continuations tree. The Moves panel shows the openings a line is built on and the named openings that continue from it (expandable, with popularity) — load any of them in one click. It follows the moves you play: the name, title, "Built on" and variations update live, and own moves past a named opening show as "custom +N". "Keep position" (on by default) loads a variation at the move you are on (and plays its next move when you are at the end of the line). "Flip board" (on by default) turns the board to the loaded opening's side; turn it off to keep the board as it is. "Clear board" under the move list goes back to the start position with no opening (undo in the toast) and lists the openings to start from.
 - **Games** — every open game autosaves and stays open while you browse; Save (overwrite) or Save as new; fork at any move; variations; notes; PGN import/export; saved-games library.
 - **Playback** — auto-play a line at slow / medium / fast; pause and step at any time.
 - **Engines** — Stockfish 19 lite (offline, default), full Stockfish (download on demand), Maia-2 human-like bot (download on demand), and server engines (Stockfish, lc0, Maia, Komodo if you supply the binary). Analysis with eval bar, MultiPV lines and arrows. Play a bot at any Elo from the current position.
@@ -43,6 +43,7 @@ Then in the app: Settings → Server → URL `http://localhost:3000`, log in, an
 | `pnpm test` | Unit tests everywhere (vitest + jest) |
 | `pnpm typecheck` / `pnpm lint` | Type checks / oxlint |
 | `pnpm --filter @chess/web test:e2e` | Playwright end-to-end tests (desktop + mobile) |
+| `pnpm data:ingest` | Refresh all openings data incrementally: sources (Lichess, eco.json, SCID), Wikibooks named lines + notes, Lichess/Masters stats for new positions, build ([details](tools/openings-data/README.md)) |
 | `pnpm data:openings` | Rebuild the openings datasets into `apps/web/public/data/` |
 | `pnpm data:notes` / `pnpm data:popularity` | Fetch Wikibooks notes / Lichess popularity (resumable; needs `LICHESS_TOKEN` in `.env`) |
 | `pnpm assets:pieces` | Rebuild the piece-set sprites |
@@ -68,4 +69,4 @@ box. Deploy with `bash scripts/deploy/deploy.sh` after pushing to `main`; detail
 
 ## Licenses and data
 
-Stockfish (GPL-3.0) ships as a separate worker file with its license. Opening data: Lichess chess-openings (CC0), eco.json (MIT), Wikibooks Chess Opening Theory (CC BY-SA 4.0), Lichess explorer statistics — see `apps/web/public/data/ATTRIBUTION.md`. Piece sets keep their own licenses — see `apps/web/public/pieces/LICENSES.md`; four sets are for personal use only. This is a personal-use app.
+Stockfish (GPL-3.0) ships as a separate worker file with its license. Opening data: Lichess chess-openings (CC0), eco.json (MIT), SCID scid.eco (GPL-2.0), Wikibooks Chess Opening Theory (CC BY-SA 4.0), Lichess explorer statistics — see `apps/web/public/data/ATTRIBUTION.md`. Piece sets keep their own licenses — see `apps/web/public/pieces/LICENSES.md`; four sets are for personal use only. This is a personal-use app.

@@ -55,6 +55,23 @@ describe('sessions store', () => {
 		expect(activeSession.value!.title).toBe('My line');
 	});
 
+	it('clear: start position, no moves, no opening, same tab; orientation kept unless given', () => {
+		const s = sessionsActions.fromOpening(SICILIAN);
+		sessionsActions.move('g1f3', s.id);
+		const linked = { ...activeSession.value!, savedGameId: 'g1' };
+		sessionsActions.replace(linked);
+		const cleared = sessionsActions.clear(s.id)!;
+		expect(cleared.id).toBe(s.id);
+		expect(cleared.tree.nodes[ROOT_ID]!.children).toEqual([]);
+		expect(cleared.cursor).toBe(ROOT_ID);
+		expect(cleared.source).toEqual({ kind: 'new' });
+		expect(cleared.savedGameId).toBeUndefined();
+		expect(cleared.orientation).toBe('black'); // the Sicilian's side, kept
+		expect(cleared.revision).toBeGreaterThan(linked.revision);
+		expect(openSessions.value).toHaveLength(1);
+		expect(sessionsActions.clear(s.id, { orientation: 'white' })!.orientation).toBe('white');
+	});
+
 	it('steps, jumps to start/end and flips', () => {
 		sessionsActions.newSession();
 		['e2e4', 'e7e5', 'g1f3'].forEach((m) => sessionsActions.move(m));

@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import type { OpeningPopularity } from './core.js';
+import type { OpeningPopularity, ProviderStats } from './core.js';
 import { readJsonl } from './jsonl.js';
 import { POP_CACHE } from './paths.js';
 
@@ -34,11 +34,12 @@ export function loadPopCache(ep: Endpoint): Map<string, PopRow> {
 const pct = (n: number, total: number) => (total ? Math.round((n / total) * 1000) / 10 : 0);
 
 /**
- * Popularity per EPD. Score 0..100 = mean of (a) percentile rank of the game count among all
- * cached positions and (b) log10-scaled count relative to the most-played position.
+ * Stats per EPD from ONE provider's rows. Score 0..100 = mean of (a) the percentile rank of the
+ * game count among that provider's cached positions and (b) log-scaled count relative to its
+ * most-played position — so scores compare only within one provider.
  */
-export function computePopularity(lichess: Map<string, PopRow>, masters: Map<string, PopRow>): Map<string, OpeningPopularity> {
-	const games = [...lichess.values()].map((r) => r.white + r.draws + r.black).sort((a, b) => a - b);
+export function providerStats(rows: Map<string, PopRow>): Map<string, ProviderStats> {
+	const games = [...rows.values()].map((r) => r.white + r.draws + r.black).sort((a, b) => a - b);
 	const maxLog = Math.log1p(games[games.length - 1] ?? 0) || 1;
 	const rank = (g: number): number => {
 		// fraction below + half the ties
@@ -53,18 +54,29 @@ export function computePopularity(lichess: Map<string, PopRow>, masters: Map<str
 		while (eq < games.length && games[eq] === g) eq++;
 		return games.length ? (lo + (eq - lo) / 2) / games.length : 0;
 	};
-	const out = new Map<string, OpeningPopularity>();
-	for (const [epd, r] of lichess) {
+	const out = new Map<string, ProviderStats>();
+	for (const [epd, r] of rows) {
 		const total = r.white + r.draws + r.black;
-		const p: OpeningPopularity = {
+		out.set(epd, {
 			games: total,
 			white: pct(r.white, total),
 			draws: pct(r.draws, total),
 			black: pct(r.black, total),
 			score: Math.round(100 * (0.5 * rank(total) + 0.5 * (Math.log1p(total) / maxLog))),
-		};
-		const m = masters.get(epd);
-		if (m) p.mastersGames = m.white + m.draws + m.black;
+		});
+	}
+	return out;
+}
+
+/** Popularity per EPD: Lichess stats at the top level, masters stats under `masters` (each scored on its own). */
+export function computePopularity(lichess: Map<string, PopRow>, masters: Map<string, PopRow>): Map<string, OpeningPopularity> {
+	const li = providerStats(lichess);
+	const ma = providerStats(masters);
+	const out = new Map<string, OpeningPopularity>();
+	for (const [epd, s] of li) {
+		const p: OpeningPopularity = { ...s };
+		const m = ma.get(epd);
+		if (m) p.masters = m;
 		out.set(epd, p);
 	}
 	return out;

@@ -91,7 +91,10 @@ describe('popularity', () => {
 		const row = (epd: string, w: number, d: number, b: number): [string, PopRow] => [epd, { epd, white: w, draws: d, black: b, t: 0 }];
 		const lichess = new Map([row('a', 500, 200, 300), row('b', 5, 0, 5), row('c', 50_000, 10_000, 40_000), row('z', 0, 0, 0)]);
 		const pop = computePopularity(lichess, new Map([row('a', 1, 2, 1)]));
-		expect(pop.get('a')).toMatchObject({ games: 1000, white: 50, draws: 20, black: 30, mastersGames: 4 });
+		expect(pop.get('a')).toMatchObject({ games: 1000, white: 50, draws: 20, black: 30 });
+		// Masters stats stay separate, scored within the masters rows only.
+		expect(pop.get('a')!.masters).toEqual({ games: 4, white: 25, draws: 50, black: 25, score: 75 });
+		expect(pop.get('b')!.masters).toBeUndefined();
 		const scores = ['z', 'b', 'a', 'c'].map((k) => pop.get(k)!.score);
 		expect(scores).toEqual([...scores].sort((x, y) => x - y));
 		expect(pop.get('c')!.score).toBe(Math.round(100 * (0.5 * (3.5 / 4) + 0.5)));

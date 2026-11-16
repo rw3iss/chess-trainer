@@ -1,7 +1,10 @@
-// MovesPanel — the '/' panel for the active session: OpeningHeader · MoveList · movesSlots.afterList (variations) · NotesCard.
+// MovesPanel — the '/' panel for the active session: OpeningHeader · MoveList · "Clear board" ·
+// movesSlots.afterList (variations) · NotesCard.
 import { useState } from 'preact/hooks';
 import type { JSX } from 'preact';
-import { getNode } from '@chess/core/chess';
+import { ROOT_ID, getNode } from '@chess/core/chess';
+import { Button } from '@/components/common/Button';
+import { getUISetting } from '@/lib/uiSettings';
 import type { Session } from '@chess/core/game';
 import { sessionsActions } from '@/state/sessions';
 import { describeMove } from '@/lib/format';
@@ -35,11 +38,27 @@ export function MovesPanel({ session }: { session: Session }): JSX.Element {
 		editNote: (id) => setNoteFor(id),
 	};
 
+	const empty = session.tree.nodes[ROOT_ID]!.children.length === 0 && session.source.kind === 'new';
+	const clear = () => {
+		const before = session;
+		// "Flip board" on → back to White's side (as a new game); off → keep the current side.
+		sessionsActions.clear(session.id, { orientation: getUISetting('openings.flipBoard') ? 'white' : session.orientation });
+		toast.show({
+			message: 'Board cleared',
+			action: { label: 'Undo', onClick: () => sessionsActions.replace(before) },
+		});
+	};
+
 	return (
 		<div class="moves-panel">
 			<OpeningHeader session={session} />
 			<div class="moves-panel__list">
 				<MoveList session={session} actions={actions} />
+			</div>
+			<div class="moves-panel__actions">
+				<Button variant="ghost" size="sm" icon="undo" disabled={empty} onClick={clear} title="Start position, no moves, no opening">
+					Clear board
+				</Button>
 			</div>
 			<movesSlots.afterList.Render session={session} />
 			<NotesCard fen={fen} />

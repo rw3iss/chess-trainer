@@ -13,6 +13,9 @@ import { installNewGameFeature } from '@/components/controls/NewGameModal/instal
 import { installClockFeature } from '@/components/clock/install';
 
 let booted = false;
+/** Resolves once every store is restored (the dev/e2e handle waits for it). */
+let markRestored: () => void = () => {};
+const restored = new Promise<void>((r) => (markRestored = r));
 
 export async function boot(): Promise<void> {
 	if (booted) return;
@@ -23,6 +26,7 @@ export async function boot(): Promise<void> {
 	// New game modal + local PvP ('newGame', 'resign', 'offerDraw').
 	installNewGameFeature();
 	await initStores();
+	markRestored();
 	// Clocks (stage slots + controller) and move sounds — after sessions are restored.
 	installClockFeature();
 	// Server feature: background sync + online-room stage wiring (after stores restore).
@@ -52,8 +56,9 @@ export async function boot(): Promise<void> {
 }
 
 // Dev/e2e handle: window.__chess exposes stores for scripted checks (never in production builds).
+// Set only after the stores are restored, so a script's changes are not overwritten by the restore.
 if (import.meta.env.DEV && typeof window !== 'undefined') {
-	void import('@/state').then((state) => {
+	void Promise.all([import('@/state'), restored]).then(([state]) => {
 		(window as unknown as { __chess: unknown }).__chess = state;
 	});
 }
