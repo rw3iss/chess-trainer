@@ -7,6 +7,7 @@
 import { lazy } from 'preact-iso';
 import type { ComponentType } from 'preact';
 import type { IconName } from '@/components/common/Icon';
+import { isBoardLinkPath } from '@/lib/openingLinks';
 
 export type RouteLayout = 'panel' | 'wide' | 'sheet';
 
@@ -36,12 +37,14 @@ const Sessions = lazy(() => import('@/pages/Sessions/Sessions'));
 const Settings = lazy(() => import('@/pages/Settings/Settings'));
 const Play = lazy(() => import('@/pages/Play/Play'));
 const QuickPlay = lazy(() => import('@/pages/QuickPlay/QuickPlay'));
+const OpeningLink = lazy(() => import('@/pages/OpeningLink/OpeningLink'));
 const NotFound = lazy(() => import('@/pages/NotFound/NotFound'));
 
 export const ROUTES: AppRoute[] = [
 	{ path: '/', component: Home, layout: 'panel', title: 'Moves' },
 	{ path: '/openings', component: Openings, layout: 'sheet', title: 'Openings' },
-	{ path: '/openings/:id', component: OpeningDetail, layout: 'sheet', title: 'Opening' },
+	{ path: '/openings/:slug', component: OpeningLink, layout: 'panel', title: 'Moves' },
+	{ path: '/openings/:slug/info', component: OpeningDetail, layout: 'sheet', title: 'Opening' },
 	{ path: '/games', component: Games, layout: 'sheet', title: 'Saved games' },
 	{ path: '/sessions', component: Sessions, layout: 'wide', title: 'Open sessions' },
 	{ path: '/settings', component: Settings, layout: 'wide', title: 'Settings' },
@@ -64,8 +67,8 @@ export function routeFor(path: string): AppRoute {
 
 /** Side-panel tabs (desktop header / mobile tab bar below the board). */
 export const PANEL_TABS: PanelTab[] = [
-	{ id: 'moves', label: 'Moves', icon: 'list', href: '/', match: (p) => p === '/' },
-	{ id: 'openings', label: 'Openings', icon: 'book', href: '/openings', match: (p) => p.startsWith('/openings') },
+	{ id: 'moves', label: 'Moves', icon: 'list', href: '/', match: (p) => p === '/' || isBoardLinkPath(p) },
+	{ id: 'openings', label: 'Openings', icon: 'book', href: '/openings', match: (p) => p.startsWith('/openings') && !isBoardLinkPath(p) },
 	{ id: 'games', label: 'Games', icon: 'games', href: '/games', match: (p) => p.startsWith('/games') },
 	{ id: 'engine', label: 'Engine', icon: 'bot' },
 ];

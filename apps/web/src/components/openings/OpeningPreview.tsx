@@ -2,6 +2,8 @@
 // scrubber + clickable moves; actions Load · Fork here · ★ · Details.
 // layout 'card' = desktop panel header, 'inline' = mobile row expansion.
 import type { JSX } from 'preact';
+import { openingInfoPath } from '@/lib/openingLinks';
+import { openingIndex } from '@/state/openings';
 import { useLocation } from 'preact-iso';
 import type { OpeningEntry } from '@chess/core/openings';
 import { Button } from '@/components/common/Button';
@@ -86,7 +88,7 @@ export function OpeningPreview({ entry, layout = 'card', onClose, onOpened }: Op
 					{forkLabel}
 				</Button>
 				<IconButton icon={fav ? 'star-filled' : 'star'} label={fav ? 'Remove from favorites' : 'Add to favorites'} active={fav} size="sm" class={cx('opening-preview__star', { 'opening-preview__star--on': fav })} onClick={() => void toggleFavorite('opening', entry.id)} />
-				<Button size="sm" variant="ghost" iconRight="chevron-right" class="opening-preview__details" onClick={() => route(`/openings/${entry.id}`)}>
+				<Button size="sm" variant="ghost" iconRight="chevron-right" class="opening-preview__details" onClick={() => route(openingInfoPath(openingIndex.value!, entry))}>
 					Details
 				</Button>
 			</div>

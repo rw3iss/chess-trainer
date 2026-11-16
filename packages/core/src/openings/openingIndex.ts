@@ -3,6 +3,7 @@ import { makeFen, parseFen } from 'chessops/fen';
 import { parseUci } from 'chessops/util';
 import { INITIAL_FEN, type Uci } from '../chess/types.js';
 import { epdOf } from './id.js';
+import { assignSlugs } from './slug.js';
 import type { Continuation, GraphFile, LineMatch, NextOpening, OpeningEntry, OpeningsFile } from './types.js';
 
 /** Order for openings that share a final position: Lichess first, then shorter lines, then name. */
@@ -28,6 +29,8 @@ export class OpeningIndex {
 	private readonly endsAt = new Map<number, OpeningEntry[]>();
 	/** node → openings whose line passes through or ends at it. */
 	private readonly through = new Map<number, OpeningEntry[]>();
+	private readonly slugs = new Map<string, OpeningEntry>();
+	private readonly lines = new Map<string, OpeningEntry>();
 	/** node → nextOpenings result. */
 	private readonly nextCache = new Map<number, NextOpening[]>();
 	/** Opening family tree by move-line prefix (built on first use). */
@@ -39,6 +42,14 @@ export class OpeningIndex {
 	) {
 		this.entries = openings.openings;
 		for (const e of this.entries) this.ids.set(e.id, e);
+		// Slugs ship in the data; compute them for data that has none.
+		const missing = this.entries.some((e) => !e.slug);
+		const computed = missing ? assignSlugs(this.entries) : undefined;
+		for (const e of this.entries) {
+			this.slugs.set(e.slug ?? computed!.get(e.id)!, e);
+		}
+		// Exact move line → best opening with that line.
+		for (const e of [...this.entries].sort(compareSamePosition).reverse()) this.lines.set(e.uci.join(' '), e);
 		graph.epd.forEach((epd, i) => this.nodeByEpd.set(epd, i));
 		for (const [node, list] of Object.entries(graph.ends)) {
 			const found = list.map((id) => this.ids.get(id)).filter((e): e is OpeningEntry => !!e);
@@ -127,6 +138,23 @@ export class OpeningIndex {
 
 	byId(id: string): OpeningEntry | undefined {
 		return this.ids.get(id);
+	}
+
+	/** Opening for a URL slug. */
+	bySlug(slug: string): OpeningEntry | undefined {
+		return this.slugs.get(slug);
+	}
+
+	/** The opening's slug (from the data, or computed for older data). */
+	slugOf(entry: OpeningEntry): string {
+		if (entry.slug) return entry.slug;
+		for (const [slug, e] of this.slugs) if (e === entry) return slug;
+		return entry.id;
+	}
+
+	/** Best opening whose move line is exactly `uci` (no transpositions). */
+	byLine(uci: readonly Uci[]): OpeningEntry | undefined {
+		return this.lines.get(uci.join(' '));
 	}
 
 	all(): OpeningEntry[] {

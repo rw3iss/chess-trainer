@@ -1,4 +1,4 @@
-// /openings/:id — opening detail: header (name, ECO, family, aliases), preview
+// /openings/:slug/info — opening detail: header (name, ECO, family, aliases), preview
 // board + stepper, full move list, theory notes along the line (with
 // attribution), popularity stats, continuations, Load / Fork / ★.
 import type { JSX } from 'preact';
@@ -18,6 +18,7 @@ import { ContinuationsList, NoteBody, PlyScrubber, StatsSourceControl, compactCo
 import { isFavorite, toggleFavorite } from '@/state/favorites';
 import { loadDatasetNote, loadOpenings, markOpeningViewed, openingIndex, openingsManifest, openingsStatus, retryLoadOpenings } from '@/state/openings';
 import { cx } from '@/lib/classNames';
+import { openingInfoPath } from '@/lib/openingLinks';
 import { useUISetting } from '@/hooks/useUISetting';
 import './OpeningDetail.scss';
 
@@ -46,10 +47,10 @@ function useLineNotes(entry: OpeningEntry | null, fens: string[]): LineNote[] | 
 export default function OpeningDetail(): JSX.Element {
 	const { params } = useRoute();
 	const { route } = useLocation();
-	const id = params.id ?? '';
+	const id = decodeURIComponent(params.slug ?? '');
 	const status = openingsStatus.value;
 	const index = openingIndex.value;
-	const entry = index?.byId(id) ?? null;
+	const entry = index?.bySlug(id) ?? index?.byId(id) ?? null;
 
 	useEffect(() => {
 		if (status === 'idle') void loadOpenings();
@@ -120,7 +121,7 @@ function OpeningDetailView({ entry }: { entry: OpeningEntry }): JSX.Element {
 	const pickContinuation = (c: ContinuationItem) => {
 		const exact = index.byId(openingId([...entry.uci.slice(0, preview.ply), c.uci]));
 		const target = exact ?? c.openingIds.map((oid) => index.byId(oid)).find((e): e is OpeningEntry => !!e);
-		if (target) route(`/openings/${target.id}`);
+		if (target) route(openingInfoPath(index, target));
 	};
 
 	const p = statsFor(entry, source);
@@ -146,8 +147,7 @@ function OpeningDetailView({ entry }: { entry: OpeningEntry }): JSX.Element {
 						variant="primary"
 						icon="play"
 						onClick={() => {
-							loadOpening(entry);
-							route('/');
+							loadOpening(entry); // goes to /openings/<slug>
 						}}
 					>
 						Load

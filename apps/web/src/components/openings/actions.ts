@@ -6,11 +6,13 @@ import type { OpeningEntry } from '@chess/core/openings';
 import { activeSession, sessionsActions } from '@/state/sessions';
 import { getUISetting } from '@/lib/uiSettings';
 import { settings } from '@/state/settings';
-import { markOpeningViewed } from '@/state/openings';
+import { markOpeningViewed, openingIndex } from '@/state/openings';
+import { navigate } from '@/lib/navigate';
+import { openingPath } from '@/lib/openingLinks';
 import { toast } from '@/services/toast';
 
 /**
- * Load an opening: new session, or reuse the active untouched opening session (setting).
+ * Load an opening (and go to its address, /openings/<slug>): new session, or reuse the active untouched opening session (setting).
  * The board turns to the opening's side unless "Flip board" (UI setting) is off: then it keeps
  * the active session's orientation.
  */
@@ -23,6 +25,9 @@ export function loadOpening(entry: OpeningEntry): Session {
 	});
 	markOpeningViewed(entry.id);
 	toast.info(`Loaded ${entry.name}`, { id: 'opening-load' });
+	// The address follows the loaded opening (/openings/<slug>), so it can be shared or bookmarked.
+	const index = openingIndex.value;
+	if (index) navigate(openingPath(index, entry));
 	return s;
 }
 

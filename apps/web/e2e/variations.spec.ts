@@ -15,7 +15,7 @@ test('variations section: built-on chain, expand, load a variation', async ({ pa
 	await expect(first).toBeVisible({ timeout: 30_000 });
 	await page.locator('.opening-row__main').first().click();
 	await page.getByRole('button', { name: 'Load', exact: true }).click();
-	await expect(page).toHaveURL(/\/$/);
+	await expect(page).toHaveURL(/\/openings\/[a-z0-9-]+$/);
 	const najdorf = await openingIdOf(page);
 
 	const section = page.getByRole('region', { name: 'Opening variations' });
@@ -50,7 +50,7 @@ test('keep position (default on, persisted): a variation loads at the same move;
 	await page.goto('/openings?q=sicilian%20najdorf');
 	await page.locator('.opening-row__main').first().click({ timeout: 30_000 });
 	await page.getByRole('button', { name: 'Load', exact: true }).click();
-	await expect(page).toHaveURL(/\/$/);
+	await expect(page).toHaveURL(/\/openings\/[a-z0-9-]+$/);
 	const section = page.getByRole('region', { name: 'Opening variations' });
 	const keep = section.getByRole('switch', { name: 'Keep position' });
 
@@ -140,7 +140,7 @@ test('flip board (default on, persisted): off keeps the board side when a variat
 	await page.goto('/openings?q=sicilian%20najdorf');
 	await page.locator('.opening-row__main').first().click({ timeout: 30_000 });
 	await page.getByRole('button', { name: 'Load', exact: true }).click();
-	await expect(page).toHaveURL(/\/$/);
+	await expect(page).toHaveURL(/\/openings\/[a-z0-9-]+$/);
 	expect(await orientation()).toBe('black'); // the Najdorf is a Black opening
 	const section = page.getByRole('region', { name: 'Opening variations' });
 	const flip = section.getByRole('switch', { name: 'Flip board' });
@@ -177,7 +177,7 @@ test('clear board: start position, no moves, no opening; variations list the ope
 	await page.goto('/openings?q=sicilian%20najdorf');
 	await page.locator('.opening-row__main').first().click({ timeout: 30_000 });
 	await page.getByRole('button', { name: 'Load', exact: true }).click();
-	await expect(page).toHaveURL(/\/$/);
+	await expect(page).toHaveURL(/\/openings\/[a-z0-9-]+$/);
 	const clear = page.getByRole('button', { name: 'Clear board' });
 	await expect(clear).toBeEnabled();
 

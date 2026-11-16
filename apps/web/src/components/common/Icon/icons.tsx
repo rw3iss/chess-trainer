@@ -9,7 +9,7 @@ export const ICON_NAMES = [
 	'chevron-left', 'chevron-right', 'more', 'plus', 'minus', 'trash', 'edit', 'note', 'check',
 	'info', 'warning', 'board', 'book', 'games', 'sessions', 'sun', 'moon', 'monitor', 'wifi-off',
 	'server', 'download', 'upload', 'copy', 'external', 'filter', 'sort', 'clock', 'user', 'undo',
-	'redo', 'promote', 'eye', 'knight', 'speed', 'home', 'grid', 'list', 'logo',
+	'redo', 'promote', 'eye', 'knight', 'speed', 'home', 'grid', 'list', 'logo', 'share',
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];
@@ -176,6 +176,15 @@ export const ICONS: Record<IconName, () => JSX.Element> = {
 		<>
 			<rect x="8" y="8" width="14" height="14" rx="2" />
 			<path d="M4 16a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2" />
+		</>
+	),
+	share: () => (
+		<>
+			<circle cx="18" cy="5" r="3" />
+			<circle cx="6" cy="12" r="3" />
+			<circle cx="18" cy="19" r="3" />
+			<path d="m8.6 13.5 6.8 4" />
+			<path d="m15.4 6.5-6.8 4" />
 		</>
 	),
 	external: () => p('M15 3h6v6', 'M10 14 21 3', 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'),

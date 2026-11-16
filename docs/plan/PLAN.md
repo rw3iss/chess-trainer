@@ -151,7 +151,7 @@ Rules:
 |---|---|
 | `/` | Moves of active session (or "start" card: new game / browse openings) |
 | `/openings` `?q&color&eco&sort&fav` | Openings browser |
-| `/openings/:id` | Opening detail (preview board, moves, notes, stats, Load / Fork) |
+| `/openings/:slug/info` | Opening detail (preview board, moves, notes, stats, Load / Fork) |
 | `/games` `?q&fav&sort` | Saved games |
 | `/sessions` | Current open games |
 | `/settings/:section` | app, board, pieces, engines, clock, server, data |

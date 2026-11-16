@@ -38,7 +38,7 @@ test('openings: search, favorite, load, play, step back, fork', async ({ page })
 	// Desktop: the preview card shows the selection; mobile: the row expands inline.
 	await page.locator('.opening-row__main').first().click();
 	await page.getByRole('button', { name: 'Load', exact: true }).click();
-	await expect(page).toHaveURL(/\/$/);
+	await expect(page).toHaveURL(/\/openings\/[a-z0-9-]+$/);
 	expect(await active(page)).toMatchObject({ kind: 'opening', openingId, count: 1 });
 
 	// Play at fast, then pause.
@@ -81,7 +81,7 @@ test('openings: SAN search, URL state survives back/forward, detail page', async
 
 	await page.locator('.opening-row__main').first().click();
 	await page.getByRole('button', { name: 'Details' }).first().click();
-	await expect(page).toHaveURL(/\/openings\/[0-9a-z]+$/);
+	await expect(page).toHaveURL(/\/openings\/[a-z0-9-]+\/info$/);
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 	await expect(page.getByRole('region', { name: 'Continuations' }).or(page.locator('.continuations')).first()).toBeVisible();
 });

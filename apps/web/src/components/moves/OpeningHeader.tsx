@@ -12,6 +12,9 @@ import { openingIdentifier, type OpeningIdentifier } from '@/state/openingIdenti
 import { openingIndex } from '@/state/openings';
 import { useUISetting } from '@/hooks/useUISetting';
 import { extraLabel } from '@/lib/format';
+import { shareLink } from '@/lib/openingLinks';
+import { IconButton } from '@/components/common/IconButton';
+import { toast } from '@/services/toast';
 import { moveNumber } from './moveLayout';
 import { WdlBar } from './WdlBar';
 import './OpeningHeader.scss';
@@ -77,12 +80,33 @@ export function OpeningHeader({ session, identify }: OpeningHeaderProps): JSX.El
 			<div class="opening-header__top">
 				{entry ? <Chip label={entry.eco} mono size="sm" tone="accent" title={`ECO ${entry.eco}`} /> : <span class="opening-header__eyebrow">{atRoot ? 'Position' : 'Opening'}</span>}
 				<span class="opening-header__meta">{meta}</span>
+				<ShareButton session={session} />
 			</div>
 			{title}
 			{entry?.aliases?.length ? <Aliases aliases={entry.aliases} /> : null}
 			{stats && <WdlBar white={stats.white} draws={stats.draws} black={stats.black} games={stats.games} source={STATS_SOURCE_LABELS[source]} />}
 		</header>
 	);
+}
+
+/**
+ * Copy a link to the current line: the opening's link when the moves are exactly a named opening,
+ * else a reversible code of the moves (/openings/~…). Hidden until there are moves.
+ */
+function ShareButton({ session }: { session: Session }): JSX.Element | null {
+	const link = shareLink(openingIndex.value, session);
+	if (!link) return null;
+	const share = async () => {
+		const url = location.origin + link.path;
+		const what = link.opening ? link.opening.name : 'this line';
+		try {
+			await navigator.clipboard.writeText(url);
+			toast.success(`Link to ${what} copied`, { id: 'share-link' });
+		} catch {
+			toast.show({ message: `Copy this link: ${url}`, id: 'share-link' });
+		}
+	};
+	return <IconButton icon="share" label={link.opening ? `Copy link to ${link.opening.name}` : 'Copy link to this line'} size="sm" class="opening-header__share" onClick={() => void share()} />;
 }
 
 const MAX_ALIASES = 3;

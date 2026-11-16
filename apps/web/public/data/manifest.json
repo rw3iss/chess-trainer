@@ -1,6 +1,6 @@
 {
 	"version": 1,
-	"generatedAt": "2026-11-16T03:42:53.840Z",
+	"generatedAt": "2026-11-16T04:17:25.753Z",
 	"counts": {
 		"openings": 12355,
 		"positions": 15909,
@@ -8,7 +8,7 @@
 		"withPopularity": 12355
 	},
 	"files": {
-		"openings": "openings.v1.042b711b.json",
+		"openings": "openings.v1.6879cf4f.json",
 		"graph": "graph.v1.fd098996.json",
 		"notes": {
 			"A": "notes.v1.A.da09518b.json",

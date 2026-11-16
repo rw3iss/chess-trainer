@@ -1,6 +1,7 @@
 // Tree mode: continuations from the ACTIVE session's current position (book +
 // live explorer). Clicking a move plays it in the active session (or starts one).
 import type { JSX } from 'preact';
+import { openingInfoPath } from '@/lib/openingLinks';
 import { useMemo } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
 import { INITIAL_FEN, getNode } from '@chess/core/chess';
@@ -46,7 +47,7 @@ export function OpeningsTree(): JSX.Element {
 					<ul class="openings-tree__list">
 						{lines.map((e) => (
 							<li key={e.id}>
-								<button type="button" class="openings-tree__line" onClick={() => route(`/openings/${e.id}`)}>
+								<button type="button" class="openings-tree__line" onClick={() => route(openingInfoPath(openingIndex.value!, e))}>
 									<span class="openings-tree__eco">{e.eco}</span>
 									<span class="openings-tree__name">{e.name}</span>
 									<span class="openings-tree__moves">{sanLine(e.san, 10)}</span>

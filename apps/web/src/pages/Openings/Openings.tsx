@@ -9,6 +9,9 @@ import { VirtualList } from '@/components/common/VirtualList';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Spinner } from '@/components/common/Spinner';
 import { Button } from '@/components/common/Button';
+import { Icon } from '@/components/common/Icon';
+import { IconButton } from '@/components/common/IconButton';
+import { LINE_PREFIX, isBoardLinkPath } from '@/lib/openingLinks';
 import { Tabs } from '@/components/common/Tabs';
 import {
 	FamilyRow,
@@ -146,7 +149,12 @@ export default function Openings(): JSX.Element {
 	};
 	const toggleFav = useCallback((e: OpeningEntry) => void toggleFavorite('opening', e.id), []);
 	const toggleFamily = useCallback((f: string) => setExpandedList((cur) => (cur.includes(f) ? cur.filter((x) => x !== f) : [...cur, f])), [setExpandedList]);
-	const opened = () => route('/');
+	// Load already went to the opening's address (/openings/<slug>); a fork goes to the board.
+	const opened = () => {
+		if (!isBoardLinkPath(location.pathname)) route('/');
+	};
+	// Set by /openings/<slug> when the link did not resolve.
+	const missing = query.missing;
 
 	// ↑/↓ move the selection from the search box; Enter loads it.
 	const onSearchKeyDown = (e: KeyboardEvent) => {
@@ -258,6 +266,15 @@ export default function Openings(): JSX.Element {
 	return (
 		<div class="openings-page">
 			<header class="openings-page__head">{tabs}</header>
+			{missing && (
+				<div class="openings-page__missing" role="alert">
+					<Icon name="warning" size={16} />
+					<span>
+						{missing.startsWith(LINE_PREFIX) ? 'That shared line link is invalid.' : <>No opening found for “{missing}”.</>} Pick one from the list below.
+					</span>
+					<IconButton icon="close" label="Dismiss" size="sm" onClick={() => route(viewStateUrl(state), true)} />
+				</div>
+			)}
 			<OpeningsToolbar
 				state={state}
 				onChange={onChange}

@@ -12,7 +12,8 @@ Add a row for every new page, shared component, hook, utility, store, service or
 | Home | `src/pages/Home/` | `/` — MovesPanel for the active session, or StartCard (New game / Browse openings / Resume) | built |
 | Sessions | `src/pages/Sessions/` | `/sessions` — grid of SessionCards; open → active + `/`; close | built, layout `wide` |
 | Openings | `src/pages/Openings/` | `/openings` — browser: search, filters, sort, group by family, virtual list, preview (desktop card / mobile inline), Browse ⇄ Tree tabs; view state in the URL (`?q&color&eco&family&len&notes&fav&sort&group&view`) | built, layout `sheet` |
-| OpeningDetail | `src/pages/OpeningDetail/` | `/openings/:id` — header, mini board + stepper, MoveList, theory notes along the line, popularity from the selected stats provider (+ StatsSourceControl; other provider's game count on its own labeled line, never summed), continuations, Load / Fork / ★ | built, layout `sheet` |
+| OpeningLink | `src/pages/OpeningLink/` | `/openings/:slug` — deep link: resolves slug / old id / `~line code` (`resolveLink`), loads it once per address (keeps the session while the user plays on), follows the active session when it changes; bad link → `/openings?missing=…` (notice on the Openings page). Renders MovesPanel | built, layout `panel` |
+| OpeningDetail | `src/pages/OpeningDetail/` | `/openings/:slug/info` (slug or id) — header, mini board + stepper, MoveList, theory notes along the line, popularity from the selected stats provider (+ StatsSourceControl; other provider's game count on its own labeled line, never summed), continuations, Load / Fork / ★ | built, layout `sheet` |
 | Games | `src/pages/Games/` | `/games?q&fav&sort&source&mode&result` — saved games: search, ★, sort, filters, VirtualList of GameRows, import/export PGN, empty state | built |
 | Settings | `src/pages/Settings/` | `/settings/:section` — sections App · Board · Pieces · Theme editor · Engines · Clock · Server · Data (registry `sections.ts`; desktop nav beside content, mobile list → section) | built, layout `wide` |
 | SettingsGroup / SettingsRow / SectionHeader | `src/pages/Settings/SettingsLayout.tsx` | titled card group, label + control row (`stacked` for wide controls), section heading | settings-like forms |
@@ -76,7 +77,7 @@ Routes + layouts + panel tabs: `src/app/routes.ts`.
 | MovesPanel | feature | `src/components/moves/MovesPanel.tsx` | OpeningHeader + MoveList + "Clear board" (`sessionsActions.clear`; undo toast; orientation follows `openings.flipBoard`) + NotesCard + NoteEditorModal for a session | `/` panel |
 | MoveList | feature | `src/components/moves/MoveList.tsx` | SAN pairs, figurines, variations, comments/notes, current + auto-scroll, context menu (fork/delete/promote/note) | any move tree display (pass `actions`) |
 | moveLayout | util | `src/components/moves/moveLayout.ts` | pure tree → rows/variation blocks/line tokens; `moveNumber`, `isWhiteMove` | move lists, PGN previews |
-| OpeningHeader | feature | `src/components/moves/OpeningHeader.tsx` | live opening name (ECO chip, family/variation, "custom +N" badge after moves past it, "Also called" aliases (max 3), W/D/L from the selected stats provider) via `identify` prop or `openingIdentifier` | opening preview headers |
+| OpeningHeader | feature | `src/components/moves/OpeningHeader.tsx` | live opening name (ECO chip, family/variation, "custom +N" badge after moves past it, Share (copy link) button, "Also called" aliases (max 3), W/D/L from the selected stats provider) via `identify` prop or `openingIdentifier` | opening preview headers |
 | WdlBar | feature | `src/components/moves/WdlBar.tsx` | white/draw/black % bar + game count; optional `source` label ('Lichess · 1.2M games') | popularity, explorer |
 | NotesCard | feature | `src/components/moves/NotesCard.tsx` | per-position (EPD) user note editor (debounced autosave) + dataset notes slot | opening detail |
 | notesSlots | slot | `src/components/moves/notesSlots.ts` | `notesSlots.dataset` ({ epd, fen }) | Wikibooks notes |
@@ -195,6 +196,8 @@ Routes + layouts + panel tabs: `src/app/routes.ts`.
 | useLongPress | `src/hooks/useLongPress.ts` | touch long-press handlers (500 ms, 8 px) | mobile context menus |
 | throttle / debounce | `src/lib/throttle.ts` | 100 ms default throttle; debounce with flush/cancel/pending | input/scroll handlers, autosave |
 | cx | `src/lib/classNames.ts` | class-name joiner | all components |
+| openingPath / openingInfoPath / linePath / resolveLink / shareLink / sessionLine / pathForSession / isBoardLinkPath | `src/lib/openingLinks.ts` | opening + line deep links; share target (opening when the moves are exactly one, else line code) | loadOpening, OpeningLink, OpeningHeader share, routes |
+| navigate | `src/lib/navigate.ts` | push/replace a path outside components (popstate for preact-iso) | loadOpening, OpeningLink, MovesPanel |
 | formatRelativeTime / moveNumberLabel / figurineSan / describeMove / extraLabel | `src/lib/format.ts` | display formatting | lists, cards |
 | isHexColor / normalizeHex / luminance / readableOn | `src/lib/color.ts` | colour math | pickers, accent fg |
 | uiStorage / cacheStorage / Storage | `src/lib/storage.ts` | sync key/value over localStorage | UI state |

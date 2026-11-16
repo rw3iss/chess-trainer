@@ -27,6 +27,8 @@ export interface OpeningPopularity extends ProviderStats {
 export interface OpeningEntry {
 	/** Stable id: short hash of the UCI line. Survives dataset updates. */
 	id: string;
+	/** URL slug from the name, unique ("-2", "-3" for repeated names; see assignSlugs). Older data: computed by OpeningIndex. */
+	slug?: string;
 	name: string;
 	/** Name before ':' (e.g. 'Sicilian Defense'). */
 	family: string;

@@ -5,6 +5,8 @@ import type { JSX } from 'preact';
 import { ROOT_ID, getNode } from '@chess/core/chess';
 import { Button } from '@/components/common/Button';
 import { getUISetting } from '@/lib/uiSettings';
+import { navigate } from '@/lib/navigate';
+import { isBoardLinkPath } from '@/lib/openingLinks';
 import type { Session } from '@chess/core/game';
 import { sessionsActions } from '@/state/sessions';
 import { describeMove } from '@/lib/format';
@@ -43,6 +45,8 @@ export function MovesPanel({ session }: { session: Session }): JSX.Element {
 		const before = session;
 		// "Flip board" on → back to White's side (as a new game); off → keep the current side.
 		sessionsActions.clear(session.id, { orientation: getUISetting('openings.flipBoard') ? 'white' : session.orientation });
+		// No opening any more: leave its address.
+		if (isBoardLinkPath(location.pathname)) navigate('/', { replace: true });
 		toast.show({
 			message: 'Board cleared',
 			action: { label: 'Undo', onClick: () => sessionsActions.replace(before) },

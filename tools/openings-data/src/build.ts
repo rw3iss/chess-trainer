@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
-import { notesChunkOf, type NotesFile, type OpeningsFile, type OpeningsManifest } from './core.js';
+import { assignSlugs, notesChunkOf, type NotesFile, type OpeningsFile, type OpeningsManifest } from './core.js';
 import { downloadSources } from './download.js';
 import { buildGraph } from './graph.js';
 import { mergeOpenings, type MergedOpening } from './merge.js';
@@ -69,6 +69,9 @@ async function main() {
 	if (missing) console.log(`${missing} openings have no stats yet — run \`pnpm data:popularity\` (or data:ingest), then build again`);
 
 	const withPopularity = attachPopularity(openings);
+	// URL slugs (unique; repeated names get -2, -3 …).
+	const slugs = assignSlugs(openings.map((o) => o.entry));
+	for (const { entry } of openings) entry.slug = slugs.get(entry.id)!;
 
 	// Notes: keyed by EPD, chunked by the smallest ECO letter among openings through that position.
 	const notes = buildNotes(collectPrefixes(openings), loadNotesCache());

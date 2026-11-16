@@ -39,3 +39,4 @@ export {
 } from './tree.js';
 export { treeToPgn, pgnToGames } from './pgn.js';
 export { capturedPieces, PIECE_VALUES, type CapturedPieces } from './material.js';
+export { encodeLine, decodeLine } from './lineCode.js';

@@ -4,6 +4,7 @@
  */
 export { openingId, splitName } from '../../../packages/core/src/openings/id.js';
 export { notesChunkOf } from '../../../packages/core/src/openings/openingIndex.js';
+export { assignSlugs } from '../../../packages/core/src/openings/slug.js';
 export type {
 	GraphFile,
 	NotesFile,
