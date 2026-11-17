@@ -6,7 +6,9 @@ import { ROOT_ID, getNode } from '@chess/core/chess';
 import { Button } from '@/components/common/Button';
 import { getUISetting } from '@/lib/uiSettings';
 import { navigate } from '@/lib/navigate';
-import { isBoardLinkPath } from '@/lib/openingLinks';
+import { isBoardLinkPath, openingPath, shareLink } from '@/lib/openingLinks';
+import { openingIndex } from '@/state/openings';
+import { lineStatus } from '@/components/openings/lineStatus';
 import type { Session } from '@chess/core/game';
 import { sessionsActions } from '@/state/sessions';
 import { describeMove } from '@/lib/format';
@@ -33,6 +35,27 @@ export function MovesPanel({ session }: { session: Session }): JSX.Element {
 			sessionsActions.deleteFrom(id, session.id);
 			toast.show({
 				message: 'Moves deleted',
+				action: { label: 'Undo', onClick: () => sessionsActions.replace(before) },
+			});
+		},
+		loadFrom: (id) => {
+			const before = session;
+			const index = openingIndex.value;
+			const onLink = isBoardLinkPath(location.pathname);
+			// The opening the shorter line reaches (its "built on") becomes the session's opening.
+			const st = index ? lineStatus(index, session.tree, id) : undefined;
+			const exact = st?.base && st.extra === 0 ? st.base : undefined;
+			const source =
+				session.source.kind === 'opening' && st?.base
+					? { openingId: st.base.id }
+					: onLink && exact
+						? { kind: 'opening' as const, openingId: exact.id }
+						: undefined;
+			const next = sessionsActions.cutAfter(id, session.id, { source });
+			// On a board link: the address follows the shorter line (its opening, or its line code).
+			if (next && onLink) navigate(exact && index ? openingPath(index, exact) : (shareLink(index, next)?.path ?? '/'), { replace: true });
+			toast.show({
+				message: `Loaded from ${describeMove(session.tree.nodes[id]!.ply, session.tree.nodes[id]!.san)}`,
 				action: { label: 'Undo', onClick: () => sessionsActions.replace(before) },
 			});
 		},

@@ -322,6 +322,23 @@ export const sessionsActions = {
 		});
 	},
 
+	/**
+	 * "Load from here": keep the line up to nodeId, delete every move after it (its subtree;
+	 * earlier side variations stay) and put the cursor on it. `source` patches the session source
+	 * (e.g. the opening the shorter line now matches).
+	 */
+	cutAfter(nodeId: string, id?: string, opts: { source?: Partial<Session['source']> } = {}): Session | null {
+		userAction(id, 'edit');
+		return apply(id, (s) => {
+			const node = s.tree.nodes[nodeId];
+			if (!node) return s;
+			let tree = s.tree;
+			for (const child of node.children) tree = deleteFrom(tree, child);
+			const source = opts.source ? { ...s.source, ...opts.source } : s.source;
+			return sessionUpdate(s, { tree, cursor: nodeId, source, dirty: tree !== s.tree || s.dirty });
+		});
+	},
+
 	promoteVariation(nodeId: string, id?: string): Session | null {
 		return apply(id, (s) => (s.tree.nodes[nodeId] ? sessionUpdate(s, { tree: promoteVariation(s.tree, nodeId), dirty: true }) : s));
 	},

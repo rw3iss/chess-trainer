@@ -35,6 +35,24 @@ describe('MoveList', () => {
 		expect(a.fork).toHaveBeenCalledWith(e5);
 	});
 
+	it('"Load from here": hover button on main-line moves followed by more moves, and a menu item', () => {
+		const a = { ...actions(), loadFrom: vi.fn() };
+		render(<MoveList session={{ tree, cursor: 'root' }} actions={a} />);
+		// e4 and e5 have later moves; Nf3 is the last move (nothing to cut).
+		expect(screen.queryByRole('button', { name: 'Load from Nf3' })).toBeNull();
+		fireEvent.click(screen.getByRole('button', { name: 'Load from e5' }));
+		expect(a.loadFrom).toHaveBeenCalledWith(e5);
+		expect(a.goto).not.toHaveBeenCalled();
+		fireEvent.contextMenu(screen.getByText('e5'), { clientX: 10, clientY: 10 });
+		fireEvent.click(screen.getByText('Load from here'));
+		expect(a.loadFrom).toHaveBeenCalledTimes(2);
+	});
+
+	it('no "Load from here" without the action', () => {
+		render(<MoveList session={{ tree, cursor: 'root' }} actions={actions()} />);
+		expect(screen.queryByRole('button', { name: /^Load from/ })).toBeNull();
+	});
+
 	it('shows a hint for an empty tree', () => {
 		render(<MoveList session={{ tree: treeFromUci([]), cursor: 'root' }} actions={actions()} />);
 		expect(screen.getByText(/Make a move/)).toBeTruthy();

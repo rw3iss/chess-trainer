@@ -116,6 +116,57 @@
 	}
 }
 
+.move-cell {
+	position: relative;
+	display: flex;
+	min-width: 0;
+
+	> .move {
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__load {
+		position: absolute;
+		top: 50%;
+		right: var(--space-2);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 22px;
+		height: 22px;
+		border-radius: var(--radius-full);
+		background: var(--color-surface-1);
+		border: 1px solid var(--color-border-strong);
+		color: var(--color-text-muted);
+		box-shadow: var(--shadow-sm);
+		cursor: pointer;
+		opacity: 0;
+		pointer-events: none;
+		transform: translateY(-50%) scale(0.9);
+		transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+
+		&:hover {
+			color: var(--color-accent-text);
+			border-color: var(--color-accent);
+		}
+	}
+
+	&:hover &__load,
+	&:focus-within &__load {
+		opacity: 1;
+		pointer-events: auto;
+		transform: translateY(-50%) scale(1);
+	}
+
+	// Touch: no hover; the move's menu (long-press) has "Load from here".
+	@media (hover: none) {
+		&__load {
+			display: none;
+		}
+	}
+}
+
 .move-block {
 	padding: var(--space-2) var(--space-3) var(--space-2) 44px;
 	font-size: var(--text-sm);

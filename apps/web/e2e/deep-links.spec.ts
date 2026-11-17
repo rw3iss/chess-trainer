@@ -11,10 +11,11 @@ type Handle = {
 const NAJDORF = 'sicilian-defense-najdorf-variation';
 
 const active = (page: Page) => page.evaluate(() => (window as unknown as { __chess: Handle }).__chess.activeSession.value);
-/** Moves of the active session's main line. */
+/** Moves of the active session's main line (null until a session is open, so polls retry). */
 const mainLine = (page: Page) =>
 	page.evaluate(() => {
-		const s = (window as unknown as { __chess: Handle }).__chess.activeSession.value!;
+		const s = (window as unknown as { __chess: Handle }).__chess.activeSession.value;
+		if (!s) return null;
 		const out: string[] = [];
 		let n = s.tree.nodes.root!;
 		while (n.children.length) {

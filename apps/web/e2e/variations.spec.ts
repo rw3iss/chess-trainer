@@ -194,3 +194,42 @@ test('clear board: start position, no moves, no opening; variations list the ope
 	await page.getByRole('button', { name: 'Undo' }).click();
 	await expect.poll(state).toMatchObject({ kind: 'opening', title: 'Sicilian Defense: Najdorf Variation' });
 });
+
+test('load from here: hover a move, cut the moves after it; opening, built-on, variations and URL follow; undo', async ({ page }, info) => {
+	type S = { title: string; cursor: string; tree: { nodes: Record<string, { ply: number; children: string[] }> } };
+	const state = () =>
+		page.evaluate(() => {
+			const s = (window as unknown as { __chess: { activeSession: { value: S | null } } }).__chess.activeSession.value!;
+			return { title: s.title, plies: Object.keys(s.tree.nodes).length - 1, ply: s.tree.nodes[s.cursor]!.ply };
+		});
+	await page.goto('/openings?q=sicilian%20najdorf');
+	await page.locator('.opening-row__main').first().click({ timeout: 30_000 });
+	await page.getByRole('button', { name: 'Load', exact: true }).click();
+	await expect(page).toHaveURL(/\/openings\/sicilian-defense-najdorf-variation$/);
+	await expect.poll(state).toMatchObject({ title: 'Sicilian Defense: Najdorf Variation', plies: 10 });
+
+	// Hover 2.d6 (ply 4) and load from it: 6 moves go, the cursor is on d6.
+	const d6 = page.locator('.move-list .move-cell').filter({ hasText: /^d6$/ }).first();
+	if (info.project.name === 'mobile') {
+		// Touch: no hover button; the move's menu has "Load from here".
+		await expect(d6.getByRole('button', { name: 'Load from d6' })).toBeHidden();
+		await d6.locator('.move').dispatchEvent('contextmenu', { clientX: 10, clientY: 10 });
+		await page.getByRole('menuitem', { name: 'Load from here' }).click();
+	} else {
+		await d6.hover();
+		await d6.getByRole('button', { name: 'Load from d6' }).click();
+	}
+	await expect.poll(state).toMatchObject({ plies: 4, ply: 4 });
+	await expect.poll(async () => (await state()).title).not.toContain('Najdorf');
+	await expect(page.locator('.opening-header')).not.toContainText('Najdorf');
+	await expect(page.locator('.opening-header__custom')).toHaveCount(0);
+	const section = page.getByRole('region', { name: 'Opening variations' });
+	await expect(section.locator('.opening-vars__crumb--current')).toBeVisible();
+	await expect(section.locator('.opening-vars__head')).toContainText('Variations');
+	await expect(page).not.toHaveURL(/najdorf/);
+	await expect(page).toHaveURL(/\/openings\/sicilian-defense/);
+
+	// Undo brings the moves back.
+	await page.getByRole('button', { name: 'Undo' }).click();
+	await expect.poll(state).toMatchObject({ plies: 10, title: 'Sicilian Defense: Najdorf Variation' });
+});

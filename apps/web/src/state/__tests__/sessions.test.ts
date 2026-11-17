@@ -111,6 +111,28 @@ describe('sessions store', () => {
 		expect(activeSession.value!.tree.nodes[c5]).toBeUndefined();
 	});
 
+	it('cutAfter keeps the line up to a move, drops the moves after it and earlier variations stay', () => {
+		sessionsActions.newSession();
+		sessionsActions.move('e2e4');
+		const e4 = activeSession.value!.cursor;
+		sessionsActions.move('e7e5');
+		const e5 = activeSession.value!.cursor;
+		sessionsActions.move('g1f3');
+		sessionsActions.move('b8c6');
+		const nc6 = activeSession.value!.cursor;
+		sessionsActions.goto(e4);
+		sessionsActions.move('c7c5'); // side variation before the cut
+		const c5 = activeSession.value!.cursor;
+		sessionsActions.cutAfter(e5, undefined, { source: { openingId: 'x' } });
+		const s = activeSession.value!;
+		expect(s.cursor).toBe(e5);
+		expect(getNode(s.tree, e5).children).toEqual([]);
+		expect(s.tree.nodes[nc6]).toBeUndefined();
+		expect(s.tree.nodes[c5]).toBeDefined();
+		expect(s.source.openingId).toBe('x');
+		expect(s.dirty).toBe(true);
+	});
+
 	it('reuses an untouched opening session when loading another opening', () => {
 		const first = sessionsActions.fromOpening(SICILIAN);
 		const second = sessionsActions.fromOpening({ ...SICILIAN, id: 'x', name: 'French', uci: ['e2e4', 'e7e6'] }, { reuseUntouched: true });

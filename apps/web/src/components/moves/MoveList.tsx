@@ -1,7 +1,8 @@
 // MoveList — two-column SAN pairs with move numbers, figurines, variations
 // (indented blocks, nested ones inline in parens), comments + user notes inline,
 // current move highlighted + auto-scrolled, click to jump, context menu
-// (right-click / long-press): fork here, delete from here, promote, add/edit note.
+// (right-click / long-press): load from here, fork here, delete from here, promote, add/edit note.
+// Main-line moves with later moves show a "Load from here" button on hover (cuts the moves after it).
 import { useEffect, useMemo, useRef } from 'preact/hooks';
 import type { JSX } from 'preact';
 import { isOnMainline, type MoveNode, type MoveTree } from '@chess/core/chess';
@@ -11,6 +12,7 @@ import { useContextMenu } from '@/components/common/ContextMenu';
 import { useLongPress } from '@/hooks/useLongPress';
 import { figurineSan } from '@/lib/format';
 import { cx } from '@/lib/classNames';
+import { Icon } from '@/components/common/Icon';
 import { layoutLine, layoutMainline } from './moveLayout';
 import './MoveList.scss';
 
@@ -18,6 +20,8 @@ export interface MoveListActions {
 	goto(nodeId: string): void;
 	fork(nodeId: string): void;
 	deleteFrom(nodeId: string): void;
+	/** Keep the line up to nodeId, drop the moves after it. Absent → no button / menu item. */
+	loadFrom?(nodeId: string): void;
 	promote(nodeId: string): void;
 	editNote(nodeId: string): void;
 }
@@ -42,6 +46,7 @@ interface MoveCtx {
 	onPick(id: string): void;
 	onMenu(e: { clientX: number; clientY: number }, node: MoveNode): void;
 	onEditNote(id: string): void;
+	onLoadFrom?(id: string): void;
 }
 
 /** SAN with the leading piece letter as a (slightly larger) figurine glyph. */
@@ -55,6 +60,29 @@ function SanText({ san, figurines }: { san: string; figurines: boolean }): JSX.E
 			</span>
 			<span class="visually-hidden">{san[0]}</span>
 			{fig.slice(1)}
+		</span>
+	);
+}
+
+/** Main-line cell: the move plus a hover "Load from here" button when moves follow it. */
+function MoveCell({ node, ctx }: { node: MoveNode; ctx: MoveCtx }): JSX.Element {
+	const load = ctx.onLoadFrom && node.children.length > 0 ? ctx.onLoadFrom : undefined;
+	if (!load) return <MoveButton node={node} ctx={ctx} cell />;
+	return (
+		<span class="move-cell">
+			<MoveButton node={node} ctx={ctx} cell />
+			<button
+				type="button"
+				class="move-cell__load"
+				title={`Load from ${node.san}: remove the moves after it`}
+				aria-label={`Load from ${node.san}`}
+				onClick={(e) => {
+					e.stopPropagation();
+					load(node.id);
+				}}
+			>
+				<Icon name="rewind" size={14} />
+			</button>
 		</span>
 	);
 }
@@ -132,6 +160,7 @@ export function MoveList({ session, actions, figurines = true, class: className 
 		figurines,
 		onPick: actions.goto,
 		onEditNote: actions.editNote,
+		onLoadFrom: actions.loadFrom,
 		onMenu: (pt, node) => {
 			const mainline = isOnMainline(tree, node.id);
 			const parent = node.parentId ? tree.nodes[node.parentId] : undefined;
@@ -139,6 +168,7 @@ export function MoveList({ session, actions, figurines = true, class: className 
 			const menuItems: MenuItem[] = [
 				{ heading: `${node.san}` },
 				{ id: 'goto', label: 'Go to move', icon: 'eye', onSelect: () => actions.goto(node.id) },
+				...(actions.loadFrom ? [{ id: 'load', label: 'Load from here', icon: 'rewind', disabled: !node.children.length, onSelect: () => actions.loadFrom!(node.id) } as MenuItem] : []),
 				{ id: 'fork', label: 'Fork here', icon: 'fork', onSelect: () => actions.fork(node.id) },
 				{ id: 'note', label: node.userNote ? 'Edit note' : 'Add note', icon: 'note', onSelect: () => actions.editNote(node.id) },
 				{ id: 'promote', label: 'Promote variation', icon: 'promote', disabled: mainline && isFirstChild, onSelect: () => actions.promote(node.id) },
@@ -164,8 +194,8 @@ export function MoveList({ session, actions, figurines = true, class: className 
 					return (
 						<div class="move-row" role="listitem" key={`r-${i}`}>
 							<span class="move-row__num">{it.num}</span>
-							{it.white ? <MoveButton node={it.white} ctx={ctx} cell /> : <span class="move-row__elided">…</span>}
-							{it.black ? <MoveButton node={it.black} ctx={ctx} cell /> : <span class="move-row__empty" />}
+							{it.white ? <MoveCell node={it.white} ctx={ctx} /> : <span class="move-row__elided">…</span>}
+							{it.black ? <MoveCell node={it.black} ctx={ctx} /> : <span class="move-row__empty" />}
 						</div>
 					);
 				}
