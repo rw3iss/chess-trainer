@@ -11,6 +11,7 @@ import type { Session } from '@chess/core/game';
 import { statsFor, type NextOpening, type OpeningEntry, type OpeningIndex } from '@chess/core/openings';
 import { Icon } from '@/components/common/Icon';
 import { Toggle } from '@/components/common/Toggle';
+import { Tooltip } from '@/components/common/Tooltip';
 import { useUISetting } from '@/hooks/useUISetting';
 import { sessionsActions } from '@/state/sessions';
 import { openingIndex } from '@/state/openings';
@@ -20,6 +21,9 @@ import { relativeName, sanLineFrom, statsLabel } from './format';
 import { extraLabel } from '@/lib/format';
 import { sessionLineStatus } from './lineStatus';
 import './OpeningVariations.scss';
+
+const FLIP_TIP = "On: loading an opening or variation turns the board to that opening's side. Off: the board stays as it is.";
+const KEEP_TIP = 'On: a variation loads at the move you are on (at the end of the line, it plays its next move). Off: it loads at the start.';
 
 /** Parent for the list at the start position (no opening yet): names show in full. */
 const START = { id: '', name: '', plies: 0 } as OpeningEntry;
@@ -182,8 +186,12 @@ export function OpeningVariations({ session }: { session: Session }): JSX.Elemen
 	const onLoad = (entry: OpeningEntry) => loadFromPanel(entry, session, keep);
 	const switches = (
 		<div class="opening-vars__switches">
-			<Toggle class="opening-vars__switch" checked={flip} onChange={setFlip} label="Flip board" />
-			<Toggle class="opening-vars__switch" checked={keep} onChange={setKeep} label="Keep position" />
+			<Tooltip content={FLIP_TIP} placement="bottom">
+				<Toggle class="opening-vars__switch" checked={flip} onChange={setFlip} label="Flip board" />
+			</Tooltip>
+			<Tooltip content={KEEP_TIP} placement="bottom">
+				<Toggle class="opening-vars__switch" checked={keep} onChange={setKeep} label="Keep position" />
+			</Tooltip>
 		</div>
 	);
 	if (!base) {
