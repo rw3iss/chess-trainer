@@ -1,6 +1,6 @@
 @use '@styles/mixins' as *;
 
-.pgn-import {
+.import-modal {
 	&__body {
 		display: flex;
 		flex-direction: column;
@@ -118,5 +118,106 @@
 		@include tabular;
 		font-size: var(--text-xs);
 		color: var(--color-text-muted);
+	}
+
+	&__drop--compact {
+		flex-direction: row;
+		flex-wrap: wrap;
+		min-height: 0;
+		padding: var(--space-3) var(--space-4);
+		gap: var(--space-1) var(--space-2);
+
+		.import-modal__drop-icon {
+			margin: 0;
+		}
+	}
+
+	// Image / FEN → position: source column (image + notes) beside the editor; stacked when narrow.
+	&__position {
+		display: grid;
+		grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+		gap: var(--space-4);
+		align-items: start;
+
+		&--single {
+			display: flex;
+			flex-direction: column;
+			align-items: flex-start;
+			gap: var(--space-3);
+		}
+
+		&:not(:has(.import-modal__source)) {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		@media (max-width: 640px) {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+
+	&__source {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-3);
+		min-width: 0;
+	}
+
+	&__image {
+		position: relative;
+		max-width: 220px;
+		line-height: 0;
+		border-radius: var(--radius-sm);
+		overflow: hidden;
+		@include surface(2);
+
+		img {
+			display: block;
+			max-width: 100%;
+			max-height: 220px;
+			object-fit: contain;
+		}
+	}
+
+	&__box {
+		position: absolute;
+		border: 2px solid var(--color-accent);
+		border-radius: 2px;
+		box-shadow: 0 0 0 9999px rgb(0 0 0 / 0.35);
+		pointer-events: none;
+	}
+
+	&__notes {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-size: var(--text-xs);
+		color: var(--color-text-muted);
+
+		li {
+			display: flex;
+			align-items: flex-start;
+			gap: var(--space-1);
+
+			svg {
+				flex: none;
+				margin-top: 1px;
+				color: var(--color-success);
+			}
+		}
+	}
+
+	&__note--warn {
+		color: var(--color-text);
+
+		svg {
+			color: var(--color-warn) !important;
+		}
+	}
+
+	&__editor {
+		min-width: 0;
 	}
 }

@@ -16,6 +16,8 @@
 		"data:notes": "pnpm --filter @chess/openings-data notes",
 		"assets:pieces": "pnpm --filter @chess/piece-assets build",
 		"data:ingest": "pnpm --filter @chess/openings-data ingest",
-		"data:wikibooks": "pnpm --filter @chess/openings-data wikibooks"
+		"data:wikibooks": "pnpm --filter @chess/openings-data wikibooks",
+		"vision:train": "bash tools/board-vision/run.sh all",
+		"vision:eval": "bash tools/board-vision/run.sh eval"
 	}
 }

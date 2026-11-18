@@ -39,6 +39,12 @@ Subpath imports: `@chess/core/chess`, `/game`, `/clock`, `/engine`, `/theme`, `/
 | `pgnToGames` | `(pgn) => PgnGame[]` | Multi-game; FEN/SetUp headers honored. `[%clk]`/`[%eval]`/shape commands stripped from comments; pre-move + post-move comments merge into `comment`. Games with an invalid start position are skipped; an illegal move ends its branch. |
 | `nodeCount` / `maxPly` | `(tree) => number` | |
 | `capturedPieces` | `(fen) => { captured: Record<Color, Role[]>; advantage: Record<Color, number> }` | Pieces each side has taken (cheapest first) and material lead in pawns. Promotions clamp. |
+| `placementFromFen` / `placementToFen` | `(fen) => Placement` / `(p) => string` | Board editor setup (`chess/setup.ts`). `Placement = (Piece \| null)[]`, 64 entries in FEN reading order (0 = a8, 7 = h8, 56 = a1, 63 = h1); `Piece = { role, color }`. `placementFromFen` accepts a full FEN or the placement field and **throws** on a malformed placement. `placementToFen` returns the placement field only. |
+| `placementIndex` / `placementSquare` | `(square) => number` / `(index) => SquareName` | `'a8' ↔ 0`, `'h1' ↔ 63`. |
+| `rotatePlacement` | `(p) => Placement` | 180° rotation (board image read upside down). |
+| `inferCastling` | `(p) => string` | `'KQkq'` subset from king + rook home squares; `'-'` if none. |
+| `buildFen` | `(p, { turn, castling?, epSquare? }) => string` | Full FEN, halfmove 0, fullmove 1. Castling = requested ∩ `inferCastling` (omitted → all allowed). `epSquare` kept only if plausible (right rank for `turn`, the pushed pawn in place, squares behind it empty). |
+| `checkSetup` | `(fen) => { ok: boolean; errors: string[] }` | Friendly errors: `Invalid FEN`, `The board is empty`, `White has no king`, `Black has 2 kings`, `White has more than 8 pawns`, `White has too many pieces (17)`, `Pawns on the first or last rank`, `The side not to move is in check` (chessops `Chess.fromSetup`). |
 
 Node ids: `nanoid`-like short random strings from `newId()` (exported from `chess/id.ts`; uses `crypto.getRandomValues` when present, else Math.random).
 

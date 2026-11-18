@@ -64,6 +64,9 @@ export default defineConfig({
 	// onnxruntime-web ships its own wasm loaders; pre-bundling breaks them. Maia models are .onnx assets.
 	optimizeDeps: { exclude: ['onnxruntime-web'] },
 	assetsInclude: ['**/*.onnx'],
+	// ES-module workers (all are created with { type: 'module' }): lets a worker lazy-import
+	// onnxruntime-web (services/vision/vision.worker.ts).
+	worker: { format: 'es' },
 	server: {
 		port: 5173,
 		open: false,

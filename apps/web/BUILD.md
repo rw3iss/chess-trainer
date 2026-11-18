@@ -51,6 +51,7 @@ src/
     cache/         DataCache (TTL, IndexedDB backend) — used by useCachedResource
     commands/      CommandBus (save, saveAs, focusSearch, …)
     pgn/           PGN import worker (pgn.worker.ts) + client, import/export helpers
+    vision/        board image → position: grid detection, ONNX piece classifier (vision.worker.ts), orientation / side to move
     playback/      PlaybackController (dependency-injected)
     toast/         toast queue (signals)
     sw/            sw.ts (service worker) + register.ts (update signals)
@@ -183,7 +184,7 @@ Default `save`/`saveAs`/`fork`/`newGame`/`openBot` handlers live in `components/
 | `/data/notes*` | StaleWhileRevalidate | `data-notes` |
 | other `/data/*` | StaleWhileRevalidate | `data` |
 | other `/pieces/*` (non-default sets) | CacheFirst | `pieces` |
-| `/engines/*` (sf-full, maia vocab), `/models/*`, `*.onnx`, `ort-wasm*.wasm`, the pinned Maia-2 model URL | CacheFirst | `chess-engines-v1` (shared with `engine/assetStore`) |
+| `/engines/*` (sf-full, maia vocab), `/models/*` (incl. the board-image model `models/board-vision/`), `*.onnx`, `ort-wasm*.wasm`, the pinned Maia-2 model URL | CacheFirst | `chess-engines-v1` (shared with `engine/assetStore`) |
 | server API GETs: `/health /openings /explorer /engines /auth/me /users/me /games /sessions` (any cross-origin host, or same-origin `/api/*`) | NetworkFirst, 3 s timeout, 200 only | `api` |
 | POST/PUT/DELETE, `/sync`, `/socket.io` | network only (never cached) | — |
 | Google Fonts CSS / files | SWR / CacheFirst | `google-fonts-css` / `google-fonts` |
@@ -203,7 +204,7 @@ Default `save`/`saveAs`/`fork`/`newGame`/`openBot` handlers live in `components/
 - Only CSS custom properties for colours/spacing/radii/fonts/motion (see DESIGN.md). Inline `style` only for runtime-computed values.
 - Bound input/scroll/resize handlers are throttled (100 ms default, `lib/throttle`).
 - Never block first paint: render shell → loading → data. Boot (`app/boot.ts`) restores stores after render.
-- Heavy work off the main thread (engines, search index, PGN import → Web Workers).
+- Heavy work off the main thread (engines, search index, PGN import, board-image reading → Web Workers). Workers are ES modules (`worker.format: 'es'` in vite.config.ts) so they can lazy-import (e.g. onnxruntime-web).
 - `COMPONENT_INDEX.md` is the reuse manifest: check it first, add a row for every shared component/hook/util/mixin.
 - Update this file, DESIGN.md and README in the same change as the behaviour.
 

@@ -1,0 +1,28 @@
+{
+	"version": 1,
+	"inputSize": 40,
+	"classes": [
+		"empty",
+		"P",
+		"N",
+		"B",
+		"R",
+		"Q",
+		"K",
+		"p",
+		"n",
+		"b",
+		"r",
+		"q",
+		"k"
+	],
+	"trainedAt": "2026-11-18T06:11:01+00:00",
+	"metrics": {
+		"syntheticVal": 0.99766,
+		"heldOutStyles": 0.96473,
+		"lichessRealTiles": 1.0,
+		"lichessRealImages": 40
+	},
+	"arch": "TileNet conv[32, 64, 128, 176] + GAP + FC",
+	"bytes": 1973004
+}

@@ -405,7 +405,7 @@ Corrections found while building:
 | 4 | **Board + assets** | `Board2D` (layers, drag/click, animation, promotion, arrows), `MiniBoard`, `tools/piece-assets` normalizer, starter piece sets + Sleek/Lux originals, procedural board themes, theme schema. |
 | 5 | **App shell + sessions** | AppShell layout (desktop + mobile), TopNav with Current switcher, Dexie repos, sessions store with autosave, Moves panel, GameControls, PlaybackController, keyboard shortcuts, `/sessions` page. |
 | 6 | **Openings browser** | Search worker, filters/sort/group, virtual list, ★ favorites, preview, detail page with notes + stats, Load / Fork, live opening name in game header, continuations list. |
-| 7 | **Saved games** | Save / Save-as modal, Games page (search, ★, sort, filters, thumbnails), open/rename/duplicate/delete/undo, PGN import/export. |
+| 7 | **Saved games** | Save / Save-as modal, Games page (search, ★, sort, filters, thumbnails), open/rename/duplicate/delete/undo, PGN import/export. Import also reads a FEN or a 2D board image (in-browser ONNX classifier, `tools/board-vision`) into a position editor → new session. Later: 3D photos (larger model; optional server endpoint with the same ONNX model). |
 | 8 | **Local engines** | Engine registry, Stockfish lite worker adapter, analysis panel (eval bar, MultiPV, arrows), Bot modal + attach/detach, strength strategy, Maia ONNX adapter, Stockfish full download. |
 | 9 | **Settings + themes** | App theme + accent, board/piece pickers, per-side color overrides, Theme editor (clone/edit/export/import), engine cards with pros/cons, clock defaults, sounds. |
 | 10 | **Local PvP + clocks** | PvP mode, Clock component (placements, sizes), tabletop mode, flags, results. |

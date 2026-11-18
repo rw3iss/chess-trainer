@@ -1,0 +1,201 @@
+[
+	{
+		"file": "lichess-01-blue-white.png",
+		"placement": "rnbqk1nr/pppp1ppp/3bp3/8/8/3PB3/PPP1PPPP/RN1QKBNR",
+		"orientation": "white",
+		"board": {
+			"x": 0,
+			"y": 0,
+			"size": 720
+		},
+		"lastMove": [
+			"f8",
+			"d6"
+		],
+		"source": "lichess-gif"
+	},
+	{
+		"file": "lichess-02-green-black.png",
+		"placement": "r1bqkb1r/p1pppppp/1pn5/8/2P1P1nN/8/PP1P1PPP/RNBQKB1R",
+		"orientation": "black",
+		"board": {
+			"x": 0,
+			"y": 0,
+			"size": 360
+		},
+		"lastMove": [
+			"h6",
+			"g4"
+		],
+		"source": "lichess-gif"
+	},
+	{
+		"file": "lichess-04-pink-white.png",
+		"placement": "2bqkb1r/2ppp3/p1n2np1/4Bp1p/6P1/PP2P2P/2PP1P2/RN2K1NR",
+		"orientation": "white",
+		"board": {
+			"x": 0,
+			"y": 0,
+			"size": 480
+		},
+		"lastMove": [
+			"b7",
+			"a6"
+		],
+		"source": "lichess-gif"
+	},
+	{
+		"file": "lichess-06-brown-white.png",
+		"placement": "1r2k3/5p2/p2pb2B/1pP1p2p/P5R1/8/3PPP2/4K3",
+		"orientation": "white",
+		"board": {
+			"x": 0,
+			"y": 0,
+			"size": 720
+		},
+		"lastMove": [
+			"a2",
+			"e6"
+		],
+		"source": "lichess-gif"
+	},
+	{
+		"file": "lichess-08-green-black.png",
+		"placement": "6R1/4pRb1/6pp/2k5/4P3/8/7P/4K3",
+		"orientation": "black",
+		"board": {
+			"x": 0,
+			"y": 0,
+			"size": 360
+		},
+		"lastMove": [
+			"d6",
+			"c5"
+		],
+		"source": "lichess-gif"
+	},
+	{
+		"file": "lichess-10-pink-white.png",
+		"placement": "rnbqkbnr/pppppp1p/8/6p1/2P5/8/PP1PPPPP/RNBQKBNR",
+		"orientation": "white",
+		"board": {
+			"x": 0,
+			"y": 0,
+			"size": 540
+		},
+		"lastMove": [
+			"g7",
+			"g5"
+		],
+		"source": "lichess-gif"
+	},
+	{
+		"file": "lichess-11-purple-black.png",
+		"placement": "rnbqkbnr/p3pppp/2p5/1p1N4/8/5P2/PPPPP1PP/R1BQKBNR",
+		"orientation": "black",
+		"board": {
+			"x": 0,
+			"y": 0,
+			"size": 360
+		},
+		"lastMove": [
+			"c7",
+			"c6"
+		],
+		"source": "lichess-gif"
+	},
+	{
+		"file": "lichess-13-blue-white.png",
+		"placement": "rnb1kbnr/1p1p3p/p1p5/5p2/8/1P1P3P/P1P1qPP1/RN1QKBNR",
+		"orientation": "white",
+		"board": {
+			"x": 0,
+			"y": 0,
+			"size": 432
+		},
+		"lastMove": [
+			"e7",
+			"e2"
+		],
+		"source": "lichess-gif"
+	},
+	{
+		"file": "lichess-15-ic-white.png",
+		"placement": "rn2k2r/ppp2p2/8/6b1/P3q1p1/1PNP4/4P3/R1BK4",
+		"orientation": "white",
+		"board": {
+			"x": 0,
+			"y": 0,
+			"size": 360
+		},
+		"lastMove": [
+			"e7",
+			"g5"
+		],
+		"source": "lichess-gif"
+	},
+	{
+		"file": "synthetic-00-green-desktop.png",
+		"placement": "r3kb2/pp2pp1r/2p4p/6p1/1p2n3/2P2P1N/P2N2PP/1RB1KB1R",
+		"orientation": "white",
+		"board": {
+			"x": 140,
+			"y": 112,
+			"size": 512
+		},
+		"source": "synthetic",
+		"style": "ours-merida",
+		"lastMove": [
+			"c5",
+			"b4"
+		]
+	},
+	{
+		"file": "synthetic-01-blue-black-pov.png",
+		"placement": "2b3B1/1pNp2k1/1Pp3p1/R3p3/4Pp2/2R5/2PB4/3QK1N1",
+		"orientation": "black",
+		"board": {
+			"x": 420,
+			"y": 100,
+			"size": 416
+		},
+		"source": "synthetic",
+		"style": "ours-cardinal-v1",
+		"lastMove": [
+			"a1",
+			"a5"
+		]
+	},
+	{
+		"file": "synthetic-02-book-diagram.png",
+		"placement": "5kn1/5p2/4Q1p1/2pq4/3N3P/8/2PK1PP1/7R",
+		"orientation": "white",
+		"board": {
+			"x": 60,
+			"y": 150,
+			"size": 288
+		},
+		"source": "synthetic",
+		"style": "font-noto-symbols2-filled",
+		"lastMove": [
+			"e7",
+			"f8"
+		]
+	},
+	{
+		"file": "synthetic-03-wood-lux-small.png",
+		"placement": "5k2/1R6/p3PN2/8/P2P1P2/8/3K4/8",
+		"orientation": "white",
+		"board": {
+			"x": 510,
+			"y": 118,
+			"size": 240
+		},
+		"source": "synthetic",
+		"style": "ours-lux",
+		"lastMove": [
+			"g7",
+			"f8"
+		]
+	}
+]

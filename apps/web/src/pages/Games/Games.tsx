@@ -13,7 +13,7 @@ import {
 	GAME_ROW_HEIGHT,
 	GameRow,
 	GamesToolbar,
-	PgnImportModal,
+	ImportModal,
 	deleteGameWithUndo,
 	duplicateGame,
 	exportGame,
@@ -86,7 +86,7 @@ export default function Games(): JSX.Element {
 					title="No saved games yet"
 					description={
 						<>
-							Load an opening, play through it and press <kbd>Ctrl</kbd> <kbd>S</kbd> — or import games from a PGN file.
+							Load an opening, play through it and press <kbd>Ctrl</kbd> <kbd>S</kbd> — or import games from a PGN file, or a position from a FEN or a board image.
 						</>
 					}
 				>
@@ -94,7 +94,7 @@ export default function Games(): JSX.Element {
 						Browse openings
 					</Button>
 					<Button variant="secondary" icon="upload" onClick={() => setImportOpen(true)}>
-						Import PGN
+						Import PGN, FEN or image
 					</Button>
 				</EmptyState>
 			) : (
@@ -132,7 +132,7 @@ export default function Games(): JSX.Element {
 				</>
 			)}
 
-			<PgnImportModal open={importOpen} onClose={() => setImportOpen(false)} />
+			<ImportModal open={importOpen} onClose={() => setImportOpen(false)} />
 		</div>
 	);
 }
