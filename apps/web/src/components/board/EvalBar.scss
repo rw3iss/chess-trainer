@@ -1,4 +1,4 @@
-// EvalBar — vertical white-win-probability bar.
+// EvalBar — white-win-probability bar (vertical, or horizontal with --h).
 
 .eval-bar {
 	position: relative;
@@ -67,6 +67,60 @@
 	&--black &__label--black {
 		top: auto;
 		bottom: 0;
+	}
+
+	// Horizontal: the bottom player's color fills from the right (top player's color on the left).
+	&--h {
+		flex-direction: row;
+		width: 100%;
+		height: 100%;
+		min-width: 0;
+		min-height: 8px;
+	}
+
+	&--h#{&}--black {
+		justify-content: flex-start;
+	}
+
+	&--h &__white {
+		width: auto;
+		height: 100%;
+		transition-property: width;
+	}
+
+	&--h &__mid {
+		left: 50%;
+		right: auto;
+		top: 0;
+		bottom: 0;
+		width: 1px;
+		height: auto;
+	}
+
+	&--h &__label {
+		top: 0;
+		bottom: 0;
+		left: auto;
+		right: auto;
+		display: flex;
+		align-items: center;
+		padding: 0 5px;
+	}
+
+	&--h#{&}--white &__label--white,
+	&--h#{&}--black &__label--black {
+		top: 0;
+		bottom: 0;
+		left: auto;
+		right: 0;
+	}
+
+	&--h#{&}--white &__label--black,
+	&--h#{&}--black &__label--white {
+		top: 0;
+		bottom: 0;
+		left: 0;
+		right: auto;
 	}
 }
 

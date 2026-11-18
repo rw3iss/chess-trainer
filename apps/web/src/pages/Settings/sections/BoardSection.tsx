@@ -1,5 +1,5 @@
 // Settings → Board: theme gallery, coordinates, highlights, arrows, animation,
-// input mode, eval bar and playback speeds.
+// input mode, eval bar (side, games) and playback speeds.
 import type { JSX } from 'preact';
 import { PLAYBACK_INTERVAL_MS, type PlaybackSpeed } from '@chess/core/game';
 import { Button, ColorPicker, SegmentedControl, Slider, Toggle } from '@/components/common';
@@ -18,6 +18,13 @@ const INPUTS: { value: BoardDisplaySettings['input']; label: string }[] = [
 	{ value: 'both', label: 'Both' },
 	{ value: 'drag', label: 'Drag' },
 	{ value: 'click', label: 'Click' },
+];
+
+const EVAL_SIDES: { value: BoardDisplaySettings['evalBarSide']; label: string }[] = [
+	{ value: 'left', label: 'Left' },
+	{ value: 'right', label: 'Right' },
+	{ value: 'top', label: 'Top' },
+	{ value: 'bottom', label: 'Bottom' },
 ];
 
 const ARROW_SWATCHES = ['#15781b', '#e8a317', '#2f6fd0', '#c8342b', '#8a4fc9', '#ffffff'];
@@ -60,7 +67,6 @@ export function BoardSection(): JSX.Element {
 				<Toggle checked={b.showCheck} onChange={(showCheck) => setBoard({ showCheck })} label="Highlight check" />
 				<Toggle checked={b.showLegalDots} onChange={(showLegalDots) => setBoard({ showLegalDots })} label="Legal move dots" />
 				<Toggle checked={b.colorBlindHighlights} onChange={(colorBlindHighlights) => setBoard({ colorBlindHighlights })} label="Colour-blind friendly highlights" />
-				<Toggle checked={b.showEvalBar} onChange={(showEvalBar) => setBoard({ showEvalBar })} label="Show evaluation bar" description="While engine analysis runs." />
 				<Toggle checked={b.showArrows} onChange={(showArrows) => setBoard({ showArrows })} label="Show arrows" description="Engine best lines and your right-drag arrows." />
 				<SettingsRow label="Arrow colour" hint={b.arrowColor ? 'Custom colour.' : 'Using the board theme colour.'} stacked>
 					<div class="settings-inline">
@@ -72,6 +78,14 @@ export function BoardSection(): JSX.Element {
 						)}
 					</div>
 				</SettingsRow>
+			</SettingsGroup>
+
+			<SettingsGroup title="Evaluation bar" description="The engine's view of the position. Updates on every move. Shortcut: the bar button at the end of the bottom player row.">
+				<Toggle checked={b.evalBar} onChange={(evalBar) => setBoard({ evalBar })} label="Show evaluation bar" description="Runs the engine on the current position (one line, limited depth, when engine analysis is off)." />
+				<SettingsRow label="Position" hint="Left or right: the bottom player's color is at the bottom. Top or bottom: the top player's color is on the left.">
+					<SegmentedControl options={EVAL_SIDES} value={b.evalBarSide} onChange={(evalBarSide) => setBoard({ evalBarSide })} ariaLabel="Evaluation bar position" size="sm" />
+				</SettingsRow>
+				<Toggle checked={b.evalBarInGames} onChange={(evalBarInGames) => setBoard({ evalBarInGames })} label="Show in games" description="Also in bot, local and online games (off: analysis only)." />
 			</SettingsGroup>
 
 			<SettingsGroup title="Moving pieces">

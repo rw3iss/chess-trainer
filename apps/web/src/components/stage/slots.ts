@@ -24,8 +24,10 @@ export const stageSlots = {
 	clockBottom: createSlot<StageSlotProps>('stage.clockBottom'),
 	/** Narrow vertical strip beside the board — e.g. side clocks. */
 	side: createSlot<StageSideSlotProps>('stage.side'),
-	/** Left of the board — e.g. the EvalBar. */
+	/** Beside, above or below the board (settings.board.evalBarSide) — e.g. the EvalBar. */
 	evalBar: createSlot<StageSideSlotProps>('stage.evalBar'),
+	/** End of the bottom player strip (opposite the captured pieces) — e.g. the eval bar toggle. */
+	stripActions: createSlot<StageSideSlotProps>('stage.stripActions'),
 	/** Absolutely positioned over the board — e.g. result banner, overlay clock. */
 	overlay: createSlot<StageSideSlotProps>('stage.overlay'),
 };

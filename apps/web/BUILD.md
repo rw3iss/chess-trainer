@@ -105,7 +105,7 @@ Key stores:
 | Page / route | `src/app/routes.ts` | add `{ path, component: lazy(...), layout, title }` |
 | Panel tab | `PANEL_TABS` in `routes.ts` | tab with `href` (route) or without (renders a panel slot) |
 | Engine panel | `panelSlots.engine` (`components/shell/panelSlots.ts`) | `panelSlots.engine.register(EnginePanel)` |
-| Clocks / eval bar / board overlays | `stageSlots` (`components/stage/slots.ts`) | `clockTop`, `clockBottom`, `side`, `evalBar`, `overlay` |
+| Clocks / eval bar / board overlays | `stageSlots` (`components/stage/slots.ts`) | `clockTop`, `clockBottom`, `side`, `evalBar`, `stripActions`, `overlay` |
 | Dataset notes | `notesSlots.dataset` (`components/moves/notesSlots.ts`) | receives `{ epd, fen }` |
 | Moves panel sections | `movesSlots.afterList` (`components/moves/movesSlots.ts`) | receives `{ session }`; renders under the move list (openings feature: `OpeningVariations`) |
 | Opening name | `setOpeningIdentifier(fn)` (`state/openingIdentity.ts`) | `(uci[], startFen?) => OpeningEntry \| undefined` |

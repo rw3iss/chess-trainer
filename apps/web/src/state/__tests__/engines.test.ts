@@ -8,6 +8,9 @@ import {
 	botActions,
 	botTip,
 	engineEntries,
+	evalBarActions,
+	evalBarActive,
+	EVAL_BAR_DEPTH,
 	initEngines,
 	isBotThinking,
 	nextTip,
@@ -17,6 +20,7 @@ import {
 	ENGINE_PREFS_KEY,
 } from '@/state/engines';
 import { activeSession, getSession, resetSessionsState, sessionsActions } from '@/state/sessions';
+import { resetSettings, updateSettings } from '@/state/settings';
 import { freshRepositories, sleep } from './testDb';
 
 interface PendingPlay {
@@ -27,7 +31,7 @@ interface PendingPlay {
 
 function fakeAdapter() {
 	const plays: PendingPlay[] = [];
-	const analyses: { pos: EnginePosition; onInfo: (i: EngineInfo) => void; stopped: boolean }[] = [];
+	const analyses: { pos: EnginePosition; opts: { multiPv?: number; depth?: number; infinite?: boolean }; onInfo: (i: EngineInfo) => void; stopped: boolean }[] = [];
 	const rejects: ((e: Error) => void)[] = [];
 	const adapter = {
 		meta: engineMeta('sf-lite')!,
@@ -40,8 +44,8 @@ function fakeAdapter() {
 				plays.push({ pos, opts, resolve });
 				rejects.push(reject);
 			}),
-		analyze: (pos: EnginePosition, _o: unknown, onInfo: (i: EngineInfo) => void) => {
-			const a = { pos, onInfo, stopped: false };
+		analyze: (pos: EnginePosition, opts: { multiPv?: number; depth?: number; infinite?: boolean }, onInfo: (i: EngineInfo) => void) => {
+			const a = { pos, opts, onInfo, stopped: false };
 			analyses.push(a);
 			return () => {
 				a.stopped = true;
@@ -87,6 +91,7 @@ describe('engines store', () => {
 	afterEach(() => {
 		resetEnginesState();
 		resetSessionsState();
+		resetSettings();
 	});
 
 	it('lists engines with availability (fake sf-lite available, others with reasons)', async () => {
@@ -116,6 +121,46 @@ describe('engines store', () => {
 		expect(analysis.value).toBeNull();
 		expect(a.stopped).toBe(true);
 		expect(analysisPrefs.value.enabled).toBe(false);
+	});
+
+	it('eval bar alone runs a bounded 1-line search; panel analysis switches to MultiPV, unbounded', async () => {
+		const s = sessionsActions.newSession();
+		sessionsActions.move('e2e4', s.id);
+		analysisActions.setMultiPv(3);
+		evalBarActions.setEnabled(true);
+		expect(evalBarActive.value).toBe(true);
+		await until(() => fake.analyses.length > 0);
+		const bar = fake.analyses[fake.analyses.length - 1]!;
+		expect(bar.opts.multiPv).toBe(1);
+		expect([EVAL_BAR_DEPTH.touch, EVAL_BAR_DEPTH.desktop]).toContain(bar.opts.depth);
+		bar.onInfo({ depth: 10, multipv: 1, score: { cp: -20 }, pv: ['e7e5'] });
+		await until(() => analysis.value?.lines.length === 1);
+
+		// Moves re-run the search.
+		const n = fake.analyses.length;
+		sessionsActions.move('e7e5', s.id);
+		await until(() => fake.analyses.length > n && fake.analyses[fake.analyses.length - 1]!.pos.moves.length === 2);
+
+		analysisActions.setEnabled(true);
+		await until(() => fake.analyses[fake.analyses.length - 1]!.opts.multiPv === 3);
+		expect(fake.analyses[fake.analyses.length - 1]!.opts.depth).toBeUndefined();
+
+		// Panel off again → back to the bar's bounded search; bar off too → engine stops.
+		analysisActions.setEnabled(false);
+		await until(() => fake.analyses[fake.analyses.length - 1]!.opts.multiPv === 1);
+		evalBarActions.setEnabled(false);
+		expect(analysis.value).toBeNull();
+		expect(fake.analyses.every((a) => a.stopped)).toBe(true);
+	});
+
+	it('eval bar: off in games unless evalBarInGames', async () => {
+		const s = sessionsActions.newSession();
+		evalBarActions.setEnabled(true);
+		expect(evalBarActive.value).toBe(true);
+		sessionsActions.update({ mode: 'local-pvp' }, s.id);
+		expect(evalBarActive.value).toBe(false);
+		updateSettings({ board: { evalBarInGames: true } });
+		expect(evalBarActive.value).toBe(true);
 	});
 
 	it('bot: attaches from the cursor, replies on its turn, and the tip follows', async () => {

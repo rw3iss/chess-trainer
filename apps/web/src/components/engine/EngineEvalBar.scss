@@ -1,17 +1,26 @@
 @use '@styles/mixins' as *;
 
-// Desktop: beside the board, same height (container-query formula of .stage__column).
-.engine-evalbar {
+// Desktop, left/right: beside the board, same height (container-query formula of .stage__column).
+.engine-evalbar--v {
 	width: 24px;
 	height: min(100cqw - var(--space-12), 100cqh - 2 * var(--strip-h, 40px) - var(--space-8));
 }
 
-// Stacked (< 900 px): the board is full width, so the bar becomes a thin strip on
-// the board's left edge. The slot container leaves the flex flow (no extra gap).
+// Top/bottom: a horizontal bar as wide as the board, between the board and the player strip.
+.engine-evalbar--h {
+	width: 100%;
+	height: var(--evalbar-thickness-h, 20px);
+}
+
 @include stacked {
-	.stage__evalbar:has(> .engine-evalbar) {
+	.stage {
+		--evalbar-thickness-h: 14px;
+	}
+
+	// Stacked (< 900 px), left/right: the board is full width, so the bar becomes a thin strip on
+	// the board's edge. The slot container leaves the flex flow (no extra gap).
+	.stage__evalbar:has(> .engine-evalbar--v) {
 		position: absolute;
-		left: 0;
 		// Board = full width square centred between two equal player strips.
 		top: calc(var(--space-2) + (100% - var(--space-2) - 100vw) / 2);
 		width: 6px;
@@ -19,16 +28,28 @@
 		z-index: var(--z-sticky);
 	}
 
-	.engine-evalbar {
+	.stage__evalbar--left:has(> .engine-evalbar--v) {
+		left: 0;
+	}
+
+	.stage__evalbar--right:has(> .engine-evalbar--v) {
+		right: 0;
+	}
+
+	.engine-evalbar--v {
 		width: 6px;
 		height: 100%;
 
 		.eval-bar {
-			border-radius: 0;
+			min-width: 0;
 		}
 
 		.eval-bar__label {
 			display: none;
 		}
+	}
+
+	.engine-evalbar .eval-bar {
+		border-radius: 0;
 	}
 }

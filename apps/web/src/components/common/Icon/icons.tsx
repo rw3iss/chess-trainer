@@ -9,7 +9,7 @@ export const ICON_NAMES = [
 	'chevron-left', 'chevron-right', 'more', 'plus', 'minus', 'trash', 'edit', 'note', 'check',
 	'info', 'warning', 'board', 'book', 'games', 'sessions', 'sun', 'moon', 'monitor', 'wifi-off',
 	'server', 'download', 'upload', 'copy', 'external', 'filter', 'sort', 'clock', 'user', 'undo',
-	'redo', 'promote', 'eye', 'knight', 'speed', 'home', 'grid', 'list', 'logo', 'share', 'rewind',
+	'redo', 'promote', 'eye', 'knight', 'speed', 'home', 'grid', 'list', 'logo', 'share', 'rewind', 'eval-bar',
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];
@@ -204,6 +204,12 @@ export const ICONS: Record<IconName, () => JSX.Element> = {
 	),
 	undo: () => p('M3 7v6h6', 'M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13'),
 	/** Back to here: corner arrow ("load from this move"). */
+	'eval-bar': () => (
+		<>
+			<rect x="8" y="3" width="8" height="18" rx="1.5" />
+			<path d="M8 12h8v7.5a1.5 1.5 0 0 1-1.5 1.5h-5A1.5 1.5 0 0 1 8 19.5Z" fill="currentColor" />
+		</>
+	),
 	rewind: () => p('M9 14 4 9l5-5', 'M4 9h10.5a5.5 5.5 0 0 1 0 11H11'),
 	redo: () => p('M21 7v6h-6', 'M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7'),
 	promote: () =>

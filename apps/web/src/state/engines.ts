@@ -2,10 +2,10 @@
 // session) and bot play (one BotPlayer per session in 'bot' mode).
 //
 // Read:   engineEntries, enginesLoaded, availableEngines, engineEntry(id), downloads,
-//         analysisPrefs, analysisEngineId, analysis, analysisStatus, analysisError,
+//         analysisPrefs, analysisEngineId, analysis, analysisStatus, analysisError, evalBarActive,
 //         botThinking, isBotThinking(id), botError(id), botTip(id)
 // Write:  enginesActions.* (refresh/download/cancelDownload/remove/importMaia/setDefault),
-//         analysisActions.* (toggle/setEnabled/setMultiPv/setEngine),
+//         analysisActions.* (toggle/setEnabled/setMultiPv/setEngine), evalBarActions.* (toggle/setEnabled),
 //         botActions.* (attach/detach/takeback/updateConfig)
 //
 // Bot rule: the bot only moves when the session cursor is at the *tip* of the bot
@@ -96,6 +96,27 @@ export const analysisStatus = computed<AnalysisStatus>(() => {
 	if (a.paused) return 'paused';
 	return a.running ? 'running' : 'idle';
 });
+
+/** Search bound when only the eval bar runs the engine (panel analysis off): saves CPU and battery. */
+export const EVAL_BAR_DEPTH = { touch: 18, desktop: 24 } as const;
+
+function evalBarDepth(): number {
+	const touch = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+	return touch ? EVAL_BAR_DEPTH.touch : EVAL_BAR_DEPTH.desktop;
+}
+
+/** True when the eval bar shows for this session: setting on, and an analysis session (or games allowed). */
+export function evalBarShows(s: Session | null | undefined, board = settings.value.board): boolean {
+	return !!s && board.evalBar && (s.mode === 'analysis' || board.evalBarInGames);
+}
+
+/** The eval bar shows on the active session (the analyzer runs for it). */
+export const evalBarActive = computed(() => evalBarShows(activeSession.value));
+
+/** Analyzer options for the current mode: full panel analysis, or the eval bar alone (1 line, bounded). */
+function analyzerOptions(panel: boolean, multiPv: number): { multiPv: number; depth: number | undefined } {
+	return panel ? { multiPv, depth: undefined } : { multiPv: 1, depth: evalBarDepth() };
+}
 
 export function isBotThinking(sessionId: string | null | undefined): boolean {
 	return !!sessionId && !!_thinking.value[sessionId];
@@ -279,7 +300,7 @@ async function startAnalyzer(engineId: string): Promise<void> {
 			onError: (e) => {
 				if (seq === analyzerSeq) _analysisError.value = e.message;
 			},
-			options: { multiPv: _prefs.peek().multiPv },
+			options: analyzerOptions(_prefs.peek().enabled, _prefs.peek().multiPv),
 		});
 		_analysisLoading.value = false;
 		analyzer.start();
@@ -307,10 +328,19 @@ export const analysisActions = {
 	setMultiPv(n: number): void {
 		const multiPv = Math.max(MULTIPV_MIN, Math.min(MULTIPV_MAX, Math.round(n)));
 		setPrefs({ multiPv });
-		analyzer?.setOptions({ multiPv });
+		if (_prefs.value.enabled) analyzer?.setOptions({ multiPv });
 	},
 	setEngine(id: string | null): void {
 		setPrefs({ engineId: id });
+	},
+};
+
+export const evalBarActions = {
+	setEnabled(evalBar: boolean): void {
+		updateSettings({ board: { evalBar } });
+	},
+	toggle(): void {
+		updateSettings({ board: { evalBar: !settings.value.board.evalBar } });
 	},
 };
 
@@ -533,23 +563,35 @@ export async function initEngines(): Promise<void> {
 		}),
 	);
 
-	// Analysis follows the toggle, the analysis engine and the active session.
+	// Analysis follows the panel toggle or the eval bar, the analysis engine and the active session.
+	// Eval bar alone → 1 line with a depth bound; panel analysis → MultiPV, unbounded.
+	let lastOpts = '';
 	disposers.push(
 		effect(() => {
-			const { enabled } = _prefs.value;
+			const { enabled, multiPv } = _prefs.value;
 			const s = activeSession.value;
+			const bar = evalBarActive.value;
 			const engineId = analysisEngineId.value;
+			const run = enabled || bar;
 			untracked(() => {
-				if (!enabled || !s) {
+				if (!run || !s) {
 					if (analyzer || analyzerEngine) stopAnalyzer();
-					if (!enabled) {
+					if (!run) {
 						_analysis.value = null;
 						_analysisError.value = null;
 					}
+					lastOpts = '';
 					return;
 				}
-				if (analyzerEngine !== engineId) void startAnalyzer(engineId);
-				else analyzer?.sync();
+				const opts = analyzerOptions(enabled, multiPv);
+				const key = JSON.stringify(opts);
+				if (analyzerEngine !== engineId) {
+					lastOpts = key;
+					void startAnalyzer(engineId);
+				} else if (key !== lastOpts) {
+					lastOpts = key;
+					analyzer?.setOptions(opts);
+				} else analyzer?.sync();
 			});
 		}),
 	);

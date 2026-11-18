@@ -68,7 +68,7 @@ Routes + layouts + panel tabs: `src/app/routes.ts`.
 | BoardStage | feature | `src/components/stage/BoardStage.tsx` | **single board integration point**: active session → Board2D (settings + themes), player strips, mode badge, result banner, slots; ghost session when none open (first move opens one) | — |
 | StageMiniBoard | feature | `src/components/stage/BoardStage.tsx` | MiniBoard for a session with active themes | cards, chips, thumbnails |
 | boardViewModel / playerLabel / lastMoveOf / movableFor | util | `src/components/stage/boardModel.ts` | Session + settings → BoardViewModel (pure) | any board view of a session |
-| stageSlots | slot | `src/components/stage/slots.ts` | `clockTop`, `clockBottom`, `side`, `evalBar`, `overlay` | clocks, eval bar, overlays |
+| stageSlots | slot | `src/components/stage/slots.ts` | `clockTop`, `clockBottom`, `side`, `evalBar` (placed by `board.evalBarSide`), `stripActions` (end of the bottom strip), `overlay` | clocks, eval bar + its toggle, overlays |
 | setStageMoveHandler / stageShapes | slot | `src/components/stage/slots.ts` | feature move handling per session mode (`movable`, `onMove`, `playerLabel`); feature arrows/marks | online play, engine arrows |
 | GameControls | feature | `src/components/controls/GameControls.tsx` | first/prev/play-pause/next/last, speed menu, flip/fork/save/bot (collapse into More by container width), More menu | — |
 | sessionCommands | util | `src/components/controls/sessionCommands.ts` | default command handlers (quick save, saveAs, fork, newGame, openBot), `copyPgn`, `copyFen`, `copyToClipboard` | fallbacks; clipboard |
@@ -96,7 +96,8 @@ Routes + layouts + panel tabs: `src/app/routes.ts`.
 | Board2D / MiniBoard / EvalBar / PromotionPicker | feature | `src/components/board/` | board renderer (owned by the board feature; see `board/index.ts`) | import only via `@/components/board` in BoardStage |
 | EnginePanel | feature | `src/components/engine/EnginePanel.tsx` | Engine tab (`panelSlots.engine`): analysis toggle, engine select, depth/nodes/nps, MultiPV 1–5, PvLines, bot card / "Play vs bot" | — |
 | PvLines | feature | `src/components/engine/PvLines.tsx` | MultiPV rows: White-POV score chip + numbered SAN (figurines); click plays first move, hover previews its arrow | any engine line list |
-| EngineEvalBar | slot | `src/components/engine/EngineEvalBar.tsx` | `stageSlots.evalBar` wiring (analysis on + `board.showEvalBar`); thin edge strip when stacked | — |
+| EngineEvalBar | slot | `src/components/engine/EngineEvalBar.tsx` | `stageSlots.evalBar` wiring (`evalBarShows`: `board.evalBar`, analysis sessions or `evalBarInGames`); vertical left/right, horizontal top/bottom (`EvalBar direction`); thin edge strip when stacked | — |
+| EvalBarToggle | slot | `src/components/engine/EvalBarToggle.tsx` | `stageSlots.stripActions` button that toggles `board.evalBar` | — |
 | engineShapes / focusedLine | util | `src/components/engine/engineShapes.ts` | best-move arrows via `setStageShapes('engine')` (best opaque, rest lighter; hovered line alone) | — |
 | pvToSan / evalBarLabel / compactNumber / linesToArrows | util | `src/components/engine/pvFormat.ts` | pure PV → SAN tokens, score labels, counts, arrows | engine displays |
 | BotStatusCard | feature | `src/components/engine/BotStatusCard.tsx` | bot game status (engine · Elo · colour, thinking, history hint) + Takeback / Bot settings / Detach | — |

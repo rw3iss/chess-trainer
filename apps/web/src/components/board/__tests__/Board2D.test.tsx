@@ -226,4 +226,14 @@ describe('EvalBar', () => {
 		expect((container.querySelector('.eval-bar__white') as HTMLElement).style.height).toBe('100%');
 		expect(container.querySelector('.eval-bar__label--white')?.textContent).toBe('+9.9');
 	});
+
+	it('horizontal: fills by width and marks the orientation', () => {
+		const { container } = render(<EvalBar whiteProb={0.25} direction="horizontal" orientation="black" />);
+		const bar = container.querySelector('.eval-bar') as HTMLElement;
+		expect(bar.classList.contains('eval-bar--h')).toBe(true);
+		expect(bar.classList.contains('eval-bar--black')).toBe(true);
+		const fill = container.querySelector('.eval-bar__white') as HTMLElement;
+		expect(fill.style.width).toBe('25%');
+		expect(fill.style.height).toBe('');
+	});
 });

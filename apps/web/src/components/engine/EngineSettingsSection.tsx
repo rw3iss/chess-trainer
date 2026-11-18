@@ -7,6 +7,7 @@ import { toast } from '@/services/toast';
 import {
 	analysisActions,
 	analysisPrefs,
+	evalBarActions,
 	downloads,
 	engineEntries,
 	enginesActions,
@@ -97,8 +98,8 @@ export function EngineSettingsSection(): JSX.Element {
 						<SegmentedControl size="sm" ariaLabel="Analysis lines" options={MULTIPV_OPTIONS} value={String(prefs.multiPv)} onChange={(v) => analysisActions.setMultiPv(Number(v))} />
 					</div>
 				</div>
-				<Toggle checked={prefs.enabled} onChange={analysisActions.setEnabled} label="Analysis on" description="Run the engine on the current position (eval bar, arrows, lines)." />
-				<Toggle checked={s.board.showEvalBar} onChange={(showEvalBar) => updateSettings({ board: { showEvalBar } })} label="Show evaluation bar" />
+				<Toggle checked={prefs.enabled} onChange={analysisActions.setEnabled} label="Analysis on" description="Run the engine on the current position (arrows, lines)." />
+				<Toggle checked={s.board.evalBar} onChange={evalBarActions.setEnabled} label="Show evaluation bar" description="Runs the engine for the bar even when analysis is off. Position: Settings → Board." />
 				<Toggle checked={s.board.showArrows} onChange={(showArrows) => updateSettings({ board: { showArrows } })} label="Show best-move arrows" />
 				<Slider
 					label="Bot human delay"

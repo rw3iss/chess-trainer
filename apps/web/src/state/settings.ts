@@ -16,6 +16,8 @@ const PERSIST_DEBOUNCE_MS = 300;
 /** localStorage mirror so index.html can apply the theme before JS boots. */
 export const THEME_BOOT_KEY = 'chess:theme-boot';
 
+export type EvalBarSide = 'left' | 'right' | 'top' | 'bottom';
+
 export interface BoardDisplaySettings {
 	coordinates: 'inside' | 'outside' | 'none';
 	showLegalDots: boolean;
@@ -24,7 +26,12 @@ export interface BoardDisplaySettings {
 	input: 'drag' | 'click' | 'both';
 	/** Piece animation ms (0 = off). */
 	animationMs: number;
-	showEvalBar: boolean;
+	/** Engine evaluation bar next to the board. Runs a light engine search when panel analysis is off. */
+	evalBar: boolean;
+	/** Board side for the eval bar. Left/right: vertical, bottom player's color at the bottom. Top/bottom: horizontal, top player's color on the left. */
+	evalBarSide: EvalBarSide;
+	/** Also show the eval bar in bot, local and online games (off: analysis sessions only). */
+	evalBarInGames: boolean;
 	showArrows: boolean;
 	/** Colour-blind-safe highlight palette. */
 	colorBlindHighlights: boolean;
@@ -106,7 +113,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
 		showCheck: true,
 		input: 'both',
 		animationMs: 180,
-		showEvalBar: true,
+		evalBar: false,
+		evalBarSide: 'left',
+		evalBarInGames: false,
 		showArrows: true,
 		colorBlindHighlights: false,
 		arrowColor: '',

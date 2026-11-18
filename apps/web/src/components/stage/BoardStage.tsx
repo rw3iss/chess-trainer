@@ -59,6 +59,11 @@ function PlayerStrip({ session, color, position, toMove, fen, pieceSet, pieceThe
 			<span class="player-strip__slot">
 				<Slot session={session} color={color} />
 			</span>
+			{position === 'bottom' && (
+				<span class="player-strip__actions">
+					<stageSlots.stripActions.Render session={session} />
+				</span>
+			)}
 		</div>
 	);
 }
@@ -111,6 +116,14 @@ export function BoardStage({ class: className }: { class?: string }): JSX.Elemen
 	const bottom: Color = session.orientation;
 	const over = positionStatus(vm.fen).outcome !== undefined || !!activeResult(session);
 
+	// Eval bar slot: beside the board (left/right, vertical) or between the board and a player strip (top/bottom, horizontal).
+	const evalSide = s.board.evalBarSide;
+	const evalBar = (
+		<div class={cx('stage__evalbar', `stage__evalbar--${evalSide}`, (evalSide === 'top' || evalSide === 'bottom') && 'stage__evalbar--h')}>
+			<stageSlots.evalBar.Render session={session} />
+		</div>
+	);
+
 	const onMove = (from: SquareName, to: SquareName, promotion?: PromotionRole) => {
 		const uci = makeUci(from, to, promotion);
 		// A feature (e.g. online play) may take over the move instead of applying it locally.
@@ -122,11 +135,10 @@ export function BoardStage({ class: className }: { class?: string }): JSX.Elemen
 	return (
 		<section class={cx('stage', s.board.showShadow && 'stage--halo', className)} style={haloStyle(s.board)} aria-label="Board">
 			<div class="stage__area">
-				<div class="stage__evalbar">
-					<stageSlots.evalBar.Render session={session} />
-				</div>
+				{evalSide === 'left' && evalBar}
 				<div class="stage__column">
 					<PlayerStrip session={session} color={top} position="top" toMove={!over && turn === top} fen={vm.fen} pieceSet={pieceSet} pieceTheme={pieceTheme} />
+					{evalSide === 'top' && evalBar}
 					<div class="stage__board">
 						<Board2D
 							{...vm}
@@ -143,8 +155,10 @@ export function BoardStage({ class: className }: { class?: string }): JSX.Elemen
 							<stageSlots.overlay.Render session={session} />
 						</div>
 					</div>
+					{evalSide === 'bottom' && evalBar}
 					<PlayerStrip session={session} color={bottom} position="bottom" toMove={!over && turn === bottom} fen={vm.fen} pieceSet={pieceSet} pieceTheme={pieceTheme} />
 				</div>
+				{evalSide === 'right' && evalBar}
 				<div class="stage__side">
 					<stageSlots.side.Render session={session} />
 				</div>
