@@ -206,8 +206,8 @@ export const ICONS: Record<IconName, () => JSX.Element> = {
 	/** Back to here: corner arrow ("load from this move"). */
 	'eval-bar': () => (
 		<>
-			<rect x="8" y="3" width="8" height="18" rx="1.5" />
-			<path d="M8 12h8v7.5a1.5 1.5 0 0 1-1.5 1.5h-5A1.5 1.5 0 0 1 8 19.5Z" fill="currentColor" />
+			<rect x="6.5" y="2.5" width="11" height="19" rx="2" />
+			<path d="M6.5 12h11v7.5a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2Z" fill="currentColor" />
 		</>
 	),
 	rewind: () => p('M9 14 4 9l5-5', 'M4 9h10.5a5.5 5.5 0 0 1 0 11H11'),

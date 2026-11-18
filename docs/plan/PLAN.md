@@ -198,7 +198,7 @@ Filter/sort state is in the URL → back/forward and links work.
 
 **Settings**
 - **App**: theme light/dark/system, accent color, density, font scale, sounds, animations speed / reduced motion.
-- **Board**: theme pick, coordinates (inside/outside/none), highlights (last move, check, legal dots), arrows color, piece animation speed, drag vs click, eval bar (on/off — also a toggle at the end of the bottom player strip; side left/right/top/bottom; show in games).
+- **Board**: theme pick, coordinates (inside/outside/none), highlights (last move, check, legal dots), arrows color, piece animation speed, drag vs click, eval bar (on/off — also a toggle left of the board, or at the end of the bottom player strip on phones; side left/right/top/bottom; show in games).
 - **Pieces**: set pick + per-side colors (fill, stroke, accent) override.
 - **Theme editor**: clone any board or piece theme → edit base colors per side, texture type/intensity, shading strength → live preview → save as new; export/import JSON.
 - **Engines**: catalog cards (§5.4) with pros/cons, size, strength range, local/remote, status (installed / downloadable / on server). Default engine, download/remove large local engines.

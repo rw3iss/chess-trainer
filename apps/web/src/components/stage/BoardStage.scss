@@ -101,6 +101,18 @@
 		align-self: stretch;
 	}
 
+	// Left rail (eval bar toggle): its own column, vertically centered beside the board.
+	&__rail {
+		align-self: center;
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+
+		&:empty {
+			display: none;
+		}
+	}
+
 	&__result {
 		display: flex;
 		flex-direction: column;
@@ -126,6 +138,10 @@
 	}
 
 	@include stacked {
+		&__rail {
+			display: none;
+		}
+
 		&__area {
 			container-type: normal;
 			padding: var(--space-2) 0 0;
@@ -202,13 +218,20 @@
 		align-items: center;
 	}
 
+	// Strip actions only when stacked (desktop uses the stage rail).
 	&__actions {
-		display: flex;
-		align-items: center;
-		gap: var(--space-1);
+		display: none;
+	}
 
-		&:empty {
-			display: none;
+	@include stacked {
+		&__actions {
+			display: flex;
+			align-items: center;
+			gap: var(--space-1);
+
+			&:empty {
+				display: none;
+			}
 		}
 	}
 

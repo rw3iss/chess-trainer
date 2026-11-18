@@ -1,4 +1,4 @@
-// Wires the engine feature into the shell: Engine tab, eval bar slot + strip toggle, board
+// Wires the engine feature into the shell: Engine tab, eval bar slot + its toggle (rail; strip when stacked), board
 // arrows, the 'openBot' command and an always-mounted BotModal host.
 import { render } from 'preact';
 import { panelSlots } from '@/components/shell/panelSlots';
@@ -15,7 +15,7 @@ let registered: (() => void) | null = null;
 /** Idempotent; returns an unregister function. */
 export function registerEngineFeature(): () => void {
 	if (registered) return registered;
-	const offs = [panelSlots.engine.register(EnginePanel), stageSlots.evalBar.register(EngineEvalBar), stageSlots.stripActions.register(EvalBarToggle), commands.register('openBot', openBotModal), startEngineShapes()];
+	const offs = [panelSlots.engine.register(EnginePanel), stageSlots.evalBar.register(EngineEvalBar), stageSlots.rail.register(EvalBarToggle), stageSlots.stripActions.register((p) => <EvalBarToggle {...p} size="sm" />), commands.register('openBot', openBotModal), startEngineShapes()];
 	let host: HTMLElement | null = null;
 	if (typeof document !== 'undefined') {
 		host = document.createElement('div');

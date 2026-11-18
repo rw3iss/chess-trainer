@@ -26,7 +26,9 @@ export const stageSlots = {
 	side: createSlot<StageSideSlotProps>('stage.side'),
 	/** Beside, above or below the board (settings.board.evalBarSide) — e.g. the EvalBar. */
 	evalBar: createSlot<StageSideSlotProps>('stage.evalBar'),
-	/** End of the bottom player strip (opposite the captured pieces) — e.g. the eval bar toggle. */
+	/** Left of the board, vertically centered, outside any left eval bar (desktop) — e.g. the eval bar toggle. */
+	rail: createSlot<StageSideSlotProps>('stage.rail'),
+	/** End of the bottom player strip (opposite the captured pieces); shown only when stacked (phones), where there is no rail. */
 	stripActions: createSlot<StageSideSlotProps>('stage.stripActions'),
 	/** Absolutely positioned over the board — e.g. result banner, overlay clock. */
 	overlay: createSlot<StageSideSlotProps>('stage.overlay'),

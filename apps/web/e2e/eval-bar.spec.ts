@@ -19,7 +19,8 @@ async function start(page: Page) {
 }
 
 const meter = (page: Page) => page.locator('.stage').getByRole('meter', { name: 'Evaluation' });
-const toggle = (page: Page) => page.locator('.player-strip--bottom').getByRole('button', { name: 'Evaluation bar' });
+/** Desktop: the rail left of the board; phones (stacked): the end of the bottom player strip. */
+const toggle = (page: Page) => page.locator('.stage__rail, .player-strip--bottom').getByRole('button', { name: 'Evaluation bar' }).locator('visible=true');
 
 /** Where the bar sits relative to the board. */
 async function sideOf(page: Page): Promise<string> {
@@ -51,6 +52,14 @@ test('eval bar: strip toggle runs the engine, updates on moves, follows side + o
 	await expect.poll(() => meter(page).getAttribute('aria-valuetext'), { timeout: 30_000 }).not.toBe(before);
 
 	await expect.poll(() => sideOf(page)).toBe('left');
+	if (test.info().project.name === 'desktop') {
+		// The toggle sits left of the board, vertically centered, with the left bar between them.
+		const t = (await toggle(page).boundingBox())!;
+		const m = (await meter(page).boundingBox())!;
+		const b = (await page.locator('.stage__board').boundingBox())!;
+		expect(t.x + t.width).toBeLessThanOrEqual(m.x);
+		expect(Math.abs(t.y + t.height / 2 - (b.y + b.height / 2))).toBeLessThan(4);
+	}
 	for (const side of ['right', 'top', 'bottom', 'left'] as const) {
 		await page.evaluate((s) => (window as unknown as { __chess: Chess }).__chess.updateSettings({ board: { evalBarSide: s } }), side);
 		await expect.poll(() => sideOf(page)).toBe(side);

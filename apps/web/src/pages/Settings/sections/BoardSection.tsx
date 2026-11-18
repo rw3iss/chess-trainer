@@ -80,7 +80,7 @@ export function BoardSection(): JSX.Element {
 				</SettingsRow>
 			</SettingsGroup>
 
-			<SettingsGroup title="Evaluation bar" description="The engine's view of the position. Updates on every move. Shortcut: the bar button at the end of the bottom player row.">
+			<SettingsGroup title="Evaluation bar" description="The engine's view of the position. Updates on every move. Shortcut: the bar button left of the board (on phones, at the end of the bottom player row).">
 				<Toggle checked={b.evalBar} onChange={(evalBar) => setBoard({ evalBar })} label="Show evaluation bar" description="Runs the engine on the current position (one line, limited depth, when engine analysis is off)." />
 				<SettingsRow label="Position" hint="Left or right: the bottom player's color is at the bottom. Top or bottom: the top player's color is on the left.">
 					<SegmentedControl options={EVAL_SIDES} value={b.evalBarSide} onChange={(evalBarSide) => setBoard({ evalBarSide })} ariaLabel="Evaluation bar position" size="sm" />

@@ -135,6 +135,9 @@ export function BoardStage({ class: className }: { class?: string }): JSX.Elemen
 	return (
 		<section class={cx('stage', s.board.showShadow && 'stage--halo', className)} style={haloStyle(s.board)} aria-label="Board">
 			<div class="stage__area">
+				<div class="stage__rail">
+					<stageSlots.rail.Render session={session} />
+				</div>
 				{evalSide === 'left' && evalBar}
 				<div class="stage__column">
 					<PlayerStrip session={session} color={top} position="top" toMove={!over && turn === top} fen={vm.fen} pieceSet={pieceSet} pieceTheme={pieceTheme} />
