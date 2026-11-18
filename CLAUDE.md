@@ -9,7 +9,7 @@ Master plan: `docs/plan/PLAN.md`. Architecture: `docs/architecture.md`. Core API
 - `packages/core` — pure TS shared logic (chess tree/PGN, sessions, clock, engine contracts + strength, themes, openings index, WS protocol). No DOM/Node APIs.
 - `tools/openings-data` — builds `apps/web/public/data/*` from Lichess TSV + eco.json + Lichess explorer popularity + Wikibooks notes.
 - `tools/piece-assets` — normalizes SVG piece sets into recolorable sprites in `apps/web/public/pieces/`.
-- `tools/board-vision` — trains the board-image piece classifier → `apps/web/public/models/board-vision/` (`pnpm vision:train`).
+- `tools/board-vision` — trains the board-image piece classifier → `apps/web/public/models/board-vision/` (`pnpm vision:train`). **`vision:train` runs the full pipeline:** it rewrites the committed e2e fixtures, trains from scratch and exports over the shipped model. To continue a run, use `train.py --resume runs/<name>/last.pt` (see its README). Ship only if `heldOutStyles` beats the current model and `e2e/import-position.spec.ts` passes.
 
 ## Conventions
 - pnpm workspace. Run from root: `pnpm dev`, `pnpm dev:server`, `pnpm test`, `pnpm typecheck`, `pnpm lint`, `pnpm build`.
@@ -18,6 +18,8 @@ Master plan: `docs/plan/PLAN.md`. Architecture: `docs/architecture.md`. Core API
 - Core functions are pure + immutable. No chess rules in components.
 - Secrets only in root `.env` / `apps/server/.env` (gitignored). `LICHESS_TOKEN` lives in root `.env`.
 - The server is optional: the web app must work fully offline without it.
+- Web direct runs (from `apps/web`): `npx vitest run -c config/vitest.config.ts` (without `-c`, the `@/` aliases fail); typecheck is `config/tsconfig.app.json` + `config/tsconfig.worker.json`. The lib is ES2022, so ignore oxlint `no-array-sort`/`toSorted` warnings.
+- e2e: drive state through `window.__chess` (wait for it first). Settings and sessions save with a 300 ms debounce, so wait about 600 ms before `page.reload()`.
 
 ## Production — https://chess.ryanweiss.net (alias https://chess.rw3iss.com)
 
