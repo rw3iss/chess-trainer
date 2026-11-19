@@ -70,8 +70,9 @@ test('eval bar: strip toggle runs the engine, updates on moves, follows side + o
 	await page.evaluate(() => (window as unknown as { __chess: Chess }).__chess.sessionsActions.update({ orientation: 'black' }));
 	await expect(meter(page)).toHaveClass(/eval-bar--black/);
 
-	// Off again from the strip.
+	// Off again: the bar closes with the reverse animation, then unmounts.
 	await toggle(page).click();
+	await expect(page.locator('.engine-evalbar--closing')).toHaveCount(1);
 	await expect(meter(page)).toHaveCount(0);
 });
 

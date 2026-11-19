@@ -57,18 +57,22 @@ Caches (`.cache/`), runs (`runs/`) and the venv are gitignored.
 ### Continue a stopped run
 
 `train.py` saves `runs/<name>/last.pt` every eval (2,500 steps) and `best.pt` on the best held-out
-score. `--resume` loads weights only (the step count and LR schedule start again). The shipped model is
-v2 (`runs/v2-best-snapshot.pt`); v3 was stopped at ~36k of 100k steps. To continue it, then ship it:
+score. `--resume` loads weights only (the step count and LR schedule start again).
+
+Shipped model: **v3b** (2026-11-18) — v2 → v3 (stopped at ~36k steps) → resumed 70k steps as v3b.
+syntheticVal 0.9984, heldOutStyles 0.9676 (v2: 0.9647), lichess real 40/40; image e2e 12/13 exact.
+To train further from it, then ship:
 
 ```bash
 cd tools/board-vision
-.venv/bin/python -u src/train.py --steps 70000 --workers 20 --name v3b --resume runs/v3/last.pt --lr 2e-3 | tee runs/v3b.log
-.venv/bin/python src/export.py --ckpt runs/v3b/best.pt
+.venv/bin/python -u src/train.py --steps 70000 --workers 20 --name v4 --resume runs/v3b/best.pt --lr 2e-3 | tee runs/v4.log
+.venv/bin/python src/export.py --ckpt runs/v4/best.pt
 .venv/bin/python src/eval_real.py
 cd ../../apps/web && npx playwright test -c config/playwright.config.ts e2e/import-position.spec.ts --project=desktop
 ```
 
-Ship only if `heldOutStyles` beats v2 (0.9647) and the image e2e still passes.
+Ship only if `heldOutStyles` beats the shipped model (0.9676) and the image e2e still passes; otherwise
+restore the model with `git checkout apps/web/public/models/board-vision/`.
 
 ## Synthetic data
 

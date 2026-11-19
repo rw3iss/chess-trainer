@@ -16,10 +16,10 @@
 		"q",
 		"k"
 	],
-	"trainedAt": "2026-11-18T06:11:01+00:00",
+	"trainedAt": "2026-11-18T14:21:16+00:00",
 	"metrics": {
-		"syntheticVal": 0.99766,
-		"heldOutStyles": 0.96473,
+		"syntheticVal": 0.99839,
+		"heldOutStyles": 0.96762,
 		"lichessRealTiles": 1.0,
 		"lichessRealImages": 40
 	},
