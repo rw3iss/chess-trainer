@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { useState } from 'preact/hooks';
-import { fireEvent, render, screen } from '@testing-library/preact';
+import { fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { INITIAL_FEN } from '@chess/core/chess';
 import { PositionEditor, type PositionEditorProps } from './PositionEditor';
 
@@ -141,5 +141,13 @@ describe('PositionEditor', () => {
 		expect(pawn.getAttribute('aria-checked')).toBe('true');
 		fireEvent.keyDown(pawn, { key: 'ArrowDown' });
 		expect(screen.getByRole('radio', { name: 'black pawn' }).getAttribute('aria-checked')).toBe('true');
+	});
+
+	it('copies the FEN from the button at the end of the field', async () => {
+		const writeText = vi.fn(async () => undefined);
+		Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+		render(<PositionEditor fen={INITIAL_FEN} onChange={() => {}} />);
+		fireEvent.click(screen.getByRole('button', { name: 'Copy FEN' }));
+		await waitFor(() => expect(writeText).toHaveBeenCalledWith(INITIAL_FEN));
 	});
 });

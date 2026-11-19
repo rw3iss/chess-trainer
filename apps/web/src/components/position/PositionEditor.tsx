@@ -19,6 +19,7 @@ import { PieceGlyph, isSpriteLoaded, loadPieceSprite } from '@/components/board'
 import { Button, Icon, IconButton, Input, Portal, SegmentedControl, Tooltip } from '@/components/common';
 import { activeBoardTheme, activePieceSet, activePieceTheme } from '@/state/themes';
 import { cx } from '@/lib/classNames';
+import { toast } from '@/services/toast';
 import './PositionEditor.scss';
 
 // ── constants ───────────────────────────────────────────────────────────
@@ -538,6 +539,22 @@ export function PositionEditor(p: PositionEditorProps): JSX.Element {
 				spellcheck={false}
 				autocomplete="off"
 				onInput={(e) => onFenInput(e.currentTarget.value)}
+				trailing={
+					<Tooltip content="Copy FEN" placement="top">
+						<IconButton
+							icon="copy"
+							label="Copy FEN"
+							size="sm"
+							class="position-editor__copy"
+							onClick={() =>
+								navigator.clipboard.writeText(fenText.trim()).then(
+									() => toast.success('FEN copied'),
+									() => toast.error('Copy failed — select the FEN and copy it.'),
+								)
+							}
+						/>
+					</Tooltip>
+				}
 			/>
 
 			{pending.length > 0 && (
