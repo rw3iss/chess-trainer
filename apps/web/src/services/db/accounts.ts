@@ -104,39 +104,58 @@ async function seedAccountSettings(device: Repositories, account: Repositories, 
 }
 
 /** True when the repositories hold games or sessions worth copying. */
-export async function hasLocalData(repos: Repositories): Promise<boolean> {
+/** Games and sessions in a database (for the copy prompt). */
+export async function localDataCounts(repos: Repositories): Promise<{ games: number; sessions: number }> {
 	const [sessions, games] = await Promise.all([repos.sessions.list(), repos.savedGames.list()]);
-	return sessions.length > 0 || games.length > 0;
+	return { games: games.length, sessions: sessions.length };
+}
+
+export async function hasLocalData(repos: Repositories): Promise<boolean> {
+	const n = await localDataCounts(repos);
+	return n.sessions > 0 || n.games > 0;
 }
 
 /**
- * Copies games, sessions (+ tab order), favorites, custom themes, notes and — when the target has
- * none — settings from one database into another. Ids are kept (the server scopes ids per user),
- * so copying twice does not duplicate.
+ * Merges games, sessions (+ tab order), favorites, custom themes, notes and — when the target has
+ * none — settings from one database into another. Ids are kept (the server scopes ids per user).
+ * Safe to run again: a game or session already in the target is replaced only when the source copy
+ * is newer (updatedAt); notes and themes the target already has are kept. Returns what was written.
  */
 export async function copyRepositories(from: Repositories, to: Repositories): Promise<{ sessions: number; games: number }> {
-	const [sessions, games, favorites, boards, pieces, notes] = await Promise.all([
+	const [sessions, games, favorites, boards, pieces, notes, dstSessions, dstGames, dstBoards, dstPieces] = await Promise.all([
 		from.sessions.list(),
 		from.savedGames.list(),
 		from.favorites.list(),
 		from.themes.listBoard(),
 		from.themes.listPiece(),
 		from.notes.list(),
+		to.sessions.list(),
+		to.savedGames.list(),
+		to.themes.listBoard(),
+		to.themes.listPiece(),
 	]);
-	if (sessions.length) await to.sessions.putMany(sessions);
+	const newer = <T extends { id: string; updatedAt: number }>(src: T[], dst: T[]): T[] => {
+		const have = new Map(dst.map((d) => [d.id, d.updatedAt]));
+		return src.filter((s) => !have.has(s.id) || s.updatedAt > have.get(s.id)!);
+	};
+	const sessionsOut = newer(sessions, dstSessions);
+	const gamesOut = newer(games, dstGames);
+	if (sessionsOut.length) await to.sessions.putMany(sessionsOut);
 	const [srcMeta, dstMeta] = await Promise.all([from.sessions.getMeta(), to.sessions.getMeta()]);
 	if (srcMeta) {
 		const order = [...(dstMeta?.order ?? []), ...srcMeta.order.filter((id) => !dstMeta?.order.includes(id))];
 		await to.sessions.setMeta({ order, activeId: dstMeta?.activeId ?? srcMeta.activeId });
 	}
-	for (const g of games) await to.savedGames.put(g);
+	for (const g of gamesOut) await to.savedGames.put(g);
 	for (const f of favorites) if (!(await to.favorites.has(f.kind, f.refId))) await to.favorites.add(f.kind, f.refId);
-	for (const t of boards) await to.themes.putBoard(t);
-	for (const t of pieces) await to.themes.putPiece(t);
-	for (const n of notes) if (n.text.trim()) await to.notes.set(n.epd, n.text);
+	const boardIds = new Set(dstBoards.map((t) => t.id));
+	const pieceIds = new Set(dstPieces.map((t) => t.id));
+	for (const t of boards) if (!boardIds.has(t.id)) await to.themes.putBoard(t);
+	for (const t of pieces) if (!pieceIds.has(t.id)) await to.themes.putPiece(t);
+	for (const n of notes) if (n.text.trim() && !(await to.notes.get(n.epd))?.text?.trim()) await to.notes.set(n.epd, n.text);
 	const settings = await from.settings.get<unknown>('app');
 	if (settings !== undefined && (await to.settings.get<unknown>('app')) === undefined) await to.settings.set('app', settings);
-	return { sessions: sessions.length, games: games.length };
+	return { sessions: sessionsOut.length, games: gamesOut.length };
 }
 
 /** Deletes an account's local database. */

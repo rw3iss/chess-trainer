@@ -1,8 +1,8 @@
 // Account store — which local database is active, the accounts known on this device, switching,
 // and the one-time "copy this device's data" prompt (docs/plan/ACCOUNTS.md §3A).
 //
-// Read:   activeAccountKey, activeAccount, knownAccounts, copyPrompt
-// Write:  accountActions.switchTo(key | null) / signOut() / removeFromDevice(key) / answerCopy(copy)
+// Read:   activeAccountKey, activeAccount, knownAccounts, copyPrompt, deviceData
+// Write:  accountActions.switchTo(key | null) / signOut() / removeFromDevice(key) / answerCopy(copy) / copyDeviceData()
 //         / cacheAvatar(user) — keeps the avatar as a data URL in the known-accounts list (offline)
 //
 // Storage: see services/db/accounts.ts (device kv: 'account:active', 'accounts:known', 'auth:sessions').
@@ -18,7 +18,7 @@ import {
 	accountKey,
 	copyRepositories,
 	deleteAccountDatabase,
-	hasLocalData,
+	localDataCounts,
 	type KnownAccount,
 } from '@/services/db/accounts';
 import { toast } from '@/services/toast';
@@ -51,6 +51,8 @@ export function configureAccount(next: Partial<AccountDeps> = {}): void {
 const _active = signal<string | null | undefined>(undefined);
 const _known = signal<KnownAccount[]>([]);
 const _copyPrompt = signal<KnownAccount | null>(null);
+/** Games + sessions in the device's anonymous database (loaded at boot while an account is active). */
+const _deviceData = signal<{ games: number; sessions: number }>({ games: 0, sessions: 0 });
 const _switching = signal(false);
 
 export const activeAccountKey = computed(() => _active.value);
@@ -58,6 +60,8 @@ export const knownAccounts = computed(() => [..._known.value].sort((a, b) => b.l
 export const activeAccount = computed(() => (_active.value ? (_known.value.find((a) => a.key === _active.value) ?? null) : null));
 /** Account whose (empty) database could take this device's anonymous data; null = no prompt. */
 export const copyPrompt = computed(() => _copyPrompt.value);
+/** What the device's anonymous space holds (copy prompt + Profile → Data "copy again"). */
+export const deviceData = computed(() => _deviceData.value);
 export const accountSwitching = computed(() => _switching.value);
 
 function deviceKv() {
@@ -200,10 +204,23 @@ export const accountActions = {
 		_copyPrompt.value = null;
 		await saveKnown(_known.value.map((x) => (x.key === a.key ? { ...x, copyAnswer: copy ? 'copied' : 'declined' } : x)));
 		if (!copy) return;
+		await accountActions.copyDeviceData();
+	},
+
+	/**
+	 * Copies the device's anonymous games and sessions into the active account (missing or newer items
+	 * only; the anonymous copy stays), then reloads so every store sees them.
+	 */
+	async copyDeviceData(): Promise<void> {
+		const key = _active.value;
+		if (!key || getDeviceRepositories() === getRepositories()) return;
 		const n = await copyRepositories(getDeviceRepositories(), getRepositories());
-		await go(a.key, (await deviceKv().get<StoredAuth>(AUTH_SESSION_KEY)) ?? null, { toast: `Copied ${n.games} games and ${n.sessions} sessions` });
+		const what = n.games + n.sessions === 0 ? 'Nothing new to copy' : `Copied ${plural(n.games, 'game')} and ${plural(n.sessions, 'session')}`;
+		await go(key, (await deviceKv().get<StoredAuth>(AUTH_SESSION_KEY)) ?? null, { toast: what });
 	},
 };
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 /** Boot (after services/db/accounts openActiveDatabase): known accounts, pending toast, copy prompt. */
 export async function loadAccounts(): Promise<void> {
@@ -236,8 +253,9 @@ export async function loadAccounts(): Promise<void> {
 		/* private mode */
 	}
 	const acc = active ? list.find((a) => a.key === active) : undefined;
-	if (acc && !acc.copyAnswer && getDeviceRepositories() !== getRepositories() && (await hasLocalData(getDeviceRepositories()))) {
-		_copyPrompt.value = acc;
+	if (acc && getDeviceRepositories() !== getRepositories()) {
+		_deviceData.value = await localDataCounts(getDeviceRepositories());
+		if (!acc.copyAnswer && _deviceData.value.games + _deviceData.value.sessions > 0) _copyPrompt.value = acc;
 	}
 }
 
@@ -246,6 +264,7 @@ export function resetAccountState(): void {
 	_active.value = undefined;
 	_known.value = [];
 	_copyPrompt.value = null;
+	_deviceData.value = { games: 0, sessions: 0 };
 	_switching.value = false;
 }
 

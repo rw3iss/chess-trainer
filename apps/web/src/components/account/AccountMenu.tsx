@@ -1,5 +1,5 @@
-// Header account menu: who is active (picture or initials), switch between accounts known on this device and
-// the anonymous space, profile, sign in / create account, server settings, sign out (state/account.ts).
+// Header account menu: who is active (picture or initials), switch between accounts when this device knows
+// more than one, profile, sign in / create account, server settings, sign out (state/account.ts).
 import type { JSX } from 'preact';
 import { useLocation } from 'preact-iso';
 import { Icon } from '@/components/common/Icon';
@@ -23,10 +23,13 @@ export function AccountMenu({ compact = false }: { compact?: boolean }): JSX.Ele
 	const signupMode = serverConnector.status.value === 'online' ? (serverConnector.health.value?.features?.signup ?? 'off') : 'off';
 	const multi = activeKey !== undefined;
 
-	const items: MenuItem[] = [{ heading: name ? (signedIn ? `Signed in as ${name}` : `${name} (signed out)`) : 'Anonymous — this device only' }];
-	if (multi) {
-		items.push({ id: 'anon', label: 'Anonymous (this device)', icon: 'user', checked: activeKey === null, onSelect: () => void accountActions.switchTo(null) });
-		for (const a of knownAccounts.value) {
+	// One space at a time: signed in = your account (Sign out returns to the device's anonymous space);
+	// not signed in = "Anonymous (this device)". Other accounts on this device are listed only when there
+	// is more than one, to switch between them.
+	const items: MenuItem[] = [{ heading: name ? (signedIn ? `Signed in as ${name}` : `${name} (signed out)`) : 'Anonymous (this device)' }];
+	const accounts = multi ? knownAccounts.value : [];
+	if (accounts.length > 1) {
+		for (const a of accounts) {
 			items.push({ id: `acc:${a.key}`, label: `${a.displayName} (@${a.username})`, icon: 'user', checked: a.key === activeKey, onSelect: () => void accountActions.switchTo(a.key) });
 		}
 		items.push({ separator: true });
@@ -38,6 +41,8 @@ export function AccountMenu({ compact = false }: { compact?: boolean }): JSX.Ele
 	}
 	items.push({ id: 'settings', label: 'Server settings', icon: 'settings', onSelect: () => route('/settings/server') });
 	if (signedIn) items.push({ id: 'signout', label: 'Sign out', icon: 'close', onSelect: () => void authActions.logout() });
+	// An account whose sign-in expired: leave it for the device's anonymous space.
+	else if (active) items.push({ id: 'signout', label: 'Sign out', icon: 'close', onSelect: () => void accountActions.signOut() });
 
 	const label = name ? `Account: ${name}` : 'Account: anonymous';
 	const picture = name ? activeAvatarSrc() : null;

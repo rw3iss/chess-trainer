@@ -150,7 +150,8 @@ test('accounts keep their own data; the copy prompt; switch back to anonymous', 
 	await signIn.getByRole('button', { name: 'Sign in' }).click();
 
 	// Reloaded into the owner's database: offered to copy the anonymous data.
-	const dialog = page.getByRole('dialog', { name: /Copy this device's games and sessions into Owner Person/ });
+	const dialog = page.getByRole('dialog', { name: /Copy this device's games into Owner Person/ });
+	await expect(dialog).toContainText('1 session on this device');
 	await expect(dialog).toBeVisible({ timeout: 15_000 });
 	await dialog.getByRole('button', { name: 'Not now' }).click();
 	await expect(dialog).toBeHidden();
@@ -158,21 +159,34 @@ test('accounts keep their own data; the copy prompt; switch back to anonymous', 
 	await ready(page);
 	expect(await sessionIds(page)).not.toContain(anonId);
 
-	// Switch to anonymous from the account menu (on the board view: on phones, settings is a sheet over the header).
+	// Signed in: the menu has no "Anonymous" entry (one account on this device → no switch list); Sign out goes back.
 	await page.goto('/');
 	await ready(page);
 	await accountButton(page).click();
-	await page.getByRole('menuitemcheckbox', { name: /Anonymous/ }).click();
+	await expect(page.getByRole('menuitemcheckbox', { name: /Anonymous/ })).toHaveCount(0);
+	await expect(page.getByRole('menuitemcheckbox', { name: /Owner Person/ })).toHaveCount(0);
+	await page.getByRole('menuitem', { name: 'Sign out' }).click();
 	await expect(accountButton(page)).toHaveAccessibleName('Account: anonymous', { timeout: 15_000 });
 	await ready(page);
 	await expect.poll(() => sessionIds(page)).toContain(anonId);
-
-	// And back to the owner (stashed tokens: no sign-in needed).
 	await accountButton(page).click();
-	await page.getByRole('menuitemcheckbox', { name: /Owner Person/ }).click();
+	await expect(page.getByText('Anonymous (this device)')).toBeVisible();
+	await page.keyboard.press('Escape');
+
+	// Profile → Data offers to copy this device's games later (the prompt was declined).
+	await page.goto('/profile');
+	const again = page.locator('.profile');
+	await expect(again.getByLabel('Username or email')).toBeEnabled({ timeout: 10_000 });
+	await again.getByLabel('Username or email').fill('owner');
+	await again.getByLabel('Password', { exact: true }).fill('pw');
+	await again.getByRole('button', { name: 'Sign in' }).click();
 	await expect(accountButton(page)).toHaveAccessibleName('Account: Owner Person', { timeout: 15_000 });
 	await ready(page);
-	expect(await sessionIds(page)).not.toContain(anonId);
+	await expect.poll(() => sessionIds(page)).not.toContain(anonId);
+	await page.goto('/profile');
+	await page.getByRole('button', { name: "Copy this device's games into my account" }).click();
+	await ready(page);
+	await expect.poll(() => sessionIds(page), { timeout: 15_000 }).toContain(anonId);
 });
 
 test('signed in: linked sign-ins (unlink refused when it is the only one) and invite a friend', async ({ page }) => {

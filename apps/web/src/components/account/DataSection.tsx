@@ -4,6 +4,7 @@ import { useState } from 'preact/hooks';
 import { Button, Input } from '@/components/common';
 import { toast } from '@/services/toast';
 import { authActions, authUser } from '@/state/auth';
+import { accountActions, deviceData } from '@/state/account';
 import { exportBackupJson, exportGamesPgn } from './accountData';
 import { RemoveFromDevice } from './RemoveFromDevice';
 import './account.scss';
@@ -133,6 +134,32 @@ export function DeleteAccount(): JSX.Element | null {
 	);
 }
 
+/** Games and sessions saved on this device while signed out → into this account (again, any time). */
+function CopyDeviceData(): JSX.Element | null {
+	const n = deviceData.value;
+	const [busy, setBusy] = useState(false);
+	if (n.games + n.sessions === 0) return null;
+	const what = [n.games && `${n.games} saved game${n.games === 1 ? '' : 's'}`, n.sessions && `${n.sessions} session${n.sessions === 1 ? '' : 's'}`].filter(Boolean).join(' and ');
+	return (
+		<>
+			<p class="account-text">This device also has {what} from when you were signed out. Copy the new or changed ones into this account; they stay on the device too.</p>
+			<div class="account-form__actions">
+				<Button
+					size="sm"
+					variant="secondary"
+					loading={busy}
+					onClick={() => {
+						setBusy(true);
+						void accountActions.copyDeviceData().finally(() => setBusy(false));
+					}}
+				>
+					Copy this device's games into my account
+				</Button>
+			</div>
+		</>
+	);
+}
+
 export function DataSection(): JSX.Element {
 	return (
 		<>
@@ -142,6 +169,7 @@ export function DataSection(): JSX.Element {
 					<h4 class="account-block__title" id="account-device">
 						This device
 					</h4>
+					<CopyDeviceData />
 					<p class="account-text">Remove this account's local copy. Synced data stays on the server.</p>
 					<div class="account-form__actions">
 						<RemoveFromDevice />

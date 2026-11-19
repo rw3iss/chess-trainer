@@ -188,8 +188,22 @@ describe('copyRepositories', () => {
 		expect(await to.favorites.has('opening', 'o1')).toBe(true);
 		expect((await to.notes.get('epd'))?.text).toBe('note');
 		expect(await to.settings.get('app')).toEqual({ v: 'to' });
-		// Twice: no duplicates.
-		await copyRepositories(from, to);
+		// Twice: no duplicates, nothing rewritten.
+		expect(await copyRepositories(from, to)).toEqual({ sessions: 0, games: 0 });
 		expect(await to.sessions.list()).toHaveLength(2);
+	});
+
+	it('copying again keeps the newer copy of a session and the target note', async () => {
+		const f = dbFactory();
+		const from = f.open('from');
+		const to = f.open('to');
+		await from.sessions.putMany([{ ...createSession({ id: 'a' }), title: 'device old', updatedAt: 100 }, { ...createSession({ id: 'b' }), title: 'device new', updatedAt: 300 }]);
+		await to.sessions.putMany([{ ...createSession({ id: 'a' }), title: 'account newer', updatedAt: 200 }, { ...createSession({ id: 'b' }), title: 'account older', updatedAt: 200 }]);
+		await from.notes.set('epd', 'device note');
+		await to.notes.set('epd', 'account note');
+		expect(await copyRepositories(from, to)).toEqual({ sessions: 1, games: 0 });
+		expect((await to.sessions.get('a'))?.title).toBe('account newer');
+		expect((await to.sessions.get('b'))?.title).toBe('device new');
+		expect((await to.notes.get('epd'))?.text).toBe('account note');
 	});
 });
