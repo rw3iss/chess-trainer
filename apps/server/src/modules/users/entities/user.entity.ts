@@ -23,6 +23,18 @@ export class UserEntity {
 	@Column({ type: 'varchar', length: 254, nullable: true })
 	email!: string | null;
 
+	/** The email is confirmed (verify link, or a provider vouched for it). Reset links go only to verified emails. */
+	@Column({ name: 'email_verified', type: 'boolean', default: false })
+	emailVerified!: boolean;
+
+	/** 'png' | 'jpeg' | 'webp' when an avatar is stored (AvatarStore), else null. */
+	@Column({ name: 'avatar_type', type: 'varchar', length: 16, nullable: true })
+	avatarType!: string | null;
+
+	/** Bumped on every avatar change (cache-busting ?v=). */
+	@Column({ name: 'avatar_version', type: 'integer', default: 0 })
+	avatarVersion!: number;
+
 	/** Epoch seconds. Refresh tokens issued before this are refused (set on password change / reset). */
 	@Column({ name: 'tokens_valid_after', type: 'bigint', default: 0, transformer: bigintNumber })
 	tokensValidAfter!: number;

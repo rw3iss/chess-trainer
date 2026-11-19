@@ -4,6 +4,11 @@
 import type {
 	AuthTokens,
 	ChangePasswordRequest,
+	DeleteAccountRequest,
+	DeviceSessionDto,
+	OwnerResetLinkDto,
+	RecoverPasswordRequest,
+	RecoveryCodesResponse,
 	ExplorerResult,
 	ExplorerSource,
 	ForgotPasswordRequest,
@@ -100,6 +105,42 @@ export class MockApiAdapter implements ApiClient {
 	updateAccount(req: UpdateAccountRequest): Promise<UserDto> {
 		const { email, ...rest } = req;
 		return delay({ ...(userFixture as UserDto), ...rest, email: email === undefined ? null : email || null }, this.latencyMs);
+	}
+	verifyEmail(_token: string): Promise<{ email: string }> {
+		return Promise.reject(new Error('Email verification needs a server.'));
+	}
+	resendVerification(): Promise<void> {
+		return delay(undefined, this.latencyMs);
+	}
+	sessions(): Promise<DeviceSessionDto[]> {
+		return delay([{ id: 'mock-session', label: 'This browser', createdAt: Date.now(), lastUsedAt: Date.now(), current: true }], this.latencyMs);
+	}
+	revokeSession(_id: string): Promise<void> {
+		return delay(undefined, this.latencyMs);
+	}
+	logout(_refreshToken: string): Promise<void> {
+		return delay(undefined, this.latencyMs);
+	}
+	createRecoveryCodes(_currentPassword: string): Promise<RecoveryCodesResponse> {
+		return delay({ codes: Array.from({ length: 8 }, (_, i) => `mock-code-${i + 1}`) }, this.latencyMs);
+	}
+	recoveryCodesLeft(): Promise<{ remaining: number }> {
+		return delay({ remaining: 0 }, this.latencyMs);
+	}
+	recoverPassword(_req: RecoverPasswordRequest): Promise<AuthTokens> {
+		return Promise.reject(new Error('Password recovery needs a server.'));
+	}
+	uploadAvatar(_file: Blob): Promise<UserDto> {
+		return Promise.reject(new Error('Avatars need a server.'));
+	}
+	deleteAvatar(): Promise<UserDto> {
+		return delay({ ...(userFixture as UserDto), avatarUrl: null }, this.latencyMs);
+	}
+	deleteAccount(_req: DeleteAccountRequest): Promise<void> {
+		return Promise.reject(new Error('Deleting an account needs a server.'));
+	}
+	ownerResetLink(username: string): Promise<OwnerResetLinkDto> {
+		return delay({ link: `/reset-password?token=mock-${username}`, expiresAt: Date.now() + 3_600_000 }, this.latencyMs);
 	}
 	explorer(fen: string, source: ExplorerSource = 'lichess'): Promise<ExplorerResult> {
 		return delay({ ...(explorerFixture as ExplorerResult), fen, source }, this.latencyMs);

@@ -26,6 +26,16 @@
 		gap: var(--space-3);
 	}
 
+	&__fine {
+		margin: 0;
+		font-size: var(--text-xs);
+		color: var(--color-text-subtle);
+
+		a {
+			color: inherit;
+		}
+	}
+
 	&__error {
 		margin: 0;
 		font-size: var(--text-sm);

@@ -32,7 +32,13 @@ describe('password reset (email) + change', () => {
 		const first = (await login('owner-pass')).body.data;
 		const set = await http().patch('/users/me').set('Authorization', `Bearer ${first.accessToken}`).send({ email: 'Owner@Example.test' });
 		expect(set.status).toBe(200);
-		expect(set.body.data.email).toBe('owner@example.test');
+		expect(set.body.data).toMatchObject({ email: 'owner@example.test', emailVerified: false });
+		// Confirm the address first: reset links go to confirmed emails only.
+		await vi(() => outbox.length === 1);
+		const verify = outbox.shift()!;
+		expect(verify.tag).toBe('verify-email');
+		const vt = decodeURIComponent(/verify-email\?token=([^\s"&]+)/.exec(verify.text)![1]!);
+		expect((await http().post('/auth/email/verify').send({ token: vt })).status).toBe(200);
 
 		await sleep(1100); // older tokens must predate the reset by a whole second (JWT iat)
 		expect((await forgot('OWNER@example.test')).status).toBe(202);

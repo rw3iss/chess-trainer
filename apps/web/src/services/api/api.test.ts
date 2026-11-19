@@ -64,6 +64,52 @@ describe('HttpApiAdapter', () => {
 		expect(calls[1]!.body).toMatchObject({ mode: 'signin', apiBase: 'http://srv/api' });
 	});
 
+	it('profile endpoints: verify, devices, logout, recovery codes, avatar (multipart), delete, owner link', async () => {
+		const calls: { url: string; method: string; auth?: string; contentType?: string; body?: BodyInit | null }[] = [];
+		const fetchImpl = vi.fn(async (url: string, init: RequestInit) => {
+			const h = init.headers as Record<string, string>;
+			calls.push({ url, method: init.method!, auth: h.Authorization, contentType: h['Content-Type'], body: init.body });
+			return new Response(JSON.stringify({ data: {} }), { status: 200 });
+		}) as unknown as typeof fetch;
+		const api = new HttpApiAdapter({ baseUrl: 'http://srv/api', getToken: () => 'tok', fetchImpl });
+		await api.verifyEmail('t1');
+		await api.resendVerification();
+		await api.sessions();
+		await api.revokeSession('s 1');
+		await api.logout('r1');
+		await api.createRecoveryCodes('pw');
+		await api.recoveryCodesLeft();
+		await api.recoverPassword({ username: 'u', code: 'c', password: 'p' });
+		await api.uploadAvatar(new Blob(['x'], { type: 'image/webp' }));
+		await api.deleteAvatar();
+		await api.deleteAccount({ password: 'pw' });
+		await api.ownerResetLink('pal');
+		expect(calls.map((c) => `${c.method} ${c.url}`)).toEqual([
+			'POST http://srv/api/auth/email/verify',
+			'POST http://srv/api/users/me/email/verify',
+			'GET http://srv/api/users/me/sessions',
+			'DELETE http://srv/api/users/me/sessions/s%201',
+			'POST http://srv/api/auth/logout',
+			'POST http://srv/api/users/me/recovery-codes',
+			'GET http://srv/api/users/me/recovery-codes',
+			'POST http://srv/api/auth/password/recover',
+			'PUT http://srv/api/users/me/avatar',
+			'DELETE http://srv/api/users/me/avatar',
+			'DELETE http://srv/api/users/me',
+			'POST http://srv/api/admin/users/pal/reset-link',
+		]);
+		expect(JSON.parse(calls[0]!.body as string)).toEqual({ token: 't1' });
+		expect(JSON.parse(calls[4]!.body as string)).toEqual({ refreshToken: 'r1' });
+		expect(JSON.parse(calls[10]!.body as string)).toEqual({ password: 'pw' });
+		// Avatar: multipart (no JSON content type; the browser sets the boundary), field `file`.
+		const upload = calls[8]!;
+		expect(upload.contentType).toBeUndefined();
+		expect(upload.body).toBeInstanceOf(FormData);
+		const file = (upload.body as FormData).get('file') as File;
+		expect(file.name).toBe('avatar.webp');
+		expect(upload.auth).toBe('Bearer tok');
+	});
+
 	it('maps { error } bodies to ApiRequestError', async () => {
 		const fetchImpl = vi.fn(
 			async () => new Response(JSON.stringify({ error: { code: 'unauthorized', message: 'Nope', timestamp: 't', path: '/auth/me' } }), { status: 401 }),

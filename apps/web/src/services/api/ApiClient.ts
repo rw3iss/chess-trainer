@@ -5,6 +5,11 @@
 import type {
 	AuthTokens,
 	ChangePasswordRequest,
+	DeleteAccountRequest,
+	DeviceSessionDto,
+	OwnerResetLinkDto,
+	RecoverPasswordRequest,
+	RecoveryCodesResponse,
 	ExplorerResult,
 	ExplorerSource,
 	ForgotPasswordRequest,
@@ -42,6 +47,9 @@ export interface UpdateAccountRequest {
 	email?: string;
 }
 
+/** Avatar upload field name (multipart). */
+export const AVATAR_FIELD = 'file';
+
 /** Password + account endpoints (signed-in calls send the bearer token). */
 export interface AccountApi {
 	/** Always resolves `{ sent: true }` for unknown accounts too (no enumeration). */
@@ -69,6 +77,30 @@ export interface AccountApi {
 	invites(): Promise<InviteDto[]>;
 	/** GET /invites/:code (public). */
 	invitePreview(code: string): Promise<InvitePreview>;
+	/** POST /auth/email/verify (public) — token from the verify email. */
+	verifyEmail(token: string): Promise<{ email: string }>;
+	/** POST /users/me/email/verify — send the verify link again. */
+	resendVerification(): Promise<void>;
+	/** GET /users/me/sessions — signed-in devices. */
+	sessions(): Promise<DeviceSessionDto[]>;
+	/** DELETE /users/me/sessions/:id — sign that device out. */
+	revokeSession(id: string): Promise<void>;
+	/** POST /auth/logout (public) — ends the session of this refresh token. */
+	logout(refreshToken: string): Promise<void>;
+	/** POST /users/me/recovery-codes — 8 new codes (old ones stop working). */
+	createRecoveryCodes(currentPassword: string): Promise<RecoveryCodesResponse>;
+	/** GET /users/me/recovery-codes — unused codes left. */
+	recoveryCodesLeft(): Promise<{ remaining: number }>;
+	/** POST /auth/password/recover (public) — recovery code + new password → signed in. */
+	recoverPassword(req: RecoverPasswordRequest): Promise<AuthTokens>;
+	/** PUT /users/me/avatar (multipart `file`). */
+	uploadAvatar(file: Blob): Promise<UserDto>;
+	/** DELETE /users/me/avatar. */
+	deleteAvatar(): Promise<UserDto>;
+	/** DELETE /users/me — the account and its server data. */
+	deleteAccount(req: DeleteAccountRequest): Promise<void>;
+	/** Owner: POST /admin/users/:username/reset-link. */
+	ownerResetLink(username: string): Promise<OwnerResetLinkDto>;
 }
 
 export interface ApiClient extends AccountApi {

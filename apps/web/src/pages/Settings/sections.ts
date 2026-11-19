@@ -27,7 +27,7 @@ export const SETTINGS_SECTIONS: SettingsSectionDef[] = [
 	{ id: 'theme-editor', label: 'Theme editor', icon: 'edit', summary: 'Create custom board and piece themes', component: ThemeEditorSection },
 	{ id: 'engines', label: 'Engines', icon: 'bot', summary: 'Analysis engine and bot defaults', component: EnginesSection },
 	{ id: 'clock', label: 'Clock', icon: 'clock', summary: 'Time controls and clock display', component: ClockSection },
-	{ id: 'server', label: 'Server', icon: 'server', summary: 'Sign in, sync and online play', component: ServerSection },
+	{ id: 'server', label: 'Server', icon: 'server', summary: 'Server, sync and online play', component: ServerSection },
 	{ id: 'data', label: 'Data', icon: 'download', summary: 'Backup, import, caches, storage', component: DataSection },
 ];
 

@@ -21,6 +21,7 @@ interface PendingState {
 	provider: OAuthProviderId;
 	mode: 'signin' | 'link';
 	userId: string | null;
+	userAgent?: string;
 	appOrigin: string;
 	redirectUri: string;
 	verifier: string;
@@ -31,6 +32,7 @@ interface PendingState {
 
 interface PendingCode {
 	userId: string;
+	userAgent?: string;
 	returnTo: string;
 	created: boolean;
 	linked: boolean;
@@ -69,7 +71,7 @@ export class OAuthService {
 		return [...this.providers.values()].filter((p) => p.enabled).map((p) => p.id);
 	}
 
-	async start(providerId: string, req: OAuthStartRequest, userId: string | null, ip?: string): Promise<{ url: string }> {
+	async start(providerId: string, req: OAuthStartRequest, userId: string | null, ip?: string, userAgent?: string): Promise<{ url: string }> {
 		const provider = this.provider(providerId);
 		const appOrigin = this.allowedOrigin(req.appOrigin, 'appOrigin');
 		const apiBase = req.apiBase.replace(/\/+$/, '');
@@ -79,7 +81,7 @@ export class OAuthService {
 		const state = b64url(randomBytes(24));
 		const verifier = b64url(randomBytes(32));
 		const redirectUri = `${apiBase}/auth/${provider.id}/callback`;
-		const pending: PendingState = { provider: provider.id, mode: req.mode, userId: req.mode === 'link' ? userId : null, appOrigin, redirectUri, verifier, returnTo, invite: req.invite, ip };
+		const pending: PendingState = { provider: provider.id, mode: req.mode, userId: req.mode === 'link' ? userId : null, appOrigin, redirectUri, verifier, returnTo, invite: req.invite, ip, userAgent };
 		await this.cache.set(`oauth:state:${state}`, pending, STATE_TTL_S);
 		const codeChallenge = b64url(createHash('sha256').update(verifier).digest());
 		return { url: provider.authorizeUrl({ state, codeChallenge, redirectUri }) };
@@ -105,7 +107,7 @@ export class OAuthService {
 		try {
 			const result = await this.resolve(pending, profile);
 			const code = b64url(randomBytes(24));
-			await this.cache.set(`oauth:code:${code}`, { ...result, returnTo: pending.returnTo } satisfies PendingCode, CODE_TTL_S);
+			await this.cache.set(`oauth:code:${code}`, { ...result, returnTo: pending.returnTo, userAgent: pending.userAgent } satisfies PendingCode, CODE_TTL_S);
 			return back(`code=${code}`);
 		} catch (e) {
 			if (e instanceof SignInError) return fail(e.message);
@@ -121,7 +123,7 @@ export class OAuthService {
 		if (!pending) throw new BadRequestException('this sign-in expired — start again');
 		await this.cache.del(key);
 		const user = await this.users.findById(pending.userId);
-		const tokens = await this.auth.tokensFor(user);
+		const tokens = await this.auth.tokensFor(user, { userAgent: pending.userAgent });
 		return { ...tokens, returnTo: pending.returnTo, created: pending.created, linked: pending.linked };
 	}
 
@@ -162,13 +164,17 @@ export class OAuthService {
 		}
 
 		// No link yet. Never attach to an existing account by email alone (account takeover risk).
-		if (profile.email && (await this.users.findByEmail(profile.email))) {
-			throw new SignInError(`An account with ${profile.email} already exists. Sign in with your password, then link ${name} in Settings → Server.`);
+		const verifiedEmail = profile.email && profile.emailVerified ? profile.email : null;
+		if (verifiedEmail) {
+			const holder = await this.users.findByEmail(verifiedEmail);
+			if (holder?.emailVerified) throw new SignInError(`An account with ${verifiedEmail} already exists. Sign in with your password, then link ${name} on your profile.`);
+			// An unconfirmed claim on the address loses it to the provider-verified owner.
+			if (holder) await this.users.releaseUnverifiedEmail(verifiedEmail);
 		}
 		const invite = await this.registration.admit(pending.invite, pending.ip);
 		const username = await this.users.freeUsername(profile.username ?? profile.email?.split('@')[0] ?? profile.name ?? 'player');
 		const user: UserEntity = await this.registration.create(
-			{ username, password: null, displayName: profile.name ?? profile.username ?? username, email: profile.email && profile.emailVerified ? profile.email : null },
+			{ username, password: null, displayName: profile.name ?? profile.username ?? username, email: verifiedEmail, emailVerified: !!verifiedEmail },
 			invite,
 		);
 		await this.link(user.id, provider, profile);

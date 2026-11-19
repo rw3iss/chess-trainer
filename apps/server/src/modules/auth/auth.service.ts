@@ -5,6 +5,8 @@ import { randomUUID } from 'crypto';
 import type { AuthTokens } from '@chess/core';
 import { AuthUser, claimsToUser, TokenClaims } from '../../common/auth/auth-user';
 import { RateLimiter } from '../../cache/rate-limiter';
+import { SessionsService } from './sessions.service';
+import type { AuthSessionEntity } from './entities/auth-session.entity';
 import { UsersService } from '../users/users.service';
 import type { UserEntity } from '../users/entities/user.entity';
 import type { GuestTokenResponse } from './dto/auth.dto';
@@ -21,13 +23,14 @@ export class AuthService {
 		private readonly users: UsersService,
 		private readonly config: ConfigService,
 		private readonly limits: RateLimiter,
+		private readonly sessions: SessionsService,
 	) {}
 
 	/**
 	 * Username (or email) + password → access/refresh pair. Same error for unknown user and bad password.
 	 * Failed attempts are counted per username and per IP (LOGIN_MAX_PER_USER / _PER_IP in LOGIN_WINDOW) → 429.
 	 */
-	async login(username: string, password: string, ip?: string): Promise<AuthTokens> {
+	async login(username: string, password: string, ip?: string, userAgent?: string): Promise<AuthTokens> {
 		const name = username.trim().toLowerCase();
 		const window = this.config.get<number>('auth.loginWindow') ?? 900;
 		const perUser = this.config.get<number>('auth.loginMaxPerUser') ?? 10;
@@ -42,11 +45,11 @@ export class AuthService {
 			throw new UnauthorizedException('invalid username or password');
 		}
 		await this.limits.reset(`login:u:${name}`);
-		return this.issueTokens(user);
+		return this.tokensFor(user, { userAgent });
 	}
 
 	/** Exchanges a valid refresh token for a fresh pair (user is re-read so role/name changes apply). */
-	async refresh(refreshToken: string): Promise<AuthTokens> {
+	async refresh(refreshToken: string, userAgent?: string): Promise<AuthTokens> {
 		const claims = await this.verify(refreshToken, 'refresh');
 		const user = await this.users.findById(claims.sub).catch(() => {
 			throw new UnauthorizedException('user no longer exists');
@@ -54,7 +57,17 @@ export class AuthService {
 		// Password changed / reset since this token was issued → signed out.
 		const iat = (claims as TokenClaims & { iat?: number }).iat ?? 0;
 		if (iat < (user.tokensValidAfter ?? 0)) throw new UnauthorizedException('session ended — sign in again');
-		return this.issueTokens(user);
+		// Tokens from before device sessions existed: start a session for them once.
+		if (!claims.sid) return this.tokensFor(user, { userAgent });
+		const r = await this.sessions.rotate(user.id, claims.sid, claims.rot ?? 0);
+		if (!r.ok) throw new UnauthorizedException('session ended — sign in again');
+		return this.issueTokens(user, r.session);
+	}
+
+	/** Ends the session of a refresh token (sign out). Invalid or expired tokens are ignored. */
+	async logout(refreshToken: string): Promise<void> {
+		const claims = await this.verify(refreshToken, 'refresh').catch(() => null);
+		if (claims?.sid) await this.sessions.revokeQuietly(claims.sid);
 	}
 
 	/** Guest token: random id, chosen display name, no account. Used to join rooms. */
@@ -88,18 +101,22 @@ export class AuthService {
 		return claimsToUser(await this.verify(token));
 	}
 
-	/** Fresh access + refresh pair for a user (after a password reset / change). */
-	tokensFor(user: UserEntity): Promise<AuthTokens> {
-		return this.issueTokens(user);
+	/**
+	 * Tokens for a user on a device session: `sessionId` keeps (renews) that session, else a new session
+	 * is created (sign-in, sign-up, provider sign-in, reset).
+	 */
+	async tokensFor(user: UserEntity, ctx: { userAgent?: string; sessionId?: string } = {}): Promise<AuthTokens> {
+		const session = (ctx.sessionId ? await this.sessions.renew(ctx.sessionId) : null) ?? (await this.sessions.create(user.id, ctx.userAgent));
+		return this.issueTokens(user, session);
 	}
 
-	private async issueTokens(user: UserEntity): Promise<AuthTokens> {
+	private async issueTokens(user: UserEntity, session: AuthSessionEntity): Promise<AuthTokens> {
 		const accessTtl = this.config.get<number>('auth.accessTtl')!;
 		const refreshTtl = this.config.get<number>('auth.refreshTtl')!;
-		const base = { sub: user.id, username: user.username, name: user.displayName, role: user.role };
+		const base = { sub: user.id, username: user.username, name: user.displayName, role: user.role, sid: session.id };
 		const [accessToken, refreshToken] = await Promise.all([
 			this.jwt.signAsync({ ...base, typ: 'access' } satisfies TokenClaims, { expiresIn: accessTtl }),
-			this.jwt.signAsync({ ...base, typ: 'refresh' } satisfies TokenClaims, { expiresIn: refreshTtl }),
+			this.jwt.signAsync({ ...base, typ: 'refresh', rot: session.rotation } satisfies TokenClaims, { expiresIn: refreshTtl }),
 		]);
 		return { accessToken, refreshToken, expiresIn: accessTtl, user: this.users.toDto(user) };
 	}

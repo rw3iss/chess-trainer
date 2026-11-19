@@ -41,6 +41,8 @@ const OpeningLink = lazy(() => import('@/pages/OpeningLink/OpeningLink'));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword/ResetPassword'));
 const Signup = lazy(() => import('@/pages/Signup/Signup'));
 const AuthCallback = lazy(() => import('@/pages/AuthCallback/AuthCallback'));
+const Profile = lazy(() => import('@/pages/Profile/Profile'));
+const VerifyEmail = lazy(() => import('@/pages/VerifyEmail/VerifyEmail'));
 const NotFound = lazy(() => import('@/pages/NotFound/NotFound'));
 
 export const ROUTES: AppRoute[] = [
@@ -57,6 +59,8 @@ export const ROUTES: AppRoute[] = [
 	{ path: '/reset-password', component: ResetPassword, layout: 'sheet', title: 'Reset password' },
 	{ path: '/signup', component: Signup, layout: 'sheet', title: 'Create account' },
 	{ path: '/auth/callback', component: AuthCallback, layout: 'sheet', title: 'Signing in' },
+	{ path: '/profile', component: Profile, layout: 'wide', title: 'Profile' },
+	{ path: '/verify-email', component: VerifyEmail, layout: 'sheet', title: 'Verify email' },
 ];
 
 export const NOT_FOUND_ROUTE: AppRoute = { path: '*', component: NotFound, layout: 'panel', title: 'Not found' };

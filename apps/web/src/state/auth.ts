@@ -3,6 +3,8 @@
 // Read:   authUser, isLoggedIn, authBusy, authError, guestName, accessToken()
 // Write:  authActions.login / logout / refresh / setGuestName
 //         authActions.forgotPassword / resetPassword / changePassword / updateEmail / loadAccount
+//           / verifyEmail / resendVerification / sessions / revokeSession / createRecoveryCodes
+//           / recoveryCodesLeft / recoverPassword / uploadAvatar / deleteAvatar / deleteAccount / ownerResetLink
 //           (reject with an Error whose message is user-facing; see accountErrorMessage)
 //         authActions.ensureAccessToken()  → fresh user token (refreshes when < 60 s left)
 //         authActions.roomToken()          → user token, else a guest token (rooms only)
@@ -12,7 +14,7 @@
 // setUnauthorizedHandler in services/api). Auth calls go straight to the HTTP
 // adapter for the configured server — never to the mock adapter.
 import { computed, signal } from '@preact/signals';
-import { PASSWORD_MIN_LENGTH, USERNAME_RE, type AuthTokens, type IdentityDto, type InviteDto, type InvitePreview, type OAuthProviderId, type RegisterRequest, type UserDto } from '@chess/core/protocol';
+import { PASSWORD_MIN_LENGTH, USERNAME_RE, type AuthTokens, type DeviceSessionDto, type IdentityDto, type InviteDto, type InvitePreview, type OAuthProviderId, type OwnerResetLinkDto, type RegisterRequest, type UserDto } from '@chess/core/protocol';
 import { getDeviceRepositories } from '@/services/db';
 import { ApiRequestError, HttpApiAdapter, setAuthTokenProvider, setUnauthorizedHandler, type AccountApi } from '@/services/api';
 import { serverConnector } from '@/services/server';
@@ -23,6 +25,11 @@ export const AUTH_GUEST_KEY = 'auth:guest';
 export const GUEST_NAME_KEY = 'auth:guestName';
 /** Refresh this long before the access token expires. */
 export const REFRESH_LEAD_MS = 60_000;
+/** sessionStorage: provider of the sign-in in flight (named in the callback toast). */
+export const OAUTH_PROVIDER_KEY = 'chess:oauth-provider';
+/** Logout waits at most this long for the server to end the session (offline: it just signs out). */
+export const LOGOUT_REVOKE_TIMEOUT_MS = 1500;
+const PROVIDER_LABEL: Record<OAuthProviderId, string> = { google: 'Google', lichess: 'Lichess' };
 
 export interface StoredAuth {
 	accessToken: string;
@@ -115,7 +122,7 @@ function errorMessage(e: unknown): string {
 	return e instanceof Error ? e.message : String(e);
 }
 
-type AccountAction = 'forgot' | 'reset' | 'change' | 'email' | 'load' | 'register' | 'oauth' | 'identity' | 'invite';
+type AccountAction = 'forgot' | 'reset' | 'change' | 'email' | 'load' | 'register' | 'oauth' | 'identity' | 'invite' | 'verify' | 'session' | 'codes' | 'recover' | 'avatar' | 'delete' | 'owner';
 
 /** User-facing message for a failed password / account call. */
 export function accountErrorMessage(action: AccountAction, e: unknown): string {
@@ -125,6 +132,13 @@ export function accountErrorMessage(action: AccountAction, e: unknown): string {
 		if (e.status === 503 && action === 'forgot') return 'Password reset by email is not set up on this server.';
 		if (e.status === 400 && action === 'reset') return 'This reset link is invalid, used or expired. Request a new one.';
 		if (e.status === 401 && action === 'change') return 'The current password is wrong.';
+		if (e.status === 400 && action === 'verify') return 'This verification link is invalid, used or expired. Send a new one from your profile.';
+		if ((e.status === 400 || e.status === 401) && action === 'recover') return 'Wrong username or recovery code, or the code was already used.';
+		if (e.status === 401 && (action === 'codes' || action === 'delete')) return 'The password is wrong.';
+		if (e.status === 403 && action === 'delete') return e.message || 'This account cannot be deleted.';
+		if ((e.status === 400 || e.status === 413 || e.status === 415) && action === 'avatar') return 'Use a PNG, JPEG or WebP image (at most 300 KB after resizing).';
+		if (e.status === 404 && action === 'owner') return 'No user with that username.';
+		if (e.status === 403 && action === 'owner') return 'Only the owner can do this.';
 		if (e.status === 401) return 'Session expired — sign in again.';
 		if (e.status === 409 && action === 'email') return 'Another account already uses that email.';
 		if (e.status === 400 && action === 'email') return 'Enter a valid email address.';
@@ -180,6 +194,8 @@ export interface SessionListener {
 	signedIn: (next: StoredAuth, previous: StoredAuth | null, opts: { to?: string; toast?: string }) => Promise<boolean>;
 	/** Explicit sign-out (not a session expiry). */
 	signedOut: () => Promise<void>;
+	/** The account was deleted on the server: forget it on this device too. */
+	deleted?: (s: StoredAuth) => Promise<void>;
 }
 let sessionListener: SessionListener | null = null;
 export function setSessionListener(l: SessionListener | null): void {
@@ -219,8 +235,14 @@ export const authActions = {
 		}
 	},
 
+	/** Sign out. Tells the server to end this session (best effort, short timeout: offline still signs out). */
 	async logout(): Promise<void> {
 		_error.value = null;
+		const s = _session.value;
+		if (s?.refreshToken) {
+			const revoke = deps.account(s.serverUrl, null).logout(s.refreshToken).catch(() => undefined);
+			await Promise.race([revoke, new Promise((r) => setTimeout(r, LOGOUT_REVOKE_TIMEOUT_MS))]);
+		}
 		await setSession(null);
 		await sessionListener?.signedOut();
 	},
@@ -304,7 +326,7 @@ export const authActions = {
 		return accountCall('reset', async () => {
 			const url = requireUrl();
 			const tokens = await deps.account(url, null).resetPassword({ token, password });
-			await signedIn(tokens, url, { to: '/settings/server', toast: 'Password changed — you are signed in' });
+			await signedIn(tokens, url, { to: '/profile', toast: 'Password changed — you are signed in' });
 			return tokens.user;
 		});
 	},
@@ -328,6 +350,17 @@ export const authActions = {
 			const s = requireSession();
 			const token = (await authActions.ensureAccessToken()) ?? s.accessToken;
 			const user = await deps.account(s.serverUrl, token).updateAccount({ email: email.trim() });
+			await patchUser(s, user);
+			return _session.value?.user ?? user;
+		});
+	},
+
+	/** Signed in: change the display name (1–64 characters). */
+	async updateDisplayName(name: string): Promise<UserDto> {
+		const displayName = name.trim();
+		if (!displayName || displayName.length > 64) throw new Error('Use 1–64 characters.');
+		return withAccount('load', async (a, s) => {
+			const user = await a.updateAccount({ displayName });
 			await patchUser(s, user);
 			return _session.value?.user ?? user;
 		});
@@ -368,6 +401,11 @@ export const authActions = {
 				token = await authActions.ensureAccessToken();
 			}
 			const appOrigin = typeof location !== 'undefined' ? location.origin : 'http://localhost';
+			try {
+				sessionStorage.setItem(OAUTH_PROVIDER_KEY, provider);
+			} catch {
+				/* private mode */
+			}
 			const res = await deps.account(url, token).oauthStart(provider, {
 				mode,
 				appOrigin,
@@ -381,13 +419,14 @@ export const authActions = {
 	},
 
 	/** /auth/callback: exchange the single-use code → signed in (or linked). */
-	async completeOAuth(code: string, providerName = 'Google'): Promise<{ returnTo: string; created: boolean; linked: boolean }> {
+	async completeOAuth(code: string, providerName?: string): Promise<{ returnTo: string; created: boolean; linked: boolean; provider: string }> {
+		if (!providerName) providerName = pendingProviderName();
 		return accountCall('oauth', async () => {
 			const url = requireUrl();
 			const res = await deps.account(url, null).oauthExchange(code);
 			const msg = res.linked ? `${providerName} linked` : res.created ? 'Account created' : `Signed in with ${providerName}`;
 			await signedIn(res, url, { to: res.returnTo || '/', toast: msg });
-			return { returnTo: res.returnTo || '/', created: res.created, linked: res.linked };
+			return { returnTo: res.returnTo || '/', created: res.created, linked: res.linked, provider: providerName };
 		});
 	},
 
@@ -428,6 +467,91 @@ export const authActions = {
 		return accountCall('invite', async () => deps.account(requireUrl(), null).invitePreview(code));
 	},
 
+	/** Public: confirm an email with the token from the verify link. Signed in → the stored user is refreshed. */
+	async verifyEmail(token: string): Promise<string> {
+		const t = token.trim();
+		if (!t) throw new Error('This link has no verification code.');
+		return accountCall('verify', async () => {
+			const res = await deps.account(requireUrl(), null).verifyEmail(t);
+			const s = _session.value;
+			if (s && s.user.email?.toLowerCase() === res.email.toLowerCase()) await patchUser(s, { ...s.user, emailVerified: true });
+			void authActions.loadAccount().catch(() => undefined);
+			return res.email;
+		});
+	},
+
+	/** Signed in: email the verify link again. */
+	async resendVerification(): Promise<void> {
+		await withAccount('verify', (a) => a.resendVerification());
+	},
+
+	/** Signed in: devices with a session. */
+	async sessions(): Promise<DeviceSessionDto[]> {
+		return withAccount('session', (a) => a.sessions());
+	},
+
+	/** Signed in: sign another device out. */
+	async revokeSession(id: string): Promise<void> {
+		await withAccount('session', (a) => a.revokeSession(id));
+	},
+
+	/** Signed in: 8 new recovery codes (shown once; old codes stop working). '' password when the account has none. */
+	async createRecoveryCodes(currentPassword: string): Promise<string[]> {
+		return withAccount('codes', async (a) => (await a.createRecoveryCodes(currentPassword)).codes);
+	},
+
+	async recoveryCodesLeft(): Promise<number> {
+		return withAccount('codes', async (a) => (await a.recoveryCodesLeft()).remaining);
+	},
+
+	/** Public: reset the password with a recovery code → signed in. */
+	async recoverPassword(username: string, code: string, password: string): Promise<UserDto> {
+		const name = username.trim();
+		const c = code.trim();
+		if (!name || !c) throw new Error('Enter your username and a recovery code.');
+		if (password.length < PASSWORD_MIN_LENGTH) throw new Error(`Use at least ${PASSWORD_MIN_LENGTH} characters.`);
+		return accountCall('recover', async () => {
+			const url = requireUrl();
+			const tokens = await deps.account(url, null).recoverPassword({ username: name, code: c, password });
+			await signedIn(tokens, url, { to: '/profile', toast: 'Password changed — you are signed in' });
+			return tokens.user;
+		});
+	},
+
+	/** Signed in: upload an avatar (already cropped/resized by the caller). */
+	async uploadAvatar(file: Blob): Promise<UserDto> {
+		return withAccount('avatar', async (a, s) => {
+			const user = await a.uploadAvatar(file);
+			await patchUser(s, user);
+			return _session.value?.user ?? user;
+		});
+	},
+
+	async deleteAvatar(): Promise<UserDto> {
+		return withAccount('avatar', async (a, s) => {
+			const user = await a.deleteAvatar();
+			await patchUser(s, { ...user, avatarUrl: null });
+			return _session.value?.user ?? user;
+		});
+	},
+
+	/** Signed in: delete the account on the server, then forget it on this device (back to anonymous). */
+	async deleteAccount(password: string): Promise<void> {
+		await withAccount('delete', async (a, s) => {
+			await a.deleteAccount({ password });
+			await setSession(null);
+			if (sessionListener?.deleted) await sessionListener.deleted(s);
+			else await sessionListener?.signedOut();
+		});
+	},
+
+	/** Owner: a one-time password reset link for another user. */
+	async ownerResetLink(username: string): Promise<OwnerResetLinkDto> {
+		const name = username.trim();
+		if (!name) throw new Error('Enter a username.');
+		return withAccount('owner', (a) => a.ownerResetLink(name));
+	},
+
 	/** Signed in: re-read the account (email) from the server into the stored user. */
 	async loadAccount(): Promise<UserDto | null> {
 		const s = _session.value;
@@ -445,11 +569,45 @@ export const authActions = {
 async function patchUser(s: StoredAuth, user: UserDto): Promise<void> {
 	const cur = _session.value;
 	if (!cur || cur.user.id !== s.user.id) return;
-	const { id, username, displayName: name, role, email, hasPassword } = user;
+	const { id, username, displayName: name, role, email, hasPassword, emailVerified, avatarUrl, createdAt } = user;
 	const next: UserDto = { ...cur.user, id, username, displayName: name, role, email: email ?? null };
 	if (hasPassword !== undefined) next.hasPassword = hasPassword;
+	if (emailVerified !== undefined) next.emailVerified = emailVerified;
+	if (avatarUrl !== undefined) next.avatarUrl = avatarUrl;
+	if (createdAt !== undefined) next.createdAt = createdAt;
 	await setSession({ ...cur, user: next });
 }
+
+/** Signed-in account call with a fresh bearer token; errors become user-facing messages. */
+function withAccount<T>(action: AccountAction, fn: (a: AccountApi, s: StoredAuth) => Promise<T>): Promise<T> {
+	return accountCall(action, async () => {
+		const s = requireSession();
+		const token = (await authActions.ensureAccessToken()) ?? s.accessToken;
+		return fn(deps.account(s.serverUrl, token), s);
+	});
+}
+
+/** Name of the provider of the sign-in in flight (set by startOAuth), default Google. */
+function pendingProviderName(): string {
+	try {
+		const p = sessionStorage.getItem(OAUTH_PROVIDER_KEY) as OAuthProviderId | null;
+		sessionStorage.removeItem(OAUTH_PROVIDER_KEY);
+		if (p && p in PROVIDER_LABEL) return PROVIDER_LABEL[p];
+	} catch {
+		/* private mode */
+	}
+	return 'Google';
+}
+
+/** Absolute avatar URL for a user (avatarUrl is relative to the server base), or null. */
+export function avatarSrc(user: Pick<UserDto, 'avatarUrl'> | null | undefined, serverUrl: string | null | undefined): string | null {
+	if (!user?.avatarUrl || !serverUrl) return null;
+	if (/^(https?:|data:|blob:)/.test(user.avatarUrl)) return user.avatarUrl;
+	return `${absoluteServerUrl(serverUrl)}${user.avatarUrl.startsWith('/') ? '' : '/'}${user.avatarUrl}`;
+}
+
+/** Server URL of the signed-in session (null when signed out). */
+export const sessionServerUrl = computed(() => _session.value?.serverUrl ?? null);
 
 // ── Boot ──────────────────────────────────────────────────────────────────
 export async function loadAuth(): Promise<void> {

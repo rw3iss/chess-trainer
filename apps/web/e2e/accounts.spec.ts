@@ -58,6 +58,8 @@ async function mockServer(page: Page, opts: MockOpts = {}): Promise<Mock> {
 		if (key === 'GET /users/me/identities') return json(200, [{ provider: 'google', label: 'me@gmail.test', linkedAt: 1 }]);
 		if (key === 'DELETE /users/me/identities/google') return opts.unlinkStatus ? json(opts.unlinkStatus, 'only sign-in') : json(200, null);
 		if (key === 'GET /invites') return json(200, []);
+		if (key === 'GET /users/me/sessions') return json(200, []);
+		if (key === 'GET /users/me/recovery-codes') return json(200, { remaining: 0 });
 		if (key === 'POST /invites') {
 			const b = body as { email: string };
 			return json(200, { code: 'inv-9', link: '/signup?invite=inv-9', email: b.email, createdAt: Date.now(), acceptedAt: null });
@@ -117,12 +119,11 @@ test('sign-up closed / invite-only read clearly', async ({ page }) => {
 
 test('Continue with Google → callback → signed in on the returned page; errors read clearly', async ({ page }) => {
 	const mock = await mockServer(page);
-	await connect(page, '/settings/server');
-	await expect(page.getByText('Online', { exact: true })).toBeVisible({ timeout: 10_000 });
-	await page.getByRole('button', { name: 'Continue with Google' }).first().click();
+	await connect(page, '/profile');
+	await page.getByRole('button', { name: 'Continue with Google' }).first().click({ timeout: 10_000 });
 	await expect.poll(() => mock.calls.find((c) => c.path === '/auth/oauth/exchange')?.body).toEqual({ code: 'g-code' });
 	const start = mock.calls.find((c) => c.path === '/auth/oauth/google/start')!.body as Record<string, string>;
-	expect(start).toMatchObject({ mode: 'signin', returnTo: '/settings/server' });
+	expect(start).toMatchObject({ mode: 'signin', returnTo: '/profile' });
 	expect(start.apiBase).toMatch(/^http:\/\/[^/]+\/api$/);
 	await expect(page).toHaveURL(/\/games$/);
 	await ready(page);
@@ -141,10 +142,12 @@ test('accounts keep their own data; the copy prompt; switch back to anonymous', 
 		await c.flushStores();
 		return id;
 	});
-	await page.goto('/settings/server');
-	await page.locator('section[aria-labelledby="server-settings-account"]').getByLabel('Username', { exact: true }).fill('owner');
-	await page.locator('section[aria-labelledby="server-settings-account"]').getByLabel('Password', { exact: true }).fill('pw');
-	await page.locator('section[aria-labelledby="server-settings-account"]').getByRole('button', { name: 'Sign in' }).click();
+	await page.goto('/profile');
+	const signIn = page.getByRole('form', { name: 'Sign in' });
+	await expect(signIn.getByLabel('Username or email')).toBeEnabled({ timeout: 10_000 });
+	await signIn.getByLabel('Username or email').fill('owner');
+	await signIn.getByLabel('Password', { exact: true }).fill('pw');
+	await signIn.getByRole('button', { name: 'Sign in' }).click();
 
 	// Reloaded into the owner's database: offered to copy the anonymous data.
 	const dialog = page.getByRole('dialog', { name: /Copy this device's games and sessions into Owner Person/ });
@@ -174,9 +177,10 @@ test('accounts keep their own data; the copy prompt; switch back to anonymous', 
 
 test('signed in: linked sign-ins (unlink refused when it is the only one) and invite a friend', async ({ page }) => {
 	const mock = await mockServer(page, { unlinkStatus: 409 });
-	await connect(page, '/settings/server');
-	const card = page.locator('section[aria-labelledby="server-settings-account"]');
-	await card.getByLabel('Username', { exact: true }).fill('owner');
+	await connect(page, '/profile');
+	const card = page.locator('.profile');
+	await expect(card.getByLabel('Username or email')).toBeEnabled({ timeout: 10_000 });
+	await card.getByLabel('Username or email').fill('owner');
 	await card.getByLabel('Password', { exact: true }).fill('pw');
 	await card.getByRole('button', { name: 'Sign in' }).click();
 	await ready(page);

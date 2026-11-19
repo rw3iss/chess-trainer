@@ -6,6 +6,8 @@ import { Repository } from 'typeorm';
 import * as argon2 from 'argon2';
 import { USERNAME_RE, type UserDto } from '@chess/core';
 import { UserEntity } from './entities/user.entity';
+import { EmailVerificationService } from './email-verification.service';
+import { AvatarStore, sniffAvatarType, AVATAR_MAX_BYTES, type AvatarType } from './avatar/avatar-store';
 
 /** Names nobody can register (routes, roles, confusables). */
 export const RESERVED_USERNAMES = new Set(['admin', 'administrator', 'root', 'system', 'support', 'help', 'guest', 'api', 'null', 'undefined', 'me', 'settings', 'account', 'signup', 'login', 'chess', 'moderator', 'staff']);
@@ -17,6 +19,8 @@ export class UsersService implements OnApplicationBootstrap {
 	constructor(
 		@InjectRepository(UserEntity) private readonly repo: Repository<UserEntity>,
 		private readonly config: ConfigService,
+		private readonly verification: EmailVerificationService,
+		private readonly avatars: AvatarStore,
 	) {}
 
 	/** Seeds / updates the owner account from OWNER_USERNAME + OWNER_PASSWORD. Env is the source of truth. */
@@ -30,7 +34,7 @@ export class UsersService implements OnApplicationBootstrap {
 		const owner = await this.upsertOwner(username, password);
 		const email = this.config.get<string>('auth.ownerEmail');
 		if (email && owner.email !== email) {
-			await this.update(owner.id, { email }).catch((e: unknown) => this.logger.warn(`OWNER_EMAIL not applied: ${e instanceof Error ? e.message : String(e)}`));
+			await this.update(owner.id, { email }, { emailVerified: true }).catch((e: unknown) => this.logger.warn(`OWNER_EMAIL not applied: ${e instanceof Error ? e.message : String(e)}`));
 		}
 	}
 
@@ -52,6 +56,9 @@ export class UsersService implements OnApplicationBootstrap {
 			passwordHash: await argon2.hash(password),
 			role: 'owner',
 			email: null,
+			emailVerified: false,
+			avatarType: null,
+			avatarVersion: 0,
 			tokensValidAfter: 0,
 			preferences: null,
 			createdAt: now,
@@ -70,7 +77,7 @@ export class UsersService implements OnApplicationBootstrap {
 	 * Creates a regular user. `password` null = provider-only account (no password yet).
 	 * 400 invalid/reserved username; 409 username or email taken.
 	 */
-	async createUser(input: { username: string; password: string | null; displayName?: string; email?: string | null }): Promise<UserEntity> {
+	async createUser(input: { username: string; password: string | null; displayName?: string; email?: string | null; emailVerified?: boolean }): Promise<UserEntity> {
 		const username = input.username.trim().toLowerCase();
 		if (!USERNAME_RE.test(username)) throw new BadRequestException('username: 3–24 characters, a–z, 0–9, _ or -');
 		if (RESERVED_USERNAMES.has(username)) throw new BadRequestException('that username is reserved');
@@ -85,12 +92,61 @@ export class UsersService implements OnApplicationBootstrap {
 			passwordHash: input.password ? await argon2.hash(input.password) : null,
 			role: 'user',
 			email,
+			emailVerified: !!email && !!input.emailVerified,
+			avatarType: null,
+			avatarVersion: 0,
 			tokensValidAfter: 0,
 			preferences: null,
 			createdAt: now,
 			updatedAt: now,
 		});
+		const saved = await this.repo.save(user);
+		await this.verification.send(saved);
+		return saved;
+	}
+
+	/** Stores a new avatar (PNG/JPEG/WebP by magic bytes, ≤ AVATAR_MAX_BYTES). */
+	async setAvatar(id: string, bytes: Buffer): Promise<UserEntity> {
+		if (bytes.length > AVATAR_MAX_BYTES) throw new BadRequestException('the image is too large (300 KB max)');
+		const type = sniffAvatarType(bytes);
+		if (!type) throw new BadRequestException('use a PNG, JPEG or WebP image');
+		const user = await this.findById(id);
+		await this.avatars.put(user.id, type, bytes);
+		user.avatarType = type;
+		user.avatarVersion += 1;
+		user.updatedAt = Date.now();
 		return this.repo.save(user);
+	}
+
+	async removeAvatar(id: string): Promise<UserEntity> {
+		const user = await this.findById(id);
+		await this.avatars.remove(user.id);
+		user.avatarType = null;
+		user.avatarVersion += 1;
+		user.updatedAt = Date.now();
+		return this.repo.save(user);
+	}
+
+	/** Avatar bytes + type, or null. */
+	async avatar(id: string): Promise<{ type: AvatarType; bytes: Buffer } | null> {
+		const user = await this.repo.findOne({ where: { id } });
+		if (!user?.avatarType) return null;
+		const bytes = await this.avatars.get(user.id, user.avatarType as AvatarType);
+		return bytes ? { type: user.avatarType as AvatarType, bytes } : null;
+	}
+
+	/** Drops an unverified email from whatever account holds it (a verified owner of the address takes it). */
+	async releaseUnverifiedEmail(email: string): Promise<void> {
+		const holder = await this.findByEmail(email);
+		if (holder && !holder.emailVerified) {
+			holder.email = null;
+			holder.updatedAt = Date.now();
+			await this.repo.save(holder);
+		}
+	}
+
+	async resendVerification(id: string): Promise<void> {
+		await this.verification.resend(await this.findById(id));
 	}
 
 	/** A free username based on `seed` (e.g. an email's local part): sanitized, then `-2`, `-3`, … when taken. */
@@ -149,8 +205,9 @@ export class UsersService implements OnApplicationBootstrap {
 	}
 
 	/** `email`: '' or null clears it; 409 when another account uses it. */
-	async update(id: string, patch: { displayName?: string; preferences?: Record<string, unknown>; email?: string | null }): Promise<UserEntity> {
+	async update(id: string, patch: { displayName?: string; preferences?: Record<string, unknown>; email?: string | null }, opts: { emailVerified?: boolean } = {}): Promise<UserEntity> {
 		const user = await this.findById(id);
+		let emailChanged = false;
 		if (patch.displayName !== undefined) user.displayName = patch.displayName;
 		if (patch.email !== undefined) {
 			const email = patch.email ? patch.email.trim().toLowerCase() : null;
@@ -158,14 +215,31 @@ export class UsersService implements OnApplicationBootstrap {
 				const other = await this.findByEmail(email);
 				if (other && other.id !== user.id) throw new ConflictException('that email is used by another account');
 			}
-			user.email = email;
+			if (email !== user.email) {
+				user.email = email;
+				user.emailVerified = false;
+				emailChanged = true;
+			}
 		}
 		if (patch.preferences !== undefined) user.preferences = patch.preferences;
+		if (emailChanged && opts.emailVerified && user.email) user.emailVerified = true;
 		user.updatedAt = Date.now();
-		return this.repo.save(user);
+		const saved = await this.repo.save(user);
+		if (emailChanged) await this.verification.send(saved);
+		return saved;
 	}
 
 	toDto(user: UserEntity): UserDto {
-		return { id: user.id, username: user.username, displayName: user.displayName, role: user.role, email: user.email ?? null, hasPassword: !!user.passwordHash };
+		return {
+			id: user.id,
+			username: user.username,
+			displayName: user.displayName,
+			role: user.role,
+			email: user.email ?? null,
+			emailVerified: !!user.email && !!user.emailVerified,
+			hasPassword: !!user.passwordHash,
+			avatarUrl: user.avatarType ? `/users/${user.id}/avatar?v=${user.avatarVersion}` : null,
+			createdAt: user.createdAt,
+		};
 	}
 }

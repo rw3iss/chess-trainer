@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Chess Trainer</title>
+<meta name="description" content="How Chess Trainer handles your data.">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<style>
+	:root { color-scheme: light dark; --bg: #f6f3ec; --fg: #23211d; --muted: #6b665c; --accent: #9a6b22; --line: #e2dccf; }
+	@media (prefers-color-scheme: dark) { :root { --bg: #0e0f12; --fg: #e9e6df; --muted: #a29d92; --accent: #d6a656; --line: #2a2c31; } }
+	* { box-sizing: border-box; }
+	body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+	main { max-width: 720px; margin: 0 auto; padding: 40px 20px 64px; }
+	h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 4px; }
+	h2 { font-size: 1.2rem; margin: 32px 0 8px; padding-top: 16px; border-top: 1px solid var(--line); }
+	p, li { margin: 8px 0; }
+	ul { padding-left: 1.25rem; }
+	a { color: var(--accent); }
+	.meta { color: var(--muted); font-size: 0.9rem; margin: 0 0 24px; }
+	.back { display: inline-block; margin-bottom: 24px; text-decoration: none; }
+	table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+	th, td { text-align: left; vertical-align: top; padding: 8px; border-bottom: 1px solid var(--line); }
+	th { color: var(--muted); font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+	<a class="back" href="/">← Chess Trainer</a>
+	<h1>Privacy Policy</h1>
+	<p class="meta">Last updated: November 19, 2026</p>
+
+	<p>Chess Trainer (<a href="https://chess.ryanweiss.net">chess.ryanweiss.net</a>, also <a href="https://chess.rw3iss.com">chess.rw3iss.com</a>) is a personal, non-commercial chess app run by Ryan Weiss. This page explains what data the app uses, why, and what you can do about it. There are no ads, no analytics or tracking scripts, and your data is never sold.</p>
+
+	<h2>Using the app without an account</h2>
+	<p>The app works without an account. Your games, sessions, notes, favorites, themes and settings are stored only in your browser (IndexedDB and local storage) on your device. They are not sent to the server. Clearing your browser's site data deletes them.</p>
+
+	<h2>Data we keep when you create an account</h2>
+	<table>
+		<tr><th>Data</th><th>Why</th></tr>
+		<tr><td>Username, display name, avatar image (optional)</td><td>To show your account and identify you to other players in online rooms.</td></tr>
+		<tr><td>Email address (optional)</td><td>Only to confirm the address and to send password reset links. We do not send newsletters or marketing.</td></tr>
+		<tr><td>Password</td><td>Stored only as a one-way hash (argon2). We cannot read it.</td></tr>
+		<tr><td>Saved games, sessions and app settings, when you turn on sync</td><td>To sync them between your devices.</td></tr>
+		<tr><td>Signed-in devices: a browser and system label (for example "Firefox on Linux") and sign-in times</td><td>So you can see and sign out your devices.</td></tr>
+		<tr><td>Recovery codes</td><td>Stored only as hashes, to let you reset your password without email.</td></tr>
+		<tr><td>Invites you send: your friend's email address and whether they joined</td><td>To email your invite and show its status. The invite email is sent once; we do not contact your friend again.</td></tr>
+	</table>
+
+	<h2>Signing in with Google or Lichess</h2>
+	<p>If you choose "Continue with Google", Google tells us your Google account ID, name and email address (and whether Google has verified it). We use these only to sign you in, create or link your account, and fill in your email. We do not get your Google password and do not access any other Google data.</p>
+	<p>If you choose "Continue with Lichess", Lichess tells us your Lichess user ID and username. The access token is revoked right after sign-in.</p>
+	<p>You can unlink Google or Lichess on your profile page at any time.</p>
+
+	<h2>Importing games from Lichess or Chess.com</h2>
+	<p>When you import games, your browser downloads the public games of the username you enter directly from Lichess or Chess.com. Those sites see your request as they would any visit. The imported games are saved in your browser, and synced to your account only if you turn on sync.</p>
+
+	<h2>Server logs and security</h2>
+	<p>Like most websites, the server records requests (IP address, time, page, browser) in its logs to keep the service working and to block abuse such as password guessing and spam. Repeated abusive requests can lead to a temporary block of the IP address. Logs are kept only for a short time, normally a few weeks.</p>
+
+	<h2>Services we use</h2>
+	<ul>
+		<li><strong>Cloudflare</strong>: carries traffic to the site and protects it from attacks.</li>
+		<li><strong>Resend</strong>: delivers our emails (confirmation, password reset and invite emails). It receives the recipient address and the message.</li>
+		<li><strong>Google</strong> and <strong>Lichess</strong>: only if you choose to sign in with them.</li>
+		<li><strong>Lichess opening explorer</strong>: the server requests opening statistics for board positions. No personal data is sent.</li>
+		<li>Our own server (hosted in the United States) stores account data.</li>
+	</ul>
+
+	<h2>Cookies</h2>
+	<p>The app uses no tracking or advertising cookies. It stores your sign-in tokens and app data in your browser's storage so that you stay signed in and the app works offline.</p>
+
+	<h2>How long we keep data</h2>
+	<p>Account data is kept until you delete your account. Deleting your account removes your profile, avatar, synced games and sessions, devices, recovery codes, linked sign-ins and invites from the server right away. Data in your own browser stays until you remove it ("Remove from this device" in the app, or clear the site data).</p>
+
+	<h2>Your choices and rights</h2>
+	<ul>
+		<li>See and change your profile, email and password on your profile page.</li>
+		<li>Export your data (games as PGN, sessions and settings as JSON) from your profile page.</li>
+		<li>Delete your account from your profile page.</li>
+		<li>Ask us anything about your data, or ask for a copy, a correction or deletion, by email (below).</li>
+	</ul>
+
+	<h2>Children</h2>
+	<p>The app is not directed at children under 13, and we do not knowingly collect their personal data. If you think a child gave us personal data, contact us and we will delete it.</p>
+
+	<h2>Changes</h2>
+	<p>If this policy changes, the new version will be posted on this page with a new date.</p>
+
+	<h2>Contact</h2>
+	<p>Ryan Weiss — <a href="mailto:ryan+privacy@ryanweiss.net">ryan+privacy@ryanweiss.net</a></p>
+</main>
+</body>
+</html>

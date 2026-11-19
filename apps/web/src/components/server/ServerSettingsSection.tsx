@@ -1,7 +1,6 @@
-// ServerSettingsSection — the "Server" settings section: server URL + status,
-// sign-in / account (email, change or set password, forgot password, Google, sign-in methods,
-// invite a friend, remove from this device), create account link, sync toggle + status,
-// guest name for online rooms.
+// ServerSettingsSection — the "Server" settings section: server URL + status, an account summary
+// (the account itself — sign-in, password, devices, linked sign-ins, invites — is on /profile),
+// sync toggle + status, guest name for online rooms.
 // Mounted lazily by the Settings page: `import('@/components/server')`.
 import type { JSX } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
@@ -9,11 +8,10 @@ import { Badge, Button, Input, Toggle, type BadgeTone } from '@/components/commo
 import { formatRelativeTime } from '@/lib/format';
 import { serverConnector, type ServerStatus } from '@/services/server';
 import { lastSyncAt, lastSyncError, syncNow, syncStatus, type SyncStatus } from '@/state/sync';
-import { authActions, authBusy, authError, authUser, guestName, isLoggedIn } from '@/state/auth';
+import { authActions, authUser, guestName, isLoggedIn } from '@/state/auth';
 import { settings, updateSettings } from '@/state/settings';
-import { AccountEmailForm, ChangePasswordForm, ForgotPasswordForm } from './AccountForms';
-import { InviteFriend, LinkedSignIns, ProviderButtons, RemoveFromDevice } from '@/components/account';
-import { accountActions, activeAccount } from '@/state/account';
+import { Avatar, activeAvatarSrc } from '@/components/account';
+import { activeAccount } from '@/state/account';
 import { useLocation } from 'preact-iso';
 import './ServerSettingsSection.scss';
 
@@ -113,172 +111,56 @@ function ConnectionCard(): JSX.Element {
 	);
 }
 
+/** Account summary: who is signed in, with a link to the profile (sign-in, password, devices… live there). */
 function AccountCard(): JSX.Element {
-	const online = serverConnector.status.value === 'online';
-	const authFeature = serverConnector.health.value?.features.auth ?? true;
-	// Email reset links only when the server has a mail provider (older servers: no flag → hidden).
-	const canReset = serverConnector.health.value?.features?.passwordReset === true;
 	const user = authUser.value;
-	const busy = authBusy.value;
-	const error = authError.value;
-	const [username, setUsername] = useState('');
-	const [password, setPassword] = useState('');
-	const [forgot, setForgot] = useState(false);
-	const [changing, setChanging] = useState(false);
 	const signedIn = !!user && isLoggedIn.value;
-	const { route } = useLocation();
-	const signupMode = online ? (serverConnector.health.value?.features?.signup ?? 'off') : 'off';
 	const offlineAccount = activeAccount.value;
-	const noPassword = user?.hasPassword === false;
+	const { route } = useLocation();
+	const online = serverConnector.status.value === 'online';
+	const signupMode = online ? (serverConnector.health.value?.features?.signup ?? 'off') : 'off';
 
-	// Signed in + online: read the account (email) from the server once.
-	useEffect(() => {
-		if (signedIn && online) void authActions.loadAccount().catch(() => undefined);
-	}, [signedIn, online, user?.id]);
-
-	if (user && signedIn) {
-		return (
-			<section class="server-settings__card" aria-labelledby="server-settings-account">
-				<header class="server-settings__card-head">
-					<h3 class="server-settings__card-title" id="server-settings-account">
-						Account
-					</h3>
-					<Badge tone="accent">{ROLE_LABEL[user.role] ?? user.role}</Badge>
-				</header>
-				<div class="server-settings__user">
-					<span class="server-settings__avatar" aria-hidden="true">
-						{(user.displayName || user.username).slice(0, 1).toUpperCase()}
-					</span>
-					<span class="server-settings__user-text">
-						<span class="server-settings__user-name">{user.displayName || user.username}</span>
-						<span class="server-settings__subtle">@{user.username}</span>
-					</span>
-					<Button variant="ghost" size="sm" onClick={() => void authActions.logout()}>
-						Sign out
-					</Button>
-				</div>
-				{online ? (
-					<>
-						<AccountEmailForm />
-						{changing ? (
-							<ChangePasswordForm setOnly={noPassword} onDone={() => setChanging(false)} />
-						) : (
-							<div class="server-settings__actions">
-								<Button variant="secondary" size="sm" icon="edit" onClick={() => setChanging(true)}>
-									{noPassword ? 'Set password' : 'Change password'}
-								</Button>
-							</div>
-						)}
-						<LinkedSignIns />
-						<InviteFriend />
-					</>
-				) : (
-					<p class="server-settings__subtle">Connect to the server to change your email or password.</p>
-				)}
-				<div class="server-settings__actions">
-					<RemoveFromDevice />
-				</div>
-			</section>
-		);
-	}
-
-	const disabled = !online || !authFeature;
-	if (forgot && canReset) {
-		return (
-			<section class="server-settings__card" aria-labelledby="server-settings-account">
-				<header class="server-settings__card-head">
-					<h3 class="server-settings__card-title" id="server-settings-account">
-						Forgot password
-					</h3>
-				</header>
-				<ForgotPasswordForm disabled={disabled} initial={username} onClose={() => setForgot(false)} />
-			</section>
-		);
-	}
 	return (
 		<section class="server-settings__card" aria-labelledby="server-settings-account">
 			<header class="server-settings__card-head">
 				<h3 class="server-settings__card-title" id="server-settings-account">
 					Account
 				</h3>
+				{signedIn && user && <Badge tone="accent">{ROLE_LABEL[user.role] ?? user.role}</Badge>}
 			</header>
-			{offlineAccount && (
-				<p class="server-settings__notice" role="status">
-					Signed out of {offlineAccount.displayName}. Its games stay on this device: sign in again to sync, or{' '}
-					<button type="button" class="server-settings__link" onClick={() => void accountActions.switchTo(null)}>
-						switch to anonymous
-					</button>
-					.
-				</p>
-			)}
-			<p class="server-settings__text">
-				{!online
-					? 'Connect to a server to sign in. Sign-in enables sync, server engines and online rooms.'
-					: !authFeature
-						? 'This server does not offer accounts.'
-						: 'Sign in to sync your games and sessions between devices.'}
-			</p>
-			{online && authFeature && <ProviderButtons mode="signin" returnTo="/settings/server" />}
-			<form
-				class="server-settings__login"
-				onSubmit={(e) => {
-					e.preventDefault();
-					if (!username.trim() || !password) return;
-					void authActions.login(username, password).then(
-						() => setPassword(''),
-						() => undefined,
-					);
-				}}
-			>
-				<Input
-					label="Username"
-					icon="user"
-					autoComplete="username"
-					autoCapitalize="none"
-					spellcheck={false}
-					value={username}
-					disabled={disabled}
-					onInput={(e) => {
-						setUsername(e.currentTarget.value);
-						if (error) authActions.clearError();
-					}}
-				/>
-				<Input
-					label="Password"
-					type="password"
-					autoComplete="current-password"
-					value={password}
-					disabled={disabled}
-					error={error ?? undefined}
-					onInput={(e) => {
-						setPassword(e.currentTarget.value);
-						if (error) authActions.clearError();
-					}}
-				/>
-				<div class="server-settings__submit server-settings__actions">
-					<Button type="submit" variant="primary" loading={busy} disabled={disabled || !username.trim() || !password}>
-						Sign in
+			{signedIn && user ? (
+				<div class="server-settings__user">
+					<Avatar name={user.displayName || user.username} src={activeAvatarSrc()} size={40} />
+					<span class="server-settings__user-text">
+						<span class="server-settings__user-name">{user.displayName || user.username}</span>
+						<span class="server-settings__subtle">@{user.username}</span>
+					</span>
+					<Button variant="secondary" size="sm" icon="user" onClick={() => route('/profile')}>
+						Profile
 					</Button>
-					{canReset && (
-						<Button
-							variant="ghost"
-							size="sm"
-							disabled={disabled}
-							onClick={() => {
-								authActions.clearError();
-								setForgot(true);
-							}}
-						>
-							Forgot password?
-						</Button>
-					)}
-					{signupMode !== 'off' && (
-						<Button variant="ghost" size="sm" disabled={disabled} onClick={() => route('/signup')}>
-							Create account
-						</Button>
-					)}
+					<Button variant="ghost" size="sm" onClick={() => void authActions.logout()}>
+						Sign out
+					</Button>
 				</div>
-			</form>
+			) : (
+				<>
+					<p class="server-settings__text">
+						{offlineAccount
+							? `Signed out of ${offlineAccount.displayName}. Its games stay on this device.`
+							: 'Sign in on your profile page to sync your games and sessions between devices.'}
+					</p>
+					<div class="server-settings__actions">
+						<Button variant="primary" size="sm" icon="user" onClick={() => route('/profile')}>
+							Sign in
+						</Button>
+						{signupMode !== 'off' && (
+							<Button variant="ghost" size="sm" onClick={() => route('/signup')}>
+								Create account
+							</Button>
+						)}
+					</div>
+				</>
+			)}
 		</section>
 	);
 }

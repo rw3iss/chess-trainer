@@ -2,6 +2,7 @@
 // • File tab: .pgn / .txt (many games) or an image → read in the browser (services/vision).
 // • Paste tab: PGN text, a FEN, or an image pasted from the clipboard (Ctrl/⌘+V works anywhere
 //   in the dialog).
+// • Lichess / Chess.com tab: the public games of an online account (OnlineImport, services/importers).
 // PGN → preview (count + first games) → "Import N games" saves them.
 // FEN / image → PositionEditor (fix squares, side to move, castling; shows setup errors) → "Open on board" opens a new
 // unsaved analysis session (save it later from the board's menu).
@@ -22,16 +23,20 @@ import { savedGamesActions } from '@/state/savedGames';
 import { sessionsActions } from '@/state/sessions';
 import { navigate } from '@/lib/navigate';
 import { cx } from '@/lib/classNames';
+import { OnlineImport } from './OnlineImport';
 import './ImportModal.scss';
 
 export interface ImportModalProps {
 	open: boolean;
 	onClose: () => void;
-	/** Called with the number of games imported (PGN). */
+	/** Called with the number of games imported (PGN, online). */
 	onImported?: (count: number) => void;
+	/** Tab shown when the dialog opens (default 'file'). */
+	initialTab?: ImportTab;
 }
 
-type SourceTab = 'file' | 'paste';
+export type ImportTab = 'file' | 'paste' | 'online';
+type SourceTab = ImportTab;
 const PREVIEW_ROWS = 6;
 /** Parse pasted text automatically after typing stops. */
 const PASTE_PARSE_DELAY_MS = 350;
@@ -54,7 +59,7 @@ function completeFen(text: string): string {
 	return [parts[0], parts[1] ?? 'w', parts[2] ?? '-', parts[3] ?? '-', parts[4] ?? '0', parts[5] ?? '1'].join(' ');
 }
 
-export function ImportModal({ open, onClose, onImported }: ImportModalProps): JSX.Element {
+export function ImportModal({ open, onClose, onImported, initialTab = 'file' }: ImportModalProps): JSX.Element {
 	const [tab, setTab] = useState<SourceTab>('file');
 	const [text, setText] = useState('');
 	const [fileNames, setFileNames] = useState<string[]>([]);
@@ -74,7 +79,7 @@ export function ImportModal({ open, onClose, onImported }: ImportModalProps): JS
 
 	useEffect(() => {
 		if (!open) return;
-		setTab('file');
+		setTab(initialTab);
 		setText('');
 		setFileNames([]);
 		setGames(null);
@@ -212,21 +217,22 @@ export function ImportModal({ open, onClose, onImported }: ImportModalProps): JS
 
 	const count = games?.length ?? 0;
 	const isPosition = !!position;
+	const online = tab === 'online';
 
 	return (
 		<Modal
 			open={open}
 			onClose={onClose}
 			title="Import"
-			description="PGN games, a FEN position, or a picture of a board: a 2D screenshot or diagram from any site, app or book."
+			description="PGN games, a FEN position, a picture of a board (a 2D screenshot or diagram from any site, app or book), or your games from Lichess or Chess.com."
 			size={isPosition ? 'lg' : 'md'}
 			class="import-modal"
 			footer={
 				<>
 					<Button variant="ghost" onClick={onClose}>
-						Cancel
+						{online ? 'Close' : 'Cancel'}
 					</Button>
-					{isPosition ? (
+					{online ? null : isPosition ? (
 						<Button variant="primary" icon="board" disabled={!setup?.ok} onClick={openPosition}>
 							Open on board
 						</Button>
@@ -246,9 +252,12 @@ export function ImportModal({ open, onClose, onImported }: ImportModalProps): JS
 					options={[
 						{ value: 'file', label: 'File or image', icon: 'upload' },
 						{ value: 'paste', label: 'Paste', icon: 'copy' },
+						{ value: 'online', label: 'Lichess / Chess.com', icon: 'download' },
 					]}
 				/>
-				{tab === 'file' ? (
+				{online ? (
+					<OnlineImport onImported={onImported} />
+				) : tab === 'file' ? (
 					<label
 						class={cx('import-modal__drop', dragOver && 'import-modal__drop--over', isPosition && 'import-modal__drop--compact')}
 						onDragOver={(e) => {
@@ -287,7 +296,7 @@ export function ImportModal({ open, onClose, onImported }: ImportModalProps): JS
 					/>
 				)}
 
-				{position ? (
+				{online ? null : position ? (
 					<PositionPanel position={position} onFen={(fen) => setPosition({ ...position, fen })} />
 				) : (
 					<div class="import-modal__preview" aria-live="polite">

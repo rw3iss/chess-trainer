@@ -3,6 +3,11 @@
 import type {
 	AuthTokens,
 	ChangePasswordRequest,
+	DeleteAccountRequest,
+	DeviceSessionDto,
+	OwnerResetLinkDto,
+	RecoverPasswordRequest,
+	RecoveryCodesResponse,
 	ExplorerResult,
 	ExplorerSource,
 	ForgotPasswordRequest,
@@ -23,7 +28,7 @@ import type {
 	SyncResponse,
 	UserDto,
 } from '@chess/core/protocol';
-import { ApiRequestError, type ApiClient, type RoomSummary, type UpdateAccountRequest } from './ApiClient';
+import { AVATAR_FIELD, ApiRequestError, type ApiClient, type RoomSummary, type UpdateAccountRequest } from './ApiClient';
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 
@@ -66,13 +71,15 @@ export class HttpApiAdapter implements ApiClient {
 		const ctrl = new AbortController();
 		const timer = setTimeout(() => ctrl.abort(), this.opts.timeoutMs ?? DEFAULT_TIMEOUT_MS);
 		const headers: Record<string, string> = { Accept: 'application/json' };
-		if (body !== undefined) headers['Content-Type'] = 'application/json';
+		// FormData (avatar upload): the browser sets the multipart boundary.
+		const form = typeof FormData !== 'undefined' && body instanceof FormData;
+		if (body !== undefined && !form) headers['Content-Type'] = 'application/json';
 		if (token) headers.Authorization = `Bearer ${token}`;
 		try {
 			const res = await fetchImpl(`${this.base}${path}`, {
 				method,
 				headers,
-				body: body === undefined ? undefined : JSON.stringify(body),
+				body: body === undefined ? undefined : form ? (body as FormData) : JSON.stringify(body),
 				signal: ctrl.signal,
 			});
 			const text = await res.text();
@@ -150,6 +157,45 @@ export class HttpApiAdapter implements ApiClient {
 	}
 	invitePreview(code: string): Promise<InvitePreview> {
 		return this.request('GET', `/invites/${encodeURIComponent(code)}`);
+	}
+	verifyEmail(token: string): Promise<{ email: string }> {
+		return this.request('POST', '/auth/email/verify', { token });
+	}
+	async resendVerification(): Promise<void> {
+		await this.request('POST', '/users/me/email/verify');
+	}
+	sessions(): Promise<DeviceSessionDto[]> {
+		return this.request('GET', '/users/me/sessions');
+	}
+	async revokeSession(id: string): Promise<void> {
+		await this.request('DELETE', `/users/me/sessions/${encodeURIComponent(id)}`);
+	}
+	async logout(refreshToken: string): Promise<void> {
+		await this.request('POST', '/auth/logout', { refreshToken });
+	}
+	createRecoveryCodes(currentPassword: string): Promise<RecoveryCodesResponse> {
+		return this.request('POST', '/users/me/recovery-codes', { currentPassword });
+	}
+	recoveryCodesLeft(): Promise<{ remaining: number }> {
+		return this.request('GET', '/users/me/recovery-codes');
+	}
+	recoverPassword(req: RecoverPasswordRequest): Promise<AuthTokens> {
+		return this.request('POST', '/auth/password/recover', req);
+	}
+	uploadAvatar(file: Blob): Promise<UserDto> {
+		const form = new FormData();
+		const ext = file.type === 'image/webp' ? 'webp' : file.type === 'image/jpeg' ? 'jpg' : 'png';
+		form.append(AVATAR_FIELD, file, `avatar.${ext}`);
+		return this.request('PUT', '/users/me/avatar', form);
+	}
+	deleteAvatar(): Promise<UserDto> {
+		return this.request('DELETE', '/users/me/avatar');
+	}
+	async deleteAccount(req: DeleteAccountRequest): Promise<void> {
+		await this.request('DELETE', '/users/me', req);
+	}
+	ownerResetLink(username: string): Promise<OwnerResetLinkDto> {
+		return this.request('POST', `/admin/users/${encodeURIComponent(username)}/reset-link`);
 	}
 	explorer(fen: string, source: ExplorerSource = 'lichess'): Promise<ExplorerResult> {
 		const q = new URLSearchParams({ fen, source });

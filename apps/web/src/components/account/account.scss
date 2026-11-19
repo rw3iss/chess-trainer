@@ -1,4 +1,5 @@
 @use '@styles/mixins' as *;
+@use '@styles/responsive' as *;
 
 // Header account trigger: initials (signed in) or a user glyph (anonymous).
 .account-trigger {
@@ -15,6 +16,8 @@
 	font-weight: var(--weight-semibold);
 	letter-spacing: 0.02em;
 	cursor: pointer;
+	padding: 0;
+	overflow: hidden;
 
 	&:hover {
 		color: var(--color-text);
@@ -150,4 +153,148 @@
 		height: 1px;
 		background: var(--color-border);
 	}
+}
+
+// ── Profile page building blocks ─────────────────────────────────────────
+
+.account-text {
+	margin: 0;
+	font-size: var(--text-sm);
+	line-height: 1.5;
+	color: var(--color-text-muted);
+
+	&--subtle {
+		font-size: var(--text-xs);
+		color: var(--color-text-subtle);
+	}
+}
+
+.account-notice {
+	margin: 0;
+	padding: var(--space-2) var(--space-3);
+	border-radius: var(--radius-md);
+	background: var(--color-accent-soft);
+	color: var(--color-text);
+	font-size: var(--text-sm);
+	line-height: 1.5;
+}
+
+.account-error--box {
+	padding: var(--space-2) var(--space-3);
+	border-radius: var(--radius-sm);
+	background: var(--color-danger-soft);
+}
+
+// Input + button on one row (email, display name).
+.account-inline {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: start;
+	gap: var(--space-2);
+
+	// Line the button up with the input (label row above it).
+	&__btn {
+		margin-top: calc(var(--text-sm) * 1.5 + var(--space-1));
+	}
+}
+
+.account-verify {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+.account-linkbtn {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--color-accent-text);
+	text-decoration: underline;
+	cursor: pointer;
+	font: inherit;
+}
+
+.account-block--danger .account-block__title {
+	color: var(--color-danger);
+}
+
+.avatar {
+	display: inline-grid;
+	place-items: center;
+	flex: none;
+	overflow: hidden;
+	border-radius: var(--radius-full);
+	background: var(--color-accent-soft);
+	color: var(--color-accent-text);
+	font-family: var(--font-display);
+	font-weight: var(--weight-semibold);
+	line-height: 1;
+
+	&__img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+	}
+}
+
+.avatar-editor {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+
+	&__side {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-1);
+		min-width: 0;
+	}
+}
+
+.recovery-codes {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+
+	&__list {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--space-1) var(--space-4);
+		margin: 0;
+		padding: var(--space-3) var(--space-3) var(--space-3) calc(var(--space-3) + 1.5em);
+		border-radius: var(--radius-sm);
+		background: var(--color-surface-1);
+		font-family: var(--font-mono);
+		font-size: var(--text-sm);
+	}
+}
+
+.sign-in-panel {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3);
+
+	&__form {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		gap: var(--space-3);
+
+		@include mobile {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+
+	&__submit {
+		grid-column: 1 / -1;
+	}
+}
+
+// Header trigger with a picture.
+.account-trigger__img {
+	width: 100%;
+	height: 100%;
+	border-radius: inherit;
+	object-fit: cover;
+	display: block;
 }

@@ -2,7 +2,7 @@ import { expect, test, type Page, type Route } from '@playwright/test';
 
 // Password reset + account (email, change password) against a mocked same-origin server at /api
 // (page.route): forgot-password form, the /reset-password page from the email link, and the
-// signed-in account card.
+// signed-in profile page.
 type Chess = { updateSettings(p: unknown): void };
 
 const USER = { id: 'u1', username: 'owner', displayName: 'Owner', role: 'owner' };
@@ -41,7 +41,13 @@ async function mockServer(page: Page, opts: { forgotStatus?: number; resetStatus
 			case 'POST /auth/password/change':
 				return opts.changeStatus ? json(opts.changeStatus, 'wrong') : json(200, tokens(++issued, mock.email));
 			case 'GET /users/me':
-				return json(200, { ...USER, email: mock.email, preferences: null });
+				return json(200, { ...USER, email: mock.email, emailVerified: true, preferences: null });
+			case 'GET /users/me/identities':
+			case 'GET /users/me/sessions':
+			case 'GET /invites':
+				return json(200, []);
+			case 'GET /users/me/recovery-codes':
+				return json(200, { remaining: 0 });
 			case 'PATCH /users/me':
 				mock.email = (body as { email: string }).email || null;
 				return json(200, { ...USER, email: mock.email, preferences: null });
@@ -58,13 +64,17 @@ async function connect(page: Page, path: string) {
 	await page.evaluate(() => (window as unknown as { __chess: Chess }).__chess.updateSettings({ server: { url: `${location.origin}/api` } }));
 }
 
-const account = (page: Page) => page.locator('section[aria-labelledby="server-settings-account"]');
+const account = (page: Page) => page.locator('.profile');
+/** Profile page, signed out, once the server answered (the sign-in fields enable). */
+async function profileReady(page: Page) {
+	await expect(account(page).getByLabel('Username or email')).toBeEnabled({ timeout: 10_000 });
+}
 
 test('forgot password: sends the identifier and shows a neutral confirmation', async ({ page }) => {
 	const mock = await mockServer(page);
-	await connect(page, '/settings/server');
-	await expect(page.getByText('Online', { exact: true })).toBeVisible({ timeout: 10_000 });
-	await account(page).getByLabel('Username', { exact: true }).fill('owner');
+	await connect(page, '/profile');
+	await profileReady(page);
+	await account(page).getByLabel('Username or email').fill('owner');
 	await account(page).getByRole('button', { name: 'Forgot password?' }).click();
 	const field = account(page).getByLabel('Username or email');
 	await expect(field).toHaveValue('owner');
@@ -78,23 +88,25 @@ test('forgot password: sends the identifier and shows a neutral confirmation', a
 
 test('forgot password: a server without email reads clearly', async ({ page }) => {
 	await mockServer(page, { forgotStatus: 503 });
-	await connect(page, '/settings/server');
-	await expect(page.getByText('Online', { exact: true })).toBeVisible({ timeout: 10_000 });
+	await connect(page, '/profile');
+	await profileReady(page);
 	await account(page).getByRole('button', { name: 'Forgot password?' }).click();
 	await account(page).getByLabel('Username or email').fill('owner');
 	await account(page).getByRole('button', { name: 'Send reset link' }).click();
 	await expect(account(page)).toContainText('Password reset by email is not set up on this server.');
 });
 
-test('forgot password is hidden when the server cannot send email', async ({ page }) => {
+test('without email on the server, forgot password goes straight to a recovery code', async ({ page }) => {
 	await mockServer(page, { passwordReset: false });
-	await connect(page, '/settings/server');
-	await expect(page.getByText('Online', { exact: true })).toBeVisible({ timeout: 10_000 });
-	await expect(account(page).getByRole('button', { name: 'Sign in' })).toBeVisible();
-	await expect(account(page).getByRole('button', { name: 'Forgot password?' })).toHaveCount(0);
+	await connect(page, '/profile');
+	await profileReady(page);
+	await expect(account(page).getByRole('button', { name: 'Use a recovery code' })).toHaveCount(0);
+	await account(page).getByRole('button', { name: 'Forgot password?' }).click();
+	await expect(account(page).getByRole('form', { name: 'Use a recovery code' })).toBeVisible();
+	await expect(account(page).getByRole('button', { name: 'Send reset link' })).toHaveCount(0);
 });
 
-test('reset link: set a new password → signed in on Settings → Server', async ({ page }) => {
+test('reset link: set a new password → signed in on the profile', async ({ page }) => {
 	const mock = await mockServer(page);
 	await connect(page, '/reset-password?token=tok-123');
 	await expect(page.getByRole('heading', { name: 'Set a new password' })).toBeVisible();
@@ -107,7 +119,7 @@ test('reset link: set a new password → signed in on Settings → Server', asyn
 	await expect(submit).toBeDisabled();
 	await page.getByLabel('Confirm new password').fill('a-long-password');
 	await submit.click();
-	await expect(page).toHaveURL(/\/settings\/server$/);
+	await expect(page).toHaveURL(/\/profile$/);
 	expect(mock.calls.find((c) => c.path === '/auth/password/reset')?.body).toEqual({ token: 'tok-123', password: 'a-long-password' });
 	await expect(account(page).getByRole('button', { name: 'Sign out' })).toBeVisible();
 	await expect(account(page).getByLabel('Email', { exact: true })).toHaveValue('me@example.org');
@@ -123,14 +135,14 @@ test('reset link: an expired link and a missing token read clearly', async ({ pa
 	await page.goto('/reset-password');
 	await expect(page.getByRole('alert')).toContainText('has no reset code');
 	await page.getByRole('button', { name: 'Go to sign in' }).click();
-	await expect(page).toHaveURL(/\/settings\/server$/);
+	await expect(page).toHaveURL(/\/profile$/);
 });
 
 test('signed in: save the email and change the password', async ({ page }) => {
 	const mock = await mockServer(page, {});
-	await connect(page, '/settings/server');
-	await expect(page.getByText('Online', { exact: true })).toBeVisible({ timeout: 10_000 });
-	await account(page).getByLabel('Username', { exact: true }).fill('owner');
+	await connect(page, '/profile');
+	await profileReady(page);
+	await account(page).getByLabel('Username or email').fill('owner');
 	await account(page).getByLabel('Password', { exact: true }).fill('owner-pass');
 	await account(page).getByRole('button', { name: 'Sign in' }).click();
 	await expect(account(page).getByRole('button', { name: 'Sign out' })).toBeVisible();
@@ -138,9 +150,10 @@ test('signed in: save the email and change the password', async ({ page }) => {
 	const email = account(page).getByLabel('Email', { exact: true });
 	await expect(email).toHaveValue('me@example.org');
 	await email.fill('new@example.org');
-	await account(page).getByRole('button', { name: 'Save' }).click();
+	const emailForm = account(page).getByRole('form', { name: 'Account email' });
+	await emailForm.getByRole('button', { name: 'Save' }).click();
 	await expect.poll(() => mock.calls.filter((c) => c.method === 'PATCH').at(-1)?.body).toEqual({ email: 'new@example.org' });
-	await expect(account(page).getByRole('button', { name: 'Save' })).toBeDisabled();
+	await expect(emailForm.getByRole('button', { name: 'Save' })).toBeDisabled();
 
 	await account(page).getByRole('button', { name: 'Change password' }).click();
 	await account(page).getByLabel('Current password').fill('owner-pass');

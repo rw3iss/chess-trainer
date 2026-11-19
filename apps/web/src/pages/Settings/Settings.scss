@@ -365,3 +365,20 @@
 		justify-content: flex-end;
 	}
 }
+
+.settings__legal {
+	margin: var(--space-4) 0 0;
+	padding: 0 var(--space-3);
+	font-size: var(--text-xs);
+
+	a {
+		color: var(--color-text-subtle);
+		text-decoration: none;
+
+		&:hover,
+		&:focus-visible {
+			color: var(--color-text-muted);
+			text-decoration: underline;
+		}
+	}
+}

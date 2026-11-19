@@ -1,6 +1,16 @@
-export { AccountMenu, initials } from './AccountMenu';
+export { AccountMenu } from './AccountMenu';
+export { AccountEmailForm, ChangePasswordForm, DisplayNameForm, ForgotPasswordForm, RecoverWithCodeForm, RESET_SENT_TEXT } from './AccountForms';
+export { Avatar, activeAvatarSrc, initials } from './Avatar';
+export { AvatarEditor } from './AvatarEditor';
+export { AVATAR_ACCEPT, AVATAR_MAX_BYTES, AVATAR_SIZE, centerSquare, prepareAvatar } from './avatarImage';
+export { collectBackup, exportBackupJson, exportGamesPgn, type AccountBackup } from './accountData';
 export { CopyDataDialog } from './CopyDataDialog';
+export { DataSection, DeleteAccount, ExportData } from './DataSection';
+export { DeviceSessions } from './DeviceSessions';
 export { InviteFriend, absoluteLink } from './InviteFriend';
 export { LinkedSignIns } from './LinkedSignIns';
+export { OwnerTools } from './OwnerTools';
 export { ProviderButtons, availableProviders, PROVIDER_NAME, type ProviderButtonsProps } from './ProviderButtons';
+export { RecoveryCodes, recoveryCodesText } from './RecoveryCodes';
 export { RemoveFromDevice } from './RemoveFromDevice';
+export { SignInPanel } from './SignInPanel';

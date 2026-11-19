@@ -94,3 +94,35 @@ export class RegisterDto {
 	@Length(8, 64)
 	invite?: string;
 }
+
+export class RecoverPasswordDto {
+	@ApiProperty({ example: 'magnus' })
+	@IsString()
+	@Length(1, 64)
+	username!: string;
+
+	@ApiProperty({ example: 'abcd-2345' })
+	@IsString()
+	@Length(8, 32)
+	code!: string;
+
+	@ApiProperty({ minLength: PASSWORD_MIN_LENGTH })
+	@IsString()
+	@Length(PASSWORD_MIN_LENGTH, 256)
+	password!: string;
+}
+
+/** Re-auth for sensitive actions ('' when the account has no password). */
+export class PasswordConfirmDto {
+	@ApiProperty()
+	@IsString()
+	@Length(0, 256)
+	password!: string;
+}
+
+export class RecoveryCodesDto {
+	@ApiProperty({ description: "'' when the account has no password." })
+	@IsString()
+	@Length(0, 256)
+	currentPassword!: string;
+}

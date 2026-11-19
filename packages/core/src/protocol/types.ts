@@ -60,6 +60,62 @@ export interface UserDto {
 	email?: string | null;
 	/** False for accounts created by a sign-in provider that never set a password (change password needs no current one). */
 	hasPassword?: boolean;
+	/** The email is confirmed (verify link clicked, or a provider vouched for it). Reset links go to verified emails only. */
+	emailVerified?: boolean;
+	/** Avatar path relative to the API base (e.g. `/users/<id>/avatar?v=<n>`); null = none. Prefix with the server URL. */
+	avatarUrl?: string | null;
+	/** Epoch ms. */
+	createdAt?: number;
+}
+
+/**
+ * Email verification. Setting/changing the email (PATCH /users/me, POST /auth/register) emails a link to
+ * `<APP_PUBLIC_URL>/verify-email?token=…` (24 h). POST /auth/email/verify { token } (public) → { email }.
+ * POST /users/me/email/verify (signed in) → 202, sends the link again (3/h). 400 bad/expired token.
+ */
+export interface VerifyEmailRequest {
+	token: string;
+}
+
+/** Signed-in sessions (devices). GET /users/me/sessions; DELETE /users/me/sessions/:id; POST /auth/logout { refreshToken } (public) ends one. */
+export interface DeviceSessionDto {
+	id: string;
+	/** Browser / OS summary from the user agent, e.g. "Firefox on Linux". */
+	label: string;
+	createdAt: number;
+	lastUsedAt: number;
+	/** The session of the token making the request. */
+	current: boolean;
+}
+
+/**
+ * Recovery codes (password reset without email). POST /users/me/recovery-codes { currentPassword } → { codes } (8 new
+ * codes, old ones stop working; currentPassword '' when hasPassword is false). GET /users/me/recovery-codes → { remaining }.
+ * POST /auth/password/recover { username, code, password } (public, rate limited) → AuthTokens; ends other sessions.
+ */
+export interface RecoveryCodesResponse {
+	codes: string[];
+}
+
+export interface RecoverPasswordRequest {
+	username: string;
+	code: string;
+	password: string;
+}
+
+/**
+ * Avatar. PUT /users/me/avatar — multipart field `file`, PNG/JPEG/WebP ≤ 300 KB (the app crops + resizes to 256 px first)
+ * → UserDto. DELETE /users/me/avatar → UserDto. GET /users/:id/avatar (public, cacheable by ?v=).
+ * Delete account: DELETE /users/me { password } (password '' when hasPassword is false; the owner cannot) → 204.
+ * Owner tool: POST /admin/users/:username/reset-link → OwnerResetLinkDto (one-time password reset link, 1 h).
+ */
+export interface DeleteAccountRequest {
+	password: string;
+}
+
+export interface OwnerResetLinkDto {
+	link: string;
+	expiresAt: number;
 }
 
 export type SignupMode = 'open' | 'invite' | 'off';

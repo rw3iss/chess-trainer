@@ -26,6 +26,11 @@ export default registerAs('auth', () => ({
 	registerMaxPerIp: parseInt(process.env.REGISTER_MAX_PER_IP ?? '5', 10),
 	/** Invites a user may send per day. */
 	invitesPerDay: parseInt(process.env.INVITES_PER_DAY ?? '10', 10),
+	lichess: {
+		/** Lichess OAuth needs no registration; on by default. */
+		enabled: process.env.LICHESS_OAUTH !== 'false',
+		clientId: process.env.LICHESS_CLIENT_ID || (process.env.APP_PUBLIC_URL ? new URL(process.env.APP_PUBLIC_URL).host : 'chess-trainer'),
+	},
 	google: {
 		clientId: process.env.GOOGLE_CLIENT_ID || undefined,
 		clientSecret: process.env.GOOGLE_CLIENT_SECRET || undefined,

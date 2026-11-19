@@ -1,6 +1,6 @@
 // /reset-password?token=… — the page a password reset email links to. Sets a new password with
 // the single-use token (authActions.resetPassword), which also signs the user in, then goes to
-// Settings → Server. Works without a signed-in session; needs the server (the token is checked there).
+// the profile. Works without a signed-in session; needs the server (the token is checked there).
 import type { JSX } from 'preact';
 import { useState } from 'preact/hooks';
 import { useLocation } from 'preact-iso';
@@ -11,7 +11,7 @@ import { authActions } from '@/state/auth';
 import { accountSwitching } from '@/state/account';
 import './ResetPassword.scss';
 
-const SERVER_SETTINGS = '/settings/server';
+const SERVER_SETTINGS = '/profile';
 
 export default function ResetPassword(): JSX.Element {
 	const { query, route } = useLocation();

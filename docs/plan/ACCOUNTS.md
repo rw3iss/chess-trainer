@@ -1,7 +1,7 @@
 # Accounts plan — sign-up, profiles, password recovery, linked sign-in
 
-Status (2026-11-19): **done** — A (local DB per account), B sign-up + invites + login limits, D1 (email reset), F (Google), most of C on the account card; box hardening (docs/ops/SECURITY.md).
-**Open** — B refresh-token table / devices / delete account, C `/account` page + avatar, D2–D4, E (Lichess), G (Chess.com).
+Status (2026-11-19): **all phases done** — A local DB per account; B sign-up, invites, login limits, devices (rotating refresh tokens), delete account; C `/profile` (avatar, email confirmation, security, invites, data, owner tools); D1 email reset, D2 email confirmation, D3 recovery codes, D4 owner reset link; E Lichess sign-in + game import; F Google; G Chess.com game import. Privacy policy: `/privacy.html` (`/privacy` redirects). Box hardening: docs/ops/SECURITY.md.
+Possible later: avatar crop UI with zoom, "unsynced changes" warning on remove-from-device, Cloudflare edge rules.
 
 ## 1. Today
 
@@ -44,8 +44,10 @@ Original plan:
 - `DELETE /users/me` (password required): deletes rows + avatar.
 - Username rules: 3–24, `[a-z0-9_-]`, unique, case-insensitive.
 
-### C. Account page (client) `/account`
-Client parts built so far (on Settings → Server's account card, not a separate page yet): sign-up page `/signup` (invite preview), Continue with Google + `/auth/callback`, linked sign-ins (link / unlink), "Set password" for provider-only accounts, invite a friend (email + link + sent list). Still open: `/account` page, avatar, devices, export / delete account.
+### C. Profile page (client) `/profile` — **DONE (client) 2026-11-19**
+Built: one page with section links — Profile (picture: center-crop + 256 px WebP in the browser, `PUT /users/me/avatar` multipart, cached as a data URL for the offline header; display name; email + Verified / Not verified + Resend), Security (change / set password, recovery codes shown once with Copy / Download, devices with "This device" and per-device Sign out, linked sign-ins Google + Lichess), Invites, Data (export PGN + JSON backup, remove from device, delete account with username + password — not the owner), Owner tools (one-time reset link for a user). Signed out: sign-in panel (Google, Lichess, password, Forgot password? → email link or recovery code, Create account) + export. Settings → Server keeps URL + sync + an account summary that links here. Also `/verify-email?token=` page, sign-out ends the server session (`POST /auth/logout`, best effort), "Continue with Lichess" everywhere Google is offered.
+
+Original plan:
 
 - Profile: display name, username, email (+ verified badge once D2 exists), avatar (upload/crop/remove).
 - Security: change password (done in Settings → Server), recovery codes (D3), devices (B), linked sign-ins (E/F).
@@ -59,6 +61,8 @@ Client parts built so far (on Settings → Server's account card, not a separate
 - **D4 — owner reset link.** Owner page: "Reset link for <user>" → one-time link (1 h) to pass on by any channel.
 
 ### E. Sign in with Lichess (+ game import)
+**Game import DONE (client) 2026-11-19:** Games → Import → "Lichess / Chess.com" (`components/games/OnlineImport.tsx`, `services/importers`). Browser-only (both APIs allow CORS), streamed NDJSON, newest first; last 20 / 100 / all, month range, rated only; username prefilled from a linked Lichess sign-in; 429 waits + retries; Stop keeps saved batches. Dedupe by deterministic saved-game id `lichess-<gameId>`; tags `lichess` + username. Public games only (no token).
+
 - OAuth2 Authorization Code + PKCE. **No registration, no client secret**: `client_id` is any name (e.g. `chess.ryanweiss.net`). Endpoints `https://lichess.org/oauth` and `https://lichess.org/api/token`; profile `GET /api/account` (optional `email:read` scope).
 - Server: `IdentityProvider` port (`LichessProvider`, later `GoogleProvider`); `user_identities` table (provider, subject, user_id, username, linked_at). Flows: sign in (existing link), create account from Lichess (sign-up policy applies), link to the signed-in account, unlink (only if a password or another link remains).
 - Game import (no OAuth needed for public games): `GET https://lichess.org/api/games/user/<name>` (NDJSON with PGN; filters: since/until, rated, perfType, max). Client streams it through the existing PGN worker into saved games with tags `lichess`, `<username>`; dedupe by Lichess game id. Options: last N, date range, all. With the user's Lichess token, imports are faster and include their private data the scopes allow.
@@ -70,7 +74,9 @@ Built: `IdentityProvider` port + `GoogleProvider` (code + PKCE, profile from the
 Original plan:
 - OpenID Connect (Authorization Code + PKCE, scopes `openid email profile`). Server verifies the ID token (`jose` against Google's JWKS) and links via `user_identities` (provider `google`, subject `sub`). A verified Google email can fill `users.email`.
 
-### G. Chess.com
+### G. Chess.com — **game import DONE (client) 2026-11-19**
+Same Import tab: archives → months newest first, standard chess only, saved-game id `chesscom-<gameId>`, tags `chesscom` + username. No username link/OAuth (not needed for public games).
+
 - No public OAuth (as far as we know, OAuth access is for approved partners only; check before relying on it). Without it: link a Chess.com **username** (no proof of ownership) and import public games from `https://api.chess.com/pub/player/<name>/games/archives` (monthly PGN), same import pipeline as E.
 
 ## 4. Order and size

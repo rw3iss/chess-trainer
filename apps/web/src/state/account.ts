@@ -3,6 +3,7 @@
 //
 // Read:   activeAccountKey, activeAccount, knownAccounts, copyPrompt
 // Write:  accountActions.switchTo(key | null) / signOut() / removeFromDevice(key) / answerCopy(copy)
+//         / cacheAvatar(user) — keeps the avatar as a data URL in the known-accounts list (offline)
 //
 // Storage: see services/db/accounts.ts (device kv: 'account:active', 'accounts:known', 'auth:sessions').
 // A switch persists the choice, flushes every store and reloads the app (or navigates to `to`), so all
@@ -21,7 +22,8 @@ import {
 	type KnownAccount,
 } from '@/services/db/accounts';
 import { toast } from '@/services/toast';
-import { AUTH_SESSION_KEY, authUser, setSessionListener, type StoredAuth } from './auth';
+import type { UserDto } from '@chess/core/protocol';
+import { AUTH_SESSION_KEY, authUser, avatarSrc, sessionServerUrl, setSessionListener, type StoredAuth } from './auth';
 import { defineStore, flushStores } from './registry';
 
 export type { KnownAccount } from '@/services/db/accounts';
@@ -159,6 +161,38 @@ export const accountActions = {
 		await deleteAccountDatabase(key);
 	},
 
+	/**
+	 * Cache the active account's avatar (a small 256 px image) as a data URL, so the account menu shows it offline.
+	 * `blob` = the uploaded image (skips the download). No avatar → clears the cache.
+	 */
+	async cacheAvatar(user: Pick<UserDto, 'id' | 'avatarUrl'>, blob?: Blob): Promise<void> {
+		const serverUrl = sessionServerUrl.value;
+		if (!serverUrl) return;
+		const key = accountKey(serverUrl, user.id);
+		const acc = _known.value.find((a) => a.key === key);
+		if (!acc) return;
+		const src = user.avatarUrl ?? undefined;
+		if (!src) {
+			if (acc.avatar || acc.avatarSrc) await saveKnown(_known.value.map((a) => (a.key === key ? { ...a, avatar: undefined, avatarSrc: undefined } : a)));
+			return;
+		}
+		if (acc.avatarSrc === src && acc.avatar) return;
+		try {
+			let data = blob;
+			if (!data) {
+				const url = avatarSrc(user, serverUrl);
+				if (!url) return;
+				const res = await fetch(url);
+				if (!res.ok) return;
+				data = await res.blob();
+			}
+			const dataUrl = await blobToDataUrl(data);
+			await saveKnown(_known.value.map((a) => (a.key === key ? { ...a, avatar: dataUrl, avatarSrc: src } : a)));
+		} catch {
+			/* offline: keep the old one */
+		}
+	},
+
 	/** Answer the copy prompt. Copy → the device's anonymous data goes into this account, then reload. */
 	async answerCopy(copy: boolean): Promise<void> {
 		const a = _copyPrompt.value;
@@ -223,7 +257,22 @@ export function setActiveAccountKeyForTests(key: string | null | undefined): voi
 setSessionListener({
 	signedIn: onSignedIn,
 	signedOut: () => accountActions.signOut(),
+	deleted: async (s) => {
+		const key = accountKey(s.serverUrl, s.user.id);
+		if (_active.value === undefined) return;
+		// Active account → removeFromDevice switches to anonymous (reload) and deletes its database on the next boot.
+		await accountActions.removeFromDevice(key);
+	},
 });
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+	return new Promise((resolve, reject) => {
+		const r = new FileReader();
+		r.onload = () => resolve(String(r.result));
+		r.onerror = () => reject(r.error ?? new Error('read failed'));
+		r.readAsDataURL(blob);
+	});
+}
 
 // The display name in the list follows the signed-in user's profile.
 export const activeDisplayName = computed(() => authUser.value?.displayName ?? activeAccount.value?.displayName ?? null);

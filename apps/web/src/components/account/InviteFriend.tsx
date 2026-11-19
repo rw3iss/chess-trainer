@@ -1,4 +1,4 @@
-// Account card: invite a friend by email (the server emails a sign-up link; the link is shown to copy too).
+// Profile → Invites: invite a friend by email (the server emails a sign-up link; the link is shown to copy too).
 import type { JSX } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import type { InviteDto } from '@chess/core/protocol';

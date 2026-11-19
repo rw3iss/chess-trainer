@@ -84,7 +84,7 @@ export default function Signup(): JSX.Element {
 					{closed}
 				</p>
 				<div class="auth-page__actions">
-					<Button variant="secondary" onClick={() => route('/settings/server')}>
+					<Button variant="secondary" onClick={() => route(mode === null ? '/settings/server' : '/profile')}>
 						Go to sign in
 					</Button>
 				</div>
@@ -170,10 +170,17 @@ export default function Signup(): JSX.Element {
 					<Button type="submit" variant="primary" loading={busy} disabled={!ready}>
 						Create account
 					</Button>
-					<Button variant="ghost" onClick={() => route('/settings/server')}>
+					<Button variant="ghost" onClick={() => route('/profile')}>
 						I have an account
 					</Button>
 				</div>
+				<p class="auth-page__fine">
+					See how your data is used in the{' '}
+					<a href="/privacy.html" target="_blank" rel="noopener">
+						privacy policy
+					</a>
+					.
+				</p>
 			</form>
 		</section>
 	);

@@ -8,6 +8,7 @@ import { Mailer, passwordResetMail } from '../mail';
 import { UsersService } from '../users/users.service';
 import type { UserEntity } from '../users/entities/user.entity';
 import { PasswordResetEntity } from './entities/password-reset.entity';
+import { SessionsService } from './sessions.service';
 
 /** Reset requests allowed per account and per client IP, per RATE_WINDOW_S. */
 export const RESET_LIMIT_PER_ACCOUNT = 3;
@@ -31,6 +32,7 @@ export class PasswordService {
 		private readonly mailer: Mailer,
 		private readonly limits: RateLimiter,
 		private readonly config: ConfigService,
+		private readonly sessions: SessionsService,
 	) {}
 
 	/**
@@ -44,7 +46,8 @@ export class PasswordService {
 		await this.limits.hit(`pwreset:ip:${ip ?? 'unknown'}`, RESET_LIMIT_PER_IP, RATE_WINDOW_S, msg);
 		await this.limits.hit(`pwreset:id:${sha256(id)}`, RESET_LIMIT_PER_ACCOUNT, RATE_WINDOW_S, msg);
 		const user = await this.users.findByIdentifier(id);
-		if (!user?.email) return;
+		// Only confirmed emails get reset links (an unconfirmed address may not belong to the account holder).
+		if (!user?.email || !user.emailVerified) return;
 		void this.sendLink(user).catch((e: unknown) => this.logger.error(`reset email to user ${user.id} failed: ${e instanceof Error ? e.message : String(e)}`));
 	}
 
@@ -58,29 +61,38 @@ export class PasswordService {
 			throw new BadRequestException('this reset link is invalid or has expired');
 		});
 		await this.clearUnused(user.id);
+		await this.sessions.revokeAll(user.id);
 		return this.users.setPassword(user, password);
 	}
 
 	/** Signed-in password change. Returns the user (caller issues tokens). */
-	async change(userId: string, currentPassword: string, newPassword: string): Promise<UserEntity> {
+	async change(userId: string, currentPassword: string, newPassword: string, keepSessionId?: string): Promise<UserEntity> {
 		const user = await this.users.findById(userId);
 		// Provider-only accounts (no password yet) set one without a current password.
 		if (user.passwordHash && !(await this.users.verifyPassword(user, currentPassword))) throw new UnauthorizedException('the current password is wrong');
 		await this.clearUnused(user.id);
+		await this.sessions.revokeAll(user.id, keepSessionId);
 		return this.users.setPassword(user, newPassword);
+	}
+
+	/** A one-time reset link (also the owner's "reset link for a user" tool). */
+	async createLink(user: UserEntity): Promise<{ link: string; expiresAt: number }> {
+		const ttlS = this.config.get<number>('auth.passwordResetTtl') ?? 3600;
+		const token = randomBytes(32).toString('base64url');
+		const now = Date.now();
+		const expiresAt = now + ttlS * 1000;
+		await this.resets.save(this.resets.create({ id: randomUUID(), userId: user.id, tokenHash: sha256(token), expiresAt, usedAt: null, createdAt: now }));
+		return { link: `${this.config.get<string>('mail.appUrl')}/reset-password?token=${encodeURIComponent(token)}`, expiresAt };
 	}
 
 	private async sendLink(user: UserEntity): Promise<void> {
 		const ttlS = this.config.get<number>('auth.passwordResetTtl') ?? 3600;
-		const token = randomBytes(32).toString('base64url');
-		const now = Date.now();
-		await this.resets.save(this.resets.create({ id: randomUUID(), userId: user.id, tokenHash: sha256(token), expiresAt: now + ttlS * 1000, usedAt: null, createdAt: now }));
-		const appUrl = this.config.get<string>('mail.appUrl')!;
+		const { link } = await this.createLink(user);
 		const mail = passwordResetMail({
 			to: user.email!,
 			appName: this.config.get<string>('mail.appName') ?? 'Chess Trainer',
 			displayName: user.displayName,
-			link: `${appUrl}/reset-password?token=${encodeURIComponent(token)}`,
+			link,
 			ttlMinutes: Math.round(ttlS / 60),
 		});
 		const res = await this.mailer.send(mail);

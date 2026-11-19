@@ -8,7 +8,7 @@ import { HttpApiAdapter } from './HttpApiAdapter';
 import { MockApiAdapter } from './MockApiAdapter';
 
 export type { AccountApi, ApiClient, RoomSummary, UpdateAccountRequest } from './ApiClient';
-export { ApiRequestError } from './ApiClient';
+export { ApiRequestError, AVATAR_FIELD } from './ApiClient';
 export { HttpApiAdapter, type HttpApiOptions } from './HttpApiAdapter';
 
 let tokenProvider: () => string | null = () => null;
@@ -65,6 +65,18 @@ export const api: ApiClient = {
 	createInvite: (req) => currentApi().createInvite(req),
 	invites: () => currentApi().invites(),
 	invitePreview: (code) => currentApi().invitePreview(code),
+	verifyEmail: (token) => currentApi().verifyEmail(token),
+	resendVerification: () => currentApi().resendVerification(),
+	sessions: () => currentApi().sessions(),
+	revokeSession: (id) => currentApi().revokeSession(id),
+	logout: (t) => currentApi().logout(t),
+	createRecoveryCodes: (p) => currentApi().createRecoveryCodes(p),
+	recoveryCodesLeft: () => currentApi().recoveryCodesLeft(),
+	recoverPassword: (req) => currentApi().recoverPassword(req),
+	uploadAvatar: (f) => currentApi().uploadAvatar(f),
+	deleteAvatar: () => currentApi().deleteAvatar(),
+	deleteAccount: (req) => currentApi().deleteAccount(req),
+	ownerResetLink: (u) => currentApi().ownerResetLink(u),
 	explorer: (fen, source) => currentApi().explorer(fen, source),
 	engines: () => currentApi().engines(),
 	sync: (req) => currentApi().sync(req),

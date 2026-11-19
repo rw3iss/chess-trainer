@@ -14,6 +14,7 @@ import {
 	GameRow,
 	GamesToolbar,
 	ImportModal,
+	type ImportTab,
 	deleteGameWithUndo,
 	duplicateGame,
 	exportGame,
@@ -37,6 +38,11 @@ export default function Games(): JSX.Element {
 	const { query: rawQuery, route } = useLocation();
 	const stacked = useIsStacked();
 	const [importOpen, setImportOpen] = useState(false);
+	const [importTab, setImportTab] = useState<ImportTab>('file');
+	const openImport = (tab: ImportTab = 'file') => {
+		setImportTab(tab);
+		setImportOpen(true);
+	};
 
 	const query = useMemo(() => parseGamesQuery(rawQuery), [JSON.stringify(rawQuery)]);
 	const all = savedGames.value;
@@ -69,7 +75,7 @@ export default function Games(): JSX.Element {
 					</p>
 				</div>
 				<div class="games-page__actions">
-					<Button variant="secondary" size="sm" icon="upload" onClick={() => setImportOpen(true)}>
+					<Button variant="secondary" size="sm" icon="upload" onClick={() => openImport()}>
 						Import
 					</Button>
 					<IconButton icon="download" label={filtered ? 'Export shown games as PGN' : 'Export all games as PGN'} disabled={!list.length} onClick={() => exportGames(list)} />
@@ -93,8 +99,11 @@ export default function Games(): JSX.Element {
 					<Button variant="primary" icon="book" onClick={() => route('/openings')}>
 						Browse openings
 					</Button>
-					<Button variant="secondary" icon="upload" onClick={() => setImportOpen(true)}>
+					<Button variant="secondary" icon="upload" onClick={() => openImport()}>
 						Import PGN, FEN or image
+					</Button>
+					<Button variant="ghost" size="sm" icon="download" onClick={() => openImport('online')}>
+						Import from Lichess or Chess.com
 					</Button>
 				</EmptyState>
 			) : (
@@ -132,7 +141,7 @@ export default function Games(): JSX.Element {
 				</>
 			)}
 
-			<ImportModal open={importOpen} onClose={() => setImportOpen(false)} />
+			<ImportModal open={importOpen} initialTab={importTab} onClose={() => setImportOpen(false)} />
 		</div>
 	);
 }

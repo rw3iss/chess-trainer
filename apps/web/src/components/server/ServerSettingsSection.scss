@@ -101,39 +101,9 @@
 		color: var(--color-text-subtle);
 	}
 
-	&__login {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-		gap: var(--space-3);
 
-		@include mobile {
-			grid-template-columns: minmax(0, 1fr);
-		}
-	}
 
-	&__submit {
-		grid-column: 1 / -1;
-		justify-self: start;
 
-		@include mobile {
-			justify-self: stretch;
-		}
-	}
-
-	// Stacked form inside a card (forgot / change password).
-	&__subform {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-3);
-	}
-
-	// Input + button on one row (email).
-	&__inline-form {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto;
-		align-items: start;
-		gap: var(--space-2);
-	}
 
 	&__actions {
 		display: flex;
@@ -142,15 +112,6 @@
 		gap: var(--space-2);
 	}
 
-	&__notice {
-		margin: 0;
-		padding: var(--space-2) var(--space-3);
-		border-radius: var(--radius-md);
-		background: var(--color-accent-soft);
-		color: var(--color-text);
-		font-size: var(--text-sm);
-		line-height: 1.5;
-	}
 
 	&__user {
 		display: flex;
@@ -158,19 +119,6 @@
 		gap: var(--space-3);
 	}
 
-	&__avatar {
-		display: grid;
-		place-items: center;
-		flex: none;
-		width: var(--control-md);
-		height: var(--control-md);
-		border-radius: var(--radius-full);
-		background: var(--color-accent-soft);
-		color: var(--color-accent-text);
-		font-family: var(--font-display);
-		font-size: var(--text-lg);
-		font-weight: var(--weight-semibold);
-	}
 
 	&__user-text {
 		display: flex;
@@ -204,13 +152,5 @@
 		font-size: var(--text-sm);
 	}
 
-	&__link {
-		padding: 0;
-		border: 0;
-		background: none;
-		color: var(--color-accent-text);
-		text-decoration: underline;
-		cursor: pointer;
-		font: inherit;
-	}
+
 }

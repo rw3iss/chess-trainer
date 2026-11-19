@@ -51,6 +51,9 @@ Inject `CacheService` (`get` / `set(key, value, ttlSeconds)` / `del` / `ping`, `
 - `trust proxy` = loopback (nginx on the host), so `@Ip()` is the real client IP.
 - Sign-up policy + creation: `RegistrationService` (`SIGNUP_MODE`, per-IP limit, invites). Shared by `/auth/register` and provider sign-in.
 - Provider sign-in: `IdentityProvider` port (`auth/oauth/identity-provider.ts`), `GoogleProvider`; register new providers in `IDENTITY_PROVIDERS` (auth.module.ts). `OAuthService` keeps PKCE state + single-use exchange codes in `CacheService`; never links by email alone; links live in `user_identities`.
+- Email confirmation: `EmailVerificationService` (users module). New/changed emails are unconfirmed and get a 24 h link; reset links go to confirmed emails only; a provider-verified email takes an address from an unconfirmed holder.
+- Devices: `auth_sessions` + `SessionsService`. Access and refresh tokens carry `sid`; refresh tokens carry `rot` and rotate on every refresh (a replayed older token revokes the session; a 30 s grace covers two tabs refreshing at once). Password change keeps this device, reset/recover end all.
+- Recovery codes (`RecoveryService`, argon2 hashes), account deletion (`AccountService`, one transaction over every `user_id` table + avatar), avatar storage port `AvatarStore` → `DiskAvatarStore` (`AVATAR_DIR`).
 - Rate limits: `RateLimiter` (cache module) — login failures, reset requests, sign-ups, invites. nginx `limit_req` + fail2ban sit in front (docs/ops/SECURITY.md).
 
 ## Engine processes

@@ -1,5 +1,5 @@
-// Header account menu: who is active (initials), switch between accounts known on this device and the
-// anonymous space, sign in / create account, account settings, sign out (state/account.ts).
+// Header account menu: who is active (picture or initials), switch between accounts known on this device and
+// the anonymous space, profile, sign in / create account, server settings, sign out (state/account.ts).
 import type { JSX } from 'preact';
 import { useLocation } from 'preact-iso';
 import { Icon } from '@/components/common/Icon';
@@ -8,13 +8,10 @@ import { serverConnector } from '@/services/server';
 import { accountActions, activeAccount, activeAccountKey, knownAccounts } from '@/state/account';
 import { authActions, authUser, isLoggedIn } from '@/state/auth';
 import { cx } from '@/lib/classNames';
+import { activeAvatarSrc, initials } from './Avatar';
 import './account.scss';
 
-export function initials(name: string): string {
-	const parts = name.trim().split(/\s+/).filter(Boolean);
-	const s = parts.length > 1 ? `${parts[0]![0]}${parts[parts.length - 1]![0]}` : (parts[0] ?? '?').slice(0, 2);
-	return s.toUpperCase();
-}
+export { initials } from './Avatar';
 
 export function AccountMenu({ compact = false }: { compact?: boolean }): JSX.Element {
 	const { route } = useLocation();
@@ -34,14 +31,16 @@ export function AccountMenu({ compact = false }: { compact?: boolean }): JSX.Ele
 		}
 		items.push({ separator: true });
 	}
-	if (!signedIn) {
-		items.push({ id: 'signin', label: active ? 'Sign in again' : 'Sign in', icon: 'user', onSelect: () => route('/settings/server') });
+	if (signedIn) items.push({ id: 'profile', label: 'Profile', icon: 'user', onSelect: () => route('/profile') });
+	else {
+		items.push({ id: 'signin', label: active ? 'Sign in again' : 'Sign in', icon: 'user', onSelect: () => route('/profile') });
 		if (signupMode !== 'off') items.push({ id: 'signup', label: 'Create account', icon: 'plus', onSelect: () => route('/signup') });
 	}
-	items.push({ id: 'settings', label: 'Account settings', icon: 'settings', onSelect: () => route('/settings/server') });
+	items.push({ id: 'settings', label: 'Server settings', icon: 'settings', onSelect: () => route('/settings/server') });
 	if (signedIn) items.push({ id: 'signout', label: 'Sign out', icon: 'close', onSelect: () => void authActions.logout() });
 
 	const label = name ? `Account: ${name}` : 'Account: anonymous';
+	const picture = name ? activeAvatarSrc() : null;
 	return (
 		<Menu
 			items={items}
@@ -50,7 +49,13 @@ export function AccountMenu({ compact = false }: { compact?: boolean }): JSX.Ele
 			minWidth={240}
 			trigger={(p) => (
 				<button {...p} type="button" title={label} class={cx('account-trigger', compact && 'account-trigger--compact', signedIn && 'account-trigger--signed-in')} aria-label={label}>
-					{name ? <span class="account-trigger__initials">{initials(name)}</span> : <Icon name="user" size={16} />}
+					{picture ? (
+						<img class="account-trigger__img" src={picture} alt="" />
+					) : name ? (
+						<span class="account-trigger__initials">{initials(name)}</span>
+					) : (
+						<Icon name="user" size={16} />
+					)}
 				</button>
 			)}
 		/>

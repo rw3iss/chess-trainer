@@ -4,3 +4,4 @@ export { ResendMailer } from './providers/resend.mailer';
 export { MemoryMailer, DisabledMailer } from './providers/memory.mailer';
 export { passwordResetMail } from './templates/password-reset';
 export { inviteMail } from './templates/invite';
+export { verifyEmailMail } from './templates/verify-email';

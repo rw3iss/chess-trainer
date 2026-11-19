@@ -21,10 +21,16 @@ export class OAuthController {
 	@Public()
 	@Post('auth/oauth/:provider/start')
 	@HttpCode(200)
-	async start(@Param('provider') provider: string, @Body() body: OAuthStartDto, @Headers('authorization') authz: string | undefined, @Ip() ip: string): Promise<{ url: string }> {
+	async start(
+		@Param('provider') provider: string,
+		@Body() body: OAuthStartDto,
+		@Headers('authorization') authz: string | undefined,
+		@Headers('user-agent') ua: string | undefined,
+		@Ip() ip: string,
+	): Promise<{ url: string }> {
 		const token = authz?.startsWith('Bearer ') ? authz.slice(7).trim() : undefined;
 		const userId = token && body.mode === 'link' ? (await this.auth.verify(token, 'access')).sub : null;
-		return this.oauth.start(provider, body, userId, ip);
+		return this.oauth.start(provider, body, userId, ip, ua);
 	}
 
 	/** Provider redirect target (register `<api base>/auth/<provider>/callback` with the provider). */

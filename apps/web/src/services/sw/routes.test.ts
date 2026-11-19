@@ -38,6 +38,8 @@ describe('sw routes', () => {
 	});
 
 	it('navigation denylist skips api, socket.io and files', () => {
+		expect(denied('/privacy.html')).toBe(true);
+		expect(denied('/privacy-settings')).toBe(false);
 		expect(denied('/api/games')).toBe(true);
 		expect(denied('/socket.io/')).toBe(true);
 		expect(denied('/data/openings.v1.json')).toBe(true);

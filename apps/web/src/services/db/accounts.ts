@@ -35,6 +35,9 @@ export interface KnownAccount {
 	lastUsedAt: number;
 	/** Answer to "Copy this device's games and sessions into …?" (absent = not asked yet). */
 	copyAnswer?: 'copied' | 'declined';
+	/** Avatar as a data URL (shown offline) and the server path it came from (re-fetched when it changes). */
+	avatar?: string;
+	avatarSrc?: string;
 }
 
 /** Host of a server URL (relative URLs resolve against the page origin). */

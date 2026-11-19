@@ -39,6 +39,23 @@ function SectionList({ current, onPick, variant }: { current?: string; onPick: (
 	);
 }
 
+/** Static legal page (public/privacy.html): a full page load, not a router navigation. */
+function LegalLinks(): JSX.Element {
+	return (
+		<p class="settings__legal">
+			<a
+				href="/privacy.html"
+				onClick={(e) => {
+					e.preventDefault();
+					window.location.assign('/privacy.html');
+				}}
+			>
+				Privacy policy
+			</a>
+		</p>
+	);
+}
+
 export default function Settings(): JSX.Element {
 	const { params } = useRoute();
 	const { route } = useLocation();
@@ -64,6 +81,7 @@ export default function Settings(): JSX.Element {
 			<div class="settings settings--list">
 				<h1 class="settings__title">Settings</h1>
 				<SectionList onPick={pick} variant="list" />
+				<LegalLinks />
 			</div>
 		);
 	}
@@ -80,6 +98,7 @@ export default function Settings(): JSX.Element {
 				<aside class="settings__aside">
 					<h1 class="settings__title">Settings</h1>
 					<SectionList current={section?.id} onPick={pick} variant="nav" />
+					<LegalLinks />
 				</aside>
 			)}
 			<div class="settings__content" ref={contentRef}>

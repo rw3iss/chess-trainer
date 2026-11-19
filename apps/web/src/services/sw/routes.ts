@@ -10,7 +10,7 @@ const API_NEVER_CACHE = [/^\/(api\/)?sync(\/|$)/, /^\/socket\.io(\/|$)/];
 /** Third-party origins that are not the app server (fonts, model hosts). */
 const NON_API_ORIGINS = new Set(['https://fonts.googleapis.com', 'https://fonts.gstatic.com', 'https://raw.githubusercontent.com']);
 
-/** Navigations that must not fall back to index.html. */
+/** Navigations that must not fall back to index.html (files with an extension, e.g. /privacy.html, go to the network). */
 export const NAVIGATION_DENYLIST: RegExp[] = [/^\/api(\/|$)/, /^\/socket\.io(\/|$)/, /\/[^/?]+\.[^/]+$/];
 
 /** Pinned Maia-2 model host/path (see services/engine/adapters/MaiaAdapter.ts MAIA2_DEFAULT_MODEL_URL). */

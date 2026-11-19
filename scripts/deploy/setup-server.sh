@@ -62,7 +62,7 @@ ENV
   sudo chmod 600 "$ENV_FILE"
 fi
 # Keys added after first install (append once; existing values are never changed).
-for kv in "HOST=127.0.0.1" "APP_PUBLIC_URL=https://$DOMAIN" "SIGNUP_MODE=open"; do
+for kv in "HOST=127.0.0.1" "APP_PUBLIC_URL=https://$DOMAIN" "SIGNUP_MODE=open" "AVATAR_DIR=/var/lib/chess/avatars"; do
   sudo grep -q "^${kv%%=*}=" "$ENV_FILE" || echo "$kv" | sudo tee -a "$ENV_FILE" >/dev/null
 done
 

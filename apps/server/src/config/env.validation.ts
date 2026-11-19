@@ -13,6 +13,7 @@ export const envValidationSchema = Joi.object({
 	NODE_ENV: Joi.string().valid('development', 'staging', 'production', 'test').default('development'),
 	PORT: Joi.number().port().default(3000),
 	HOST: Joi.string().allow('').default('0.0.0.0'),
+	AVATAR_DIR: Joi.string().allow('').optional(),
 	API_PREFIX: Joi.string().allow('').default(''),
 	CORS_ORIGINS: Joi.string().allow('').default('*'),
 	LOG_LEVEL: Joi.string().valid('error', 'warn', 'log', 'debug', 'verbose').default('log'),
@@ -56,6 +57,8 @@ export const envValidationSchema = Joi.object({
 	REGISTER_MAX_PER_IP: Joi.number().integer().min(1).default(5),
 	INVITES_PER_DAY: Joi.number().integer().min(0).default(10),
 	// Sign in with Google (OAuth client "Web application"; redirect URI = <api base>/auth/google/callback)
+	LICHESS_OAUTH: Joi.boolean().default(true),
+	LICHESS_CLIENT_ID: Joi.string().allow('').optional(),
 	GOOGLE_CLIENT_ID: Joi.string().allow('').optional(),
 	GOOGLE_CLIENT_SECRET: Joi.string().allow('').optional(),
 

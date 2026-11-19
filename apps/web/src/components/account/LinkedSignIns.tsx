@@ -1,4 +1,4 @@
-// Account card: sign-in providers linked to this account (link / unlink).
+// Profile → Security: sign-in providers linked to this account (link / unlink).
 import type { JSX } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import type { IdentityDto } from '@chess/core/protocol';
@@ -64,7 +64,7 @@ export function LinkedSignIns(): JSX.Element | null {
 					))}
 				</ul>
 			)}
-			<ProviderButtons mode="link" returnTo="/settings/server" exclude={(list ?? []).map((i) => i.provider)} />
+			<ProviderButtons mode="link" returnTo="/profile" exclude={(list ?? []).map((i) => i.provider)} />
 			{error && (
 				<p class="account-error" role="alert">
 					{error}

@@ -34,7 +34,7 @@ public/            static: data/ (openings datasets), pieces/ (sprites), engines
 e2e/               Playwright specs
 src/
   app/             App, AppShell boot, routes.ts (route table + panel tabs), slots.tsx (extension slots), boot.ts
-  pages/<Name>/    route views (lazy): Home, Openings, OpeningDetail, Games, Sessions, Settings, Play, QuickPlay, OpeningLink, ResetPassword, Signup, AuthCallback, NotFound
+  pages/<Name>/    route views (lazy): Home, Openings, OpeningDetail, Games, Sessions, Settings, Play, QuickPlay, OpeningLink, Profile, VerifyEmail, ResetPassword, Signup, AuthCallback, NotFound
   components/
     common/<Name>/ primitives (Button, Icon, Menu, Modal, Sheet, Tabs, Toast, …) — barrel common/index.ts
     board/         Board2D, MiniBoard, EvalBar (BoardRenderer contract in board/types.ts)

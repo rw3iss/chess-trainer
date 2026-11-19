@@ -55,7 +55,8 @@ describe('auth store', () => {
 			refresh: vi.fn(async () => tokens(++issued)),
 			guest: vi.fn(async (req: { displayName: string }) => ({ accessToken: 'guest', expiresIn: 3600, user: { ...owner, id: 'g', role: 'guest' as const, displayName: req.displayName } })),
 		};
-		configureAuth({ client: () => client, serverUrl: () => URL_, now: () => now });
+		// Sign-out tells the server (best effort): a no-op fake keeps these tests off the network.
+		configureAuth({ client: () => client, account: () => ({ logout: async () => undefined }) as unknown as AccountApi, serverUrl: () => URL_, now: () => now });
 	});
 
 	afterEach(() => {
@@ -166,6 +167,18 @@ describe('auth store', () => {
 				createInvite: vi.fn(async (req) => ({ code: 'c1', link: '/signup?invite=c1', email: req.email, createdAt: 1, acceptedAt: null })),
 				invites: vi.fn(async () => []),
 				invitePreview: vi.fn(async () => ({ inviter: { username: 'owner', displayName: 'Owner' }, email: 'f@x.org' })),
+				verifyEmail: vi.fn(async () => ({ email: 'me@x.org' })),
+				resendVerification: vi.fn(async () => undefined),
+				sessions: vi.fn(async () => [{ id: 's1', label: 'Firefox on Linux', createdAt: 1, lastUsedAt: 2, current: true }]),
+				revokeSession: vi.fn(async () => undefined),
+				logout: vi.fn(async () => undefined),
+				createRecoveryCodes: vi.fn(async () => ({ codes: ['aaaa-bbbb', 'cccc-dddd'] })),
+				recoveryCodesLeft: vi.fn(async () => ({ remaining: 2 })),
+				recoverPassword: vi.fn(async () => tokens(++issued)),
+				uploadAvatar: vi.fn(async () => ({ ...owner, avatarUrl: '/users/u1/avatar?v=2' })),
+				deleteAvatar: vi.fn(async () => ({ ...owner, avatarUrl: null })),
+				deleteAccount: vi.fn(async () => undefined),
+				ownerResetLink: vi.fn(async (u: string) => ({ link: `/reset-password?token=t-${u}`, expiresAt: 9 })),
 			};
 			configureAuth({ client: () => client, account: (_u, t) => (tokensSeen.push(t), account), serverUrl: () => URL_, now: () => now, navigate });
 		});
@@ -195,7 +208,7 @@ describe('auth store', () => {
 		it('completeOAuth stores the tokens and reports created / returnTo', async () => {
 			const r = await authActions.completeOAuth('code-1');
 			expect(account.oauthExchange).toHaveBeenCalledWith('code-1');
-			expect(r).toEqual({ returnTo: '/games', created: true, linked: false });
+			expect(r).toEqual({ returnTo: '/games', created: true, linked: false, provider: 'Google' });
 			expect(isLoggedIn.value).toBe(true);
 		});
 
@@ -265,6 +278,94 @@ describe('auth store', () => {
 			account.changePassword.mockRejectedValueOnce(new ApiRequestError('Unauthorized', 401));
 			await expect(authActions.changePassword('bad', 'long-enough')).rejects.toThrow('The current password is wrong.');
 			expect(isLoggedIn.value).toBe(true);
+		});
+
+		it('logout ends the server session with the refresh token, and still signs out when that fails', async () => {
+			await authActions.login('owner', 'pw');
+			await authActions.logout();
+			expect(account.logout).toHaveBeenCalledWith('refresh-1');
+			expect(isLoggedIn.value).toBe(false);
+			await authActions.login('owner', 'pw');
+			account.logout.mockRejectedValueOnce(new ApiRequestError('offline', 0));
+			await authActions.logout();
+			expect(isLoggedIn.value).toBe(false);
+		});
+
+		it('verifyEmail marks the stored email verified; a bad link reads clearly', async () => {
+			await authActions.login('owner', 'pw');
+			await authActions.updateEmail('me@x.org');
+			expect(await authActions.verifyEmail(' tok ')).toBe('me@x.org');
+			expect(account.verifyEmail).toHaveBeenCalledWith('tok');
+			expect(authUser.value?.emailVerified).toBe(true);
+			await expect(authActions.verifyEmail('')).rejects.toThrow('no verification code');
+			account.verifyEmail.mockRejectedValueOnce(new ApiRequestError('bad', 400));
+			await expect(authActions.verifyEmail('x')).rejects.toThrow(/invalid, used or expired/);
+			await authActions.resendVerification();
+			expect(account.resendVerification).toHaveBeenCalled();
+		});
+
+		it('recovery codes: make (password checked), count left, reset with a code → signed in', async () => {
+			await authActions.login('owner', 'pw');
+			expect(await authActions.createRecoveryCodes('pw')).toEqual(['aaaa-bbbb', 'cccc-dddd']);
+			expect(account.createRecoveryCodes).toHaveBeenCalledWith('pw');
+			expect(await authActions.recoveryCodesLeft()).toBe(2);
+			account.createRecoveryCodes.mockRejectedValueOnce(new ApiRequestError('Unauthorized', 401));
+			await expect(authActions.createRecoveryCodes('bad')).rejects.toThrow('The password is wrong.');
+			await authActions.logout();
+
+			await expect(authActions.recoverPassword('owner', '', 'long-enough')).rejects.toThrow(/username and a recovery code/);
+			await expect(authActions.recoverPassword('owner', 'c', 'short')).rejects.toThrow(/at least 8/);
+			await authActions.recoverPassword(' owner ', ' aaaa-bbbb ', 'long-enough');
+			expect(account.recoverPassword).toHaveBeenCalledWith({ username: 'owner', code: 'aaaa-bbbb', password: 'long-enough' });
+			expect(isLoggedIn.value).toBe(true);
+			account.recoverPassword.mockRejectedValueOnce(new ApiRequestError('Unauthorized', 401));
+			await expect(authActions.recoverPassword('owner', 'used', 'long-enough')).rejects.toThrow(/Wrong username or recovery code/);
+		});
+
+		it('devices, avatar, owner reset link and display name go through the signed-in account', async () => {
+			await authActions.login('owner', 'pw');
+			expect(await authActions.sessions()).toHaveLength(1);
+			await authActions.revokeSession('s2');
+			expect(account.revokeSession).toHaveBeenCalledWith('s2');
+			const blob = new Blob(['x'], { type: 'image/webp' });
+			expect((await authActions.uploadAvatar(blob)).avatarUrl).toBe('/users/u1/avatar?v=2');
+			expect(account.uploadAvatar).toHaveBeenCalledWith(blob);
+			expect(authUser.value?.avatarUrl).toBe('/users/u1/avatar?v=2');
+			await authActions.deleteAvatar();
+			expect(authUser.value?.avatarUrl).toBeNull();
+			account.uploadAvatar.mockRejectedValueOnce(new ApiRequestError('too big', 413));
+			await expect(authActions.uploadAvatar(blob)).rejects.toThrow(/PNG, JPEG or WebP/);
+			expect((await authActions.ownerResetLink(' pal ')).link).toBe('/reset-password?token=t-pal');
+			account.ownerResetLink.mockRejectedValueOnce(new ApiRequestError('nope', 404));
+			await expect(authActions.ownerResetLink('ghost')).rejects.toThrow('No user with that username.');
+			await expect(authActions.updateDisplayName('  ')).rejects.toThrow('1–64');
+			await authActions.updateDisplayName(' Boss ');
+			expect(account.updateAccount).toHaveBeenCalledWith({ displayName: 'Boss' });
+		});
+
+		it('deleteAccount sends the password, signs out and tells the account layer', async () => {
+			const deleted = vi.fn(async () => undefined);
+			setSessionListener({ signedIn: async () => false, signedOut: async () => undefined, deleted });
+			try {
+				await authActions.login('owner', 'pw');
+				account.deleteAccount.mockRejectedValueOnce(new ApiRequestError('Unauthorized', 401));
+				await expect(authActions.deleteAccount('bad')).rejects.toThrow('The password is wrong.');
+				expect(isLoggedIn.value).toBe(true);
+				await authActions.deleteAccount('pw');
+				expect(account.deleteAccount).toHaveBeenCalledWith({ password: 'pw' });
+				expect(isLoggedIn.value).toBe(false);
+				expect(deleted).toHaveBeenCalledWith(expect.objectContaining({ user: expect.objectContaining({ id: 'u1' }) }));
+			} finally {
+				setSessionListener(null);
+			}
+		});
+
+		it('completeOAuth names the provider the sign-in started with', async () => {
+			await authActions.startOAuth('lichess', 'signin');
+			expect(account.oauthStart).toHaveBeenCalledWith('lichess', expect.objectContaining({ mode: 'signin' }));
+			const r = await authActions.completeOAuth('code-2');
+			expect(r.provider).toBe('Lichess');
+			expect((await authActions.completeOAuth('code-3')).provider).toBe('Google');
 		});
 
 		it('updateEmail / loadAccount patch the stored user; 409 reads clearly', async () => {

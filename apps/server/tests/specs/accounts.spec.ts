@@ -51,7 +51,7 @@ describe('accounts: sign-up, login limits, invites, Google', () => {
 
 	it('health advertises sign-up and providers', async () => {
 		const { body } = await http().get('/health');
-		expect(body.data.features).toMatchObject({ signup: 'open', oauth: ['google'], passwordReset: true });
+		expect(body.data.features).toMatchObject({ signup: 'open', oauth: ['google', 'lichess'], passwordReset: true });
 	});
 
 	it('registers, validates, and refuses taken names and emails', async () => {
@@ -117,9 +117,19 @@ describe('accounts: sign-up, login limits, invites, Google', () => {
 		expect((await http().delete('/users/me/identities/google').set(bearer(tok))).status).toBe(409);
 		expect((await http().post('/auth/password/change').set(bearer(tok)).send({ currentPassword: '', newPassword: 'newbie-pass' })).status).toBe(200);
 
+		// Alice's email is still unconfirmed: a Google-verified owner of the address takes it over.
+		// Once confirmed, it blocks a new Google account with the same email.
+		const verify = outbox.find((m) => m.to === 'alice@example.test' && m.tag === 'verify-email')!;
+		const vt = decodeURIComponent(/verify-email\?token=([^\s"&]+)/.exec(verify.text)![1]!);
+		expect((await http().post('/auth/email/verify').send({ token: vt })).status).toBe(200);
 		googleUser = { sub: 'g-other', email: 'alice@example.test', email_verified: true, name: 'Not Alice' };
 		const conflict = await google('signin');
 		expect(decodeURIComponent(conflict)).toContain('#error=An account with alice@example.test already exists');
+
+		googleUser = { sub: 'g-squat', email: 'squatted@example.test', email_verified: true, name: 'Real Owner' };
+		expect((await register({ username: 'squatter', password: 'squat-pass-1', email: 'squatted@example.test' })).status).toBe(201);
+		const taken = await exchange(await google('signin'));
+		expect(taken.body.data).toMatchObject({ created: true, user: { email: 'squatted@example.test', emailVerified: true } });
 	});
 
 	it('Google: links to the signed-in account, lists and unlinks', async () => {

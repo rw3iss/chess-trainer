@@ -60,6 +60,7 @@ All variables are validated by Joi at boot (`src/config/env.validation.ts`). The
 | `REDIS_HOST` | *(empty)* | empty → in-memory cache; set → Redis cache + room mirror |
 | `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB` | `6379`, —, `0` | |
 | `HOST` | `0.0.0.0` | bind address (`127.0.0.1` behind nginx on the same host) |
+| `AVATAR_DIR` | `data/avatars` | avatar files (`DiskAvatarStore`); production `/var/lib/chess/avatars` |
 | `JWT_SECRET` | random per process | **required in production** (≥16 chars) |
 | `JWT_ACCESS_TTL` / `JWT_REFRESH_TTL` / `GUEST_TTL` | `900` / `2592000` / `86400` | seconds |
 | `OWNER_USERNAME`, `OWNER_PASSWORD` | `owner` / — | owner account, created or re-hashed at boot (no account when the password is unset) |
@@ -69,6 +70,7 @@ All variables are validated by Joi at boot (`src/config/env.validation.ts`). The
 | `LOGIN_MAX_PER_USER`, `LOGIN_MAX_PER_IP`, `LOGIN_WINDOW` | `10`, `30`, `900` | failed sign-ins allowed per username / IP per window (s) → 429 |
 | `REGISTER_MAX_PER_IP` | `5` | new accounts per IP per hour |
 | `INVITES_PER_DAY` | `10` | invites a user may send per day |
+| `LICHESS_OAUTH`, `LICHESS_CLIENT_ID` | `true`, host of `APP_PUBLIC_URL` | Sign in with Lichess (no registration or secret needed) |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | — | Sign in with Google (OAuth client "Web application"; redirect URI `<api base>/auth/google/callback`). Secret: server env only |
 | `MAIL_PROVIDER` | `resend` with a key, else `memory` (dev) / `none` (production) | `resend` · `memory` (outbox + log, sends nothing) · `none` (reset by email off → 503) |
 | `MAIL_FROM` | `Chess Trainer <noreply@ryanweiss.net>` | must be on a domain the provider verified |
@@ -110,13 +112,23 @@ Success: `{ data, timestamp }`. Error: `{ error: { code, message, details?, time
 | POST | `/auth/password/forgot` | public | `{ identifier }` (username or email) → 202 `{ sent: true }` always; emails a single-use link; 429 rate limited (3/h per account, 10/h per IP); 503 no mail provider |
 | POST | `/auth/password/reset` | public | `{ token, password }` → `AuthTokens`; 400 invalid/used/expired; ends other sessions |
 | POST | `/auth/password/change` | user | `{ currentPassword, newPassword }` → `AuthTokens`; 401 wrong current; ends other sessions. `currentPassword: ''` when `hasPassword` is false |
+| POST | `/auth/password/recover` | public | `{ username, code, password }` → `AuthTokens` (recovery code, single use; 5/h per user); ends other sessions |
+| POST | `/auth/logout` | public | `{ refreshToken }` → 204; ends that device session |
+| POST | `/auth/email/verify` | public | `{ token }` from the confirmation email → `{ email }` |
+| POST | `/users/me/email/verify` | user | send the confirmation link again (3/h) |
+| GET / DELETE | `/users/me/sessions[/:id]` | user | signed-in devices (`DeviceSessionDto[]`, `current` marks this one) / sign one out |
+| GET / POST | `/users/me/recovery-codes` | user | `{ remaining }` / `{ currentPassword }` → 8 new codes (old ones stop working) |
+| PUT / DELETE | `/users/me/avatar` | user | multipart `file` (PNG/JPEG/WebP by magic bytes, ≤ 300 KB) → `UserDto` / remove |
+| GET | `/users/:id/avatar` | public | the image (`Cache-Control: immutable`; URL carries `?v=`) |
+| DELETE | `/users/me` | user | `{ password }` → 204; deletes the account and all its rows + avatar (not the owner) |
+| POST | `/admin/users/:username/reset-link` | owner | one-time reset link (1 h) to pass on |
 | POST | `/auth/oauth/:provider/start` | public (`link`: user) | `OAuthStartRequest` → `{ url }` (PKCE; origins must be allowed: `CORS_ORIGINS`, `APP_PUBLIC_URL`, localhost outside production) |
 | GET | `/auth/:provider/callback` | public | provider redirect → 302 `<app>/auth/callback#code=…` or `#error=…` |
 | POST | `/auth/oauth/exchange` | public | `{ code }` (single use, 2 min) → `OAuthExchangeResponse` |
 | GET / DELETE | `/users/me/identities[/:provider]` | user | linked providers; unlink (409 when it is the only way to sign in) |
 | POST / GET | `/invites` | user | email a friend a sign-up link (`InviteDto`; 403 for accounts younger than 24 h, owner exempt) / my invites |
 | GET | `/invites/:code` | public | `InvitePreview` for the sign-up page (404 unknown or used) |
-| GET / PATCH | `/users/me` | user | profile (`displayName`, `email` — `''` clears; 409 if taken) + synced `preferences` blob |
+| GET / PATCH | `/users/me` | user | profile (`displayName`, `email` — `''` clears; 409 if taken; a new email is unconfirmed until its link is clicked) + synced `preferences` blob |
 | GET | `/openings/manifest` | public | `DATA_DIR/manifest.json` |
 | GET | `/openings/data/:file` | public | dataset files with ETag; hashed files cached immutable |
 | GET | `/explorer?fen=&source=lichess\|masters` | user (or public with `EXPLORER_PUBLIC`) | Lichess explorer → `ExplorerResult` |
