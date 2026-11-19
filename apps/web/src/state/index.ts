@@ -10,6 +10,7 @@ export * from './themes';
 export * from './playback';
 export * from './openingIdentity';
 export * from './auth';
+export * from './account';
 export * from './engines';
 export * from './openings';
 export * from './rooms';

@@ -59,11 +59,17 @@ All variables are validated by Joi at boot (`src/config/env.validation.ts`). The
 | `DB_SYNCHRONIZE` | `false` | dev-only schema sync; migrations always run at boot |
 | `REDIS_HOST` | *(empty)* | empty → in-memory cache; set → Redis cache + room mirror |
 | `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB` | `6379`, —, `0` | |
+| `HOST` | `0.0.0.0` | bind address (`127.0.0.1` behind nginx on the same host) |
 | `JWT_SECRET` | random per process | **required in production** (≥16 chars) |
 | `JWT_ACCESS_TTL` / `JWT_REFRESH_TTL` / `GUEST_TTL` | `900` / `2592000` / `86400` | seconds |
 | `OWNER_USERNAME`, `OWNER_PASSWORD` | `owner` / — | owner account, created or re-hashed at boot (no account when the password is unset) |
 | `OWNER_EMAIL` | — | owner's email for reset links (applied at boot; also editable in the app) |
 | `PASSWORD_RESET_TTL` | `3600` | seconds a reset link works |
+| `SIGNUP_MODE` | `open` | `open` (anyone) · `invite` (invite code needed) · `off` |
+| `LOGIN_MAX_PER_USER`, `LOGIN_MAX_PER_IP`, `LOGIN_WINDOW` | `10`, `30`, `900` | failed sign-ins allowed per username / IP per window (s) → 429 |
+| `REGISTER_MAX_PER_IP` | `5` | new accounts per IP per hour |
+| `INVITES_PER_DAY` | `10` | invites a user may send per day |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | — | Sign in with Google (OAuth client "Web application"; redirect URI `<api base>/auth/google/callback`). Secret: server env only |
 | `MAIL_PROVIDER` | `resend` with a key, else `memory` (dev) / `none` (production) | `resend` · `memory` (outbox + log, sends nothing) · `none` (reset by email off → 503) |
 | `MAIL_FROM` | `Chess Trainer <noreply@ryanweiss.net>` | must be on a domain the provider verified |
 | `MAIL_REPLY_TO` | — | optional reply-to address |
@@ -94,15 +100,22 @@ Success: `{ data, timestamp }`. Error: `{ error: { code, message, details?, time
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
-| GET | `/health` | public | `HealthDto` + feature flags (`auth`, `explorer`, `engines`, `rooms`, `sync`) |
+| GET | `/health` | public | `HealthDto` + feature flags (`auth`, `explorer`, `engines`, `rooms`, `sync`, `passwordReset`, `signup`, `oauth`) |
 | GET | `/health/ready` | public | DB + cache readiness |
-| POST | `/auth/login` | public | `{ username, password }` → `AuthTokens` |
+| POST | `/auth/register` | public | `RegisterRequest` → `AuthTokens` (201); 403 sign-up off / invite needed; 409 taken; 429 |
+| POST | `/auth/login` | public | `{ username (or email), password }` → `AuthTokens`; 429 after too many failures |
 | POST | `/auth/refresh` | public | `{ refreshToken }` → new `AuthTokens` |
 | POST | `/auth/guest` | public | `{ displayName }` → guest access token (rooms) |
 | GET | `/auth/me` | user or guest | current principal (`UserDto`) |
 | POST | `/auth/password/forgot` | public | `{ identifier }` (username or email) → 202 `{ sent: true }` always; emails a single-use link; 429 rate limited (3/h per account, 10/h per IP); 503 no mail provider |
 | POST | `/auth/password/reset` | public | `{ token, password }` → `AuthTokens`; 400 invalid/used/expired; ends other sessions |
-| POST | `/auth/password/change` | user | `{ currentPassword, newPassword }` → `AuthTokens`; 401 wrong current; ends other sessions |
+| POST | `/auth/password/change` | user | `{ currentPassword, newPassword }` → `AuthTokens`; 401 wrong current; ends other sessions. `currentPassword: ''` when `hasPassword` is false |
+| POST | `/auth/oauth/:provider/start` | public (`link`: user) | `OAuthStartRequest` → `{ url }` (PKCE; origins must be allowed: `CORS_ORIGINS`, `APP_PUBLIC_URL`, localhost outside production) |
+| GET | `/auth/:provider/callback` | public | provider redirect → 302 `<app>/auth/callback#code=…` or `#error=…` |
+| POST | `/auth/oauth/exchange` | public | `{ code }` (single use, 2 min) → `OAuthExchangeResponse` |
+| GET / DELETE | `/users/me/identities[/:provider]` | user | linked providers; unlink (409 when it is the only way to sign in) |
+| POST / GET | `/invites` | user | email a friend a sign-up link (`InviteDto`; 403 for accounts younger than 24 h, owner exempt) / my invites |
+| GET | `/invites/:code` | public | `InvitePreview` for the sign-up page (404 unknown or used) |
 | GET / PATCH | `/users/me` | user | profile (`displayName`, `email` — `''` clears; 409 if taken) + synced `preferences` blob |
 | GET | `/openings/manifest` | public | `DATA_DIR/manifest.json` |
 | GET | `/openings/data/:file` | public | dataset files with ETag; hashed files cached immutable |

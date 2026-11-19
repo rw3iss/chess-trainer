@@ -112,8 +112,8 @@ export function AccountEmailForm(): JSX.Element {
 	);
 }
 
-/** Signed in: change the password (current + new + confirm). */
-export function ChangePasswordForm({ onDone }: { onDone: () => void }): JSX.Element {
+/** Signed in: change the password (current + new + confirm). `setOnly`: no password yet (provider sign-in) → no current field. */
+export function ChangePasswordForm({ onDone, setOnly = false }: { onDone: () => void; setOnly?: boolean }): JSX.Element {
 	const [current, setCurrent] = useState('');
 	const [next, setNext] = useState('');
 	const [confirm, setConfirm] = useState('');
@@ -121,22 +121,22 @@ export function ChangePasswordForm({ onDone }: { onDone: () => void }): JSX.Elem
 	const [error, setError] = useState<string | null>(null);
 	const short = next.length > 0 && next.length < PASSWORD_MIN_LENGTH;
 	const mismatch = confirm.length > 0 && confirm !== next;
-	const ready = !!current && next.length >= PASSWORD_MIN_LENGTH && confirm === next;
+	const ready = (setOnly || !!current) && next.length >= PASSWORD_MIN_LENGTH && confirm === next;
 
 	return (
 		<form
 			class="server-settings__subform"
-			aria-label="Change password"
+			aria-label={setOnly ? 'Set password' : 'Change password'}
 			onSubmit={(e) => {
 				e.preventDefault();
 				if (!ready) return;
 				setBusy(true);
 				setError(null);
 				authActions
-					.changePassword(current, next)
+					.changePassword(setOnly ? '' : current, next)
 					.then(
 						() => {
-							toast.success('Password changed. Other devices are signed out.');
+							toast.success(setOnly ? 'Password set. You can now sign in with it.' : 'Password changed. Other devices are signed out.');
 							onDone();
 						},
 						(err: unknown) => setError(message(err)),
@@ -144,18 +144,26 @@ export function ChangePasswordForm({ onDone }: { onDone: () => void }): JSX.Elem
 					.finally(() => setBusy(false));
 			}}
 		>
-			<Input
-				label="Current password"
-				type="password"
-				autoComplete="current-password"
-				value={current}
-				disabled={busy}
-				error={error ?? undefined}
-				onInput={(e) => {
-					setCurrent(e.currentTarget.value);
-					setError(null);
-				}}
-			/>
+			{setOnly ? (
+				error && (
+					<p class="server-settings__error" role="alert">
+						{error}
+					</p>
+				)
+			) : (
+				<Input
+					label="Current password"
+					type="password"
+					autoComplete="current-password"
+					value={current}
+					disabled={busy}
+					error={error ?? undefined}
+					onInput={(e) => {
+						setCurrent(e.currentTarget.value);
+						setError(null);
+					}}
+				/>
+			)}
 			<Input
 				label="New password"
 				type="password"
@@ -177,7 +185,7 @@ export function ChangePasswordForm({ onDone }: { onDone: () => void }): JSX.Elem
 			/>
 			<div class="server-settings__actions">
 				<Button type="submit" variant="primary" size="sm" loading={busy} disabled={!ready}>
-					Change password
+					{setOnly ? 'Set password' : 'Change password'}
 				</Button>
 				<Button variant="ghost" size="sm" onClick={onDone}>
 					Cancel

@@ -1,0 +1,12 @@
+[Unit]
+Description=Apply the chess fail2ban ban list to nginx (/etc/nginx/chess/banned.conf), every 5 s
+After=nginx.service fail2ban.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/chess-nginx-bans --watch
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

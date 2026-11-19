@@ -1,11 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { PASSWORD_MIN_LENGTH } from '@chess/core';
-import { IsString, Length } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsOptional, IsString, Length, Matches } from 'class-validator';
 
 export class LoginDto {
-	@ApiProperty({ example: 'owner' })
+	@ApiProperty({ example: 'owner', description: 'Username or email.' })
 	@IsString()
-	@Length(1, 64)
+	@Length(1, 254)
 	username!: string;
 
 	@ApiProperty({ example: 'secret' })
@@ -54,13 +54,43 @@ export class ResetPasswordDto {
 }
 
 export class ChangePasswordDto {
-	@ApiProperty()
+	@ApiProperty({ description: "'' when the account has no password yet (hasPassword false)." })
 	@IsString()
-	@Length(1, 256)
+	@Length(0, 256)
 	currentPassword!: string;
 
 	@ApiProperty({ minLength: PASSWORD_MIN_LENGTH })
 	@IsString()
 	@Length(PASSWORD_MIN_LENGTH, 256)
 	newPassword!: string;
+}
+
+export class RegisterDto {
+	@ApiProperty({ example: 'magnus', description: '3–24 chars: a–z, 0–9, _ or -' })
+	@IsString()
+	@Matches(/^[A-Za-z0-9_-]{3,24}$/, { message: 'username: 3–24 characters, a–z, 0–9, _ or -' })
+	username!: string;
+
+	@ApiProperty({ minLength: PASSWORD_MIN_LENGTH })
+	@IsString()
+	@Length(PASSWORD_MIN_LENGTH, 256)
+	password!: string;
+
+	@ApiPropertyOptional({ example: 'Magnus' })
+	@IsOptional()
+	@IsString()
+	@Length(1, 64)
+	displayName?: string;
+
+	@ApiPropertyOptional({ example: 'me@example.com' })
+	@IsOptional()
+	@IsEmail()
+	@Length(3, 254)
+	email?: string;
+
+	@ApiPropertyOptional({ description: 'Invite code from a /signup?invite=… link.' })
+	@IsOptional()
+	@IsString()
+	@Length(8, 64)
+	invite?: string;
 }

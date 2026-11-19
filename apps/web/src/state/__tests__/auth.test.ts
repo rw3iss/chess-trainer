@@ -12,6 +12,7 @@ import {
 	isLoggedIn,
 	loadAuth,
 	resetAuthState,
+	setSessionListener,
 	type AuthApi,
 	type StoredAuth,
 } from '@/state/auth';
@@ -157,8 +158,80 @@ describe('auth store', () => {
 				changePassword: vi.fn(async () => tokens(++issued)),
 				account: vi.fn(async () => ({ ...owner, email: 'me@x.org' })),
 				updateAccount: vi.fn(async (req: { email?: string }) => ({ ...owner, email: req.email || null })),
+				register: vi.fn(async (req) => ({ ...tokens(++issued), user: { ...owner, id: 'u2', username: req.username, displayName: req.displayName ?? req.username } })),
+				oauthStart: vi.fn(async () => ({ url: 'https://accounts.google.test/o?x=1' })),
+				oauthExchange: vi.fn(async () => ({ ...tokens(++issued), returnTo: '/games', created: true, linked: false })),
+				identities: vi.fn(async () => [{ provider: 'google' as const, label: 'me@gmail.test', linkedAt: 1 }]),
+				unlinkIdentity: vi.fn(async () => undefined),
+				createInvite: vi.fn(async (req) => ({ code: 'c1', link: '/signup?invite=c1', email: req.email, createdAt: 1, acceptedAt: null })),
+				invites: vi.fn(async () => []),
+				invitePreview: vi.fn(async () => ({ inviter: { username: 'owner', displayName: 'Owner' }, email: 'f@x.org' })),
 			};
-			configureAuth({ client: () => client, account: (_u, t) => (tokensSeen.push(t), account), serverUrl: () => URL_, now: () => now });
+			configureAuth({ client: () => client, account: (_u, t) => (tokensSeen.push(t), account), serverUrl: () => URL_, now: () => now, navigate });
+		});
+		const navigate = vi.fn();
+
+		it('register validates, lower-cases the username, omits empty fields and signs in', async () => {
+			await expect(authActions.register({ username: 'x', password: 'long-enough' })).rejects.toThrow(/3–24/);
+			await expect(authActions.register({ username: 'okname', password: 'short' })).rejects.toThrow(/at least 8/);
+			await authActions.register({ username: ' NewUser ', password: 'long-enough', displayName: ' ', email: '', invite: 'abc' });
+			expect(account.register).toHaveBeenCalledWith({ username: 'newuser', password: 'long-enough', invite: 'abc' });
+			expect(authUser.value?.username).toBe('newuser');
+			account.register.mockRejectedValueOnce(new ApiRequestError('username is taken', 409));
+			await expect(authActions.register({ username: 'newuser', password: 'long-enough' })).rejects.toThrow('username is taken');
+		});
+
+		it('startOAuth sends absolute apiBase + origin and navigates; link mode sends the bearer', async () => {
+			await authActions.startOAuth('google', 'signin', { returnTo: '/games' });
+			expect(account.oauthStart).toHaveBeenCalledWith('google', expect.objectContaining({ mode: 'signin', apiBase: 'http://srv', returnTo: '/games' }));
+			expect(navigate).toHaveBeenCalledWith('https://accounts.google.test/o?x=1');
+			expect(tokensSeen.at(-1)).toBeNull();
+			await expect(authActions.startOAuth('google', 'link')).rejects.toThrow('Sign in first.');
+			await authActions.login('owner', 'pw');
+			await authActions.startOAuth('google', 'link');
+			expect(tokensSeen.at(-1)).toBe('access-1');
+		});
+
+		it('completeOAuth stores the tokens and reports created / returnTo', async () => {
+			const r = await authActions.completeOAuth('code-1');
+			expect(account.oauthExchange).toHaveBeenCalledWith('code-1');
+			expect(r).toEqual({ returnTo: '/games', created: true, linked: false });
+			expect(isLoggedIn.value).toBe(true);
+		});
+
+		it('identities, unlink (409 = only sign-in), invites use the bearer token', async () => {
+			await authActions.login('owner', 'pw');
+			expect(await authActions.identities()).toHaveLength(1);
+			account.unlinkIdentity.mockRejectedValueOnce(new ApiRequestError('Conflict', 409));
+			await expect(authActions.unlinkIdentity('google')).rejects.toThrow(/only way to sign in/);
+			await expect(authActions.createInvite('nope')).rejects.toThrow('Enter a valid email address.');
+			const inv = await authActions.createInvite(' f@x.org ', '  ');
+			expect(account.createInvite).toHaveBeenCalledWith({ email: 'f@x.org' });
+			expect(inv.code).toBe('c1');
+			expect((await authActions.invitePreview('c1')).inviter.displayName).toBe('Owner');
+			expect(tokensSeen.at(-1)).toBeNull();
+		});
+
+		it('notifies the session listener on sign-in (with the previous session) and on sign-out', async () => {
+			const signedIn = vi.fn(async () => false);
+			const signedOut = vi.fn(async () => undefined);
+			setSessionListener({ signedIn, signedOut });
+			try {
+				await authActions.login('owner', 'pw');
+				expect(signedIn).toHaveBeenCalledWith(expect.objectContaining({ accessToken: 'access-1' }), null, expect.any(Object));
+				await authActions.register({ username: 'second', password: 'long-enough' });
+				expect(signedIn).toHaveBeenLastCalledWith(expect.objectContaining({ user: expect.objectContaining({ username: 'second' }) }), expect.objectContaining({ accessToken: 'access-1' }), expect.any(Object));
+				await authActions.logout();
+				expect(signedOut).toHaveBeenCalledTimes(1);
+			} finally {
+				setSessionListener(null);
+			}
+		});
+
+		it('login 429 reads as rate limited', async () => {
+			client.login.mockRejectedValueOnce(new ApiRequestError('Too Many Requests', 429));
+			await expect(authActions.login('owner', 'pw')).rejects.toThrow();
+			expect(authError.value).toBe('Too many sign-in attempts. Try again later.');
 		});
 
 		it('forgotPassword trims the identifier; maps 429 / 503 to readable errors', async () => {

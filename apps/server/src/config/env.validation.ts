@@ -12,6 +12,7 @@ export const envValidationSchema = Joi.object({
 	// App
 	NODE_ENV: Joi.string().valid('development', 'staging', 'production', 'test').default('development'),
 	PORT: Joi.number().port().default(3000),
+	HOST: Joi.string().allow('').default('0.0.0.0'),
 	API_PREFIX: Joi.string().allow('').default(''),
 	CORS_ORIGINS: Joi.string().allow('').default('*'),
 	LOG_LEVEL: Joi.string().valid('error', 'warn', 'log', 'debug', 'verbose').default('log'),
@@ -48,6 +49,15 @@ export const envValidationSchema = Joi.object({
 	OWNER_EMAIL: Joi.string().email().allow('').optional(),
 	/** Password reset link lifetime (seconds). */
 	PASSWORD_RESET_TTL: Joi.number().integer().min(300).max(24 * 3600).default(3600),
+	SIGNUP_MODE: Joi.string().valid('open', 'invite', 'off').default('open'),
+	LOGIN_MAX_PER_USER: Joi.number().integer().min(1).default(10),
+	LOGIN_MAX_PER_IP: Joi.number().integer().min(1).default(30),
+	LOGIN_WINDOW: Joi.number().integer().min(60).default(900),
+	REGISTER_MAX_PER_IP: Joi.number().integer().min(1).default(5),
+	INVITES_PER_DAY: Joi.number().integer().min(0).default(10),
+	// Sign in with Google (OAuth client "Web application"; redirect URI = <api base>/auth/google/callback)
+	GOOGLE_CLIENT_ID: Joi.string().allow('').optional(),
+	GOOGLE_CLIENT_SECRET: Joi.string().allow('').optional(),
 
 	// Mail (src/modules/mail) — provider is swappable; see config/loaders/mail.config.ts
 	MAIL_PROVIDER: Joi.string().valid('resend', 'memory', 'none').allow('').optional(),

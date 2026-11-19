@@ -49,6 +49,9 @@ Inject `CacheService` (`get` / `set(key, value, ttlSeconds)` / `del` / `ping`, `
 - Email goes through the `Mailer` port (`src/modules/mail`): `ResendMailer`, `MemoryMailer` (dev/tests outbox), `DisabledMailer`, picked by `MAIL_PROVIDER` in `createMailer`. Add a provider = implement `Mailer` + one `case`; callers never change. Templates are pure functions in `mail/templates/`.
 - Password reset: hashed single-use tokens (`password_resets`), 202 for every request (no enumeration), rate limits in `CacheService`. A reset or change sets `users.tokens_valid_after`; `/auth/refresh` refuses older refresh tokens (access tokens expire within `JWT_ACCESS_TTL`).
 - `trust proxy` = loopback (nginx on the host), so `@Ip()` is the real client IP.
+- Sign-up policy + creation: `RegistrationService` (`SIGNUP_MODE`, per-IP limit, invites). Shared by `/auth/register` and provider sign-in.
+- Provider sign-in: `IdentityProvider` port (`auth/oauth/identity-provider.ts`), `GoogleProvider`; register new providers in `IDENTITY_PROVIDERS` (auth.module.ts). `OAuthService` keeps PKCE state + single-use exchange codes in `CacheService`; never links by email alone; links live in `user_identities`.
+- Rate limits: `RateLimiter` (cache module) — login failures, reset requests, sign-ups, invites. nginx `limit_req` + fail2ban sit in front (docs/ops/SECURITY.md).
 
 ## Engine processes
 

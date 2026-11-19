@@ -40,6 +40,9 @@ the alias `rw` (`alias rw='ssh rw3iss@162.35.181.92'`); scripts use the full hos
 | Native engine | Fedora `stockfish` (`/usr/bin/stockfish`) → engine `sf-native`. lc0/Maia/Komodo not installed |
 | nginx | `/etc/nginx/conf.d/chess.ryanweiss.net.conf` (`chess.ryanweiss.net` + `chess.rw3iss.com`): static PWA, `/api/` → API (prefix stripped), `/api/socket.io/` WebSocket |
 | TLS | Let's Encrypt `/etc/letsencrypt/live/chess.ryanweiss.net/` (auto-renew) |
+| Cloudflare | Both domains are proxied by Cloudflare. nginx restores the client IP from `CF-Connecting-IP` (`/etc/nginx/chess/realip.conf`) — limits and bans are per real client |
+| Rate limits | nginx zones `chess_auth` (10 r/min on `/api/auth/{login,register,password,oauth}`), `chess_api` (20 r/s), 30 connections per client → 429. Files: `deploy/nginx/` |
+| fail2ban | Jails `chess-auth`, `chess-limit-req`, `chess-scan` (ban = nginx `deny` via `chess-nginx-bans.service`, since Cloudflare is the TCP peer) + box-wide `sshd`, `recidive`. Unban: `sudo fail2ban-client set <jail> unbanip <ip>`. Details: `docs/ops/SECURITY.md` |
 
 The client is built with `VITE_DEFAULT_SERVER_URL=/api` (relative → resolved against the page origin), so new
 installs talk to the same-origin server out of the box on either domain. `CORS_ORIGINS` lists both domains. socket.io goes through `services/server/socketTarget.ts` (namespace on the origin,
@@ -53,7 +56,8 @@ ssh rw3iss@162.35.181.92 'bash /var/www/chess/scripts/deploy/update.sh'   # same
 ```
 
 `update.sh`: `git reset --hard origin/main` → `pnpm install` → build core, server, web → `setup-server.sh`
-(idempotent: stockfish, data dir, Postgres role/db + env file on first run, systemd units, TLS cert, nginx vhost)
+(idempotent: stockfish, data dir, Postgres role/db + env file on first run, systemd units, TLS cert, nginx vhost +
+chess snippets/zones, fail2ban jails)
 → restart → health-gate. Migrations run at server boot.
 
 **Operate:** `sudo journalctl -u chess-server -f` · `sudo systemctl restart chess-server` ·

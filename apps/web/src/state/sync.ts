@@ -12,6 +12,8 @@ import { api } from '@/services/api';
 import { getRepositories } from '@/services/db';
 import { serverConnector } from '@/services/server';
 import { authActions, authUser, isLoggedIn } from '@/state/auth';
+import { activeAccountKey } from '@/state/account';
+import { accountKey } from '@/services/db/accounts';
 import { loadSavedGames, savedGames } from '@/state/savedGames';
 import { getSession, openSessions, sessionsActions } from '@/state/sessions';
 import { settings } from '@/state/settings';
@@ -50,11 +52,17 @@ const sessionsAdapter: SyncStoreAdapter<Session> = {
 	},
 };
 
-/** `${serverUrl}|${userId}` while a non-guest user is signed in. */
+/**
+ * `${serverUrl}|${userId}` while a non-guest user is signed in AND their own local database is the active
+ * one (never push one account's data into another; undefined active key = single-database mode in tests).
+ */
 const account = computed(() => {
 	const user = authUser.value;
 	const url = serverConnector.url.value;
-	return isLoggedIn.value && user && url ? `${url}|${user.id}` : null;
+	if (!isLoggedIn.value || !user || !url) return null;
+	const active = activeAccountKey.value;
+	if (active !== undefined && active !== accountKey(url, user.id)) return null;
+	return `${url}|${user.id}`;
 });
 
 export const syncService = new SyncService({

@@ -9,6 +9,14 @@ import type {
 	ForgotPasswordRequest,
 	GuestTokenRequest,
 	HealthDto,
+	IdentityDto,
+	InviteDto,
+	InvitePreview,
+	InviteRequest,
+	OAuthExchangeResponse,
+	OAuthProviderId,
+	OAuthStartRequest,
+	RegisterRequest,
 	LoginRequest,
 	RemoteEngineDto,
 	ResetPasswordRequest,
@@ -64,6 +72,30 @@ export class MockApiAdapter implements ApiClient {
 	}
 	account(): Promise<UserDto> {
 		return delay({ email: null, ...(userFixture as UserDto) }, this.latencyMs);
+	}
+	register(req: RegisterRequest): Promise<AuthTokens> {
+		return delay(tokens({ ...(userFixture as UserDto), username: req.username, displayName: req.displayName || req.username, email: req.email ?? null, hasPassword: true }), this.latencyMs);
+	}
+	oauthStart(_provider: OAuthProviderId, _req: OAuthStartRequest): Promise<{ url: string }> {
+		return Promise.reject(new Error('Sign-in providers need a server.'));
+	}
+	oauthExchange(_code: string): Promise<OAuthExchangeResponse> {
+		return Promise.reject(new Error('Sign-in providers need a server.'));
+	}
+	identities(): Promise<IdentityDto[]> {
+		return delay([], this.latencyMs);
+	}
+	unlinkIdentity(_provider: OAuthProviderId): Promise<void> {
+		return delay(undefined, this.latencyMs);
+	}
+	createInvite(req: InviteRequest): Promise<InviteDto> {
+		return delay({ code: 'mock-invite', link: '/signup?invite=mock-invite', email: req.email, createdAt: Date.now(), acceptedAt: null }, this.latencyMs);
+	}
+	invites(): Promise<InviteDto[]> {
+		return delay([], this.latencyMs);
+	}
+	invitePreview(_code: string): Promise<InvitePreview> {
+		return delay({ inviter: { username: 'demo', displayName: 'Demo' }, email: '' }, this.latencyMs);
 	}
 	updateAccount(req: UpdateAccountRequest): Promise<UserDto> {
 		const { email, ...rest } = req;

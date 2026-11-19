@@ -35,6 +35,35 @@ describe('HttpApiAdapter', () => {
 		]);
 	});
 
+	it('accounts endpoints: register, OAuth, identities, invites', async () => {
+		const calls: { url: string; method: string; auth?: string; body?: unknown }[] = [];
+		const fetchImpl = vi.fn(async (url: string, init: RequestInit) => {
+			calls.push({ url, method: init.method!, auth: (init.headers as Record<string, string>).Authorization, body: init.body ? JSON.parse(init.body as string) : undefined });
+			return new Response(JSON.stringify({ data: {} }), { status: 200 });
+		}) as unknown as typeof fetch;
+		const api = new HttpApiAdapter({ baseUrl: 'http://srv/api/', getToken: () => 'tok', fetchImpl });
+		await api.register({ username: 'u', password: 'p' });
+		await api.oauthStart('google', { mode: 'signin', appOrigin: 'http://app', apiBase: 'http://srv/api' });
+		await api.oauthExchange('c');
+		await api.identities();
+		await api.unlinkIdentity('google');
+		await api.createInvite({ email: 'f@x.org' });
+		await api.invites();
+		await api.invitePreview('a b');
+		expect(calls.map((c) => `${c.method} ${c.url}`)).toEqual([
+			'POST http://srv/api/auth/register',
+			'POST http://srv/api/auth/oauth/google/start',
+			'POST http://srv/api/auth/oauth/exchange',
+			'GET http://srv/api/users/me/identities',
+			'DELETE http://srv/api/users/me/identities/google',
+			'POST http://srv/api/invites',
+			'GET http://srv/api/invites',
+			'GET http://srv/api/invites/a%20b',
+		]);
+		expect(calls[2]!.body).toEqual({ code: 'c' });
+		expect(calls[1]!.body).toMatchObject({ mode: 'signin', apiBase: 'http://srv/api' });
+	});
+
 	it('maps { error } bodies to ApiRequestError', async () => {
 		const fetchImpl = vi.fn(
 			async () => new Response(JSON.stringify({ error: { code: 'unauthorized', message: 'Nope', timestamp: 't', path: '/auth/me' } }), { status: 401 }),

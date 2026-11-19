@@ -2,6 +2,7 @@ import { Global, Logger, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { CacheService, MemoryCacheService, RedisCacheService } from './cache.service';
+import { RateLimiter } from './rate-limiter';
 
 /**
  * Global cache. Inject `CacheService` anywhere. Backend is chosen at boot:
@@ -10,6 +11,7 @@ import { CacheService, MemoryCacheService, RedisCacheService } from './cache.ser
 @Global()
 @Module({
 	providers: [
+		RateLimiter,
 		{
 			provide: CacheService,
 			inject: [ConfigService],
@@ -31,6 +33,6 @@ import { CacheService, MemoryCacheService, RedisCacheService } from './cache.ser
 			},
 		},
 	],
-	exports: [CacheService],
+	exports: [CacheService, RateLimiter],
 })
 export class CacheModule {}

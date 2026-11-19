@@ -107,6 +107,17 @@
 		padding: 0 var(--space-3);
 		height: 52px;
 	}
+
+	// Phones: the end buttons keep their size; the session switcher takes what is left and truncates.
+	&--compact &__end {
+		flex: none;
+		gap: var(--space-1);
+	}
+
+	&--compact .session-switcher {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
 }
 
 .server-status {

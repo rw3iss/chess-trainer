@@ -1,9 +1,9 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, Logger, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createHash, randomBytes, randomUUID } from 'crypto';
 import { Repository } from 'typeorm';
-import { CacheService } from '../../cache/cache.service';
+import { RateLimiter } from '../../cache/rate-limiter';
 import { Mailer, passwordResetMail } from '../mail';
 import { UsersService } from '../users/users.service';
 import type { UserEntity } from '../users/entities/user.entity';
@@ -29,7 +29,7 @@ export class PasswordService {
 		@InjectRepository(PasswordResetEntity) private readonly resets: Repository<PasswordResetEntity>,
 		private readonly users: UsersService,
 		private readonly mailer: Mailer,
-		private readonly cache: CacheService,
+		private readonly limits: RateLimiter,
 		private readonly config: ConfigService,
 	) {}
 
@@ -40,8 +40,9 @@ export class PasswordService {
 	async requestReset(identifier: string, ip: string | undefined): Promise<void> {
 		if (!this.mailer.enabled) throw new ServiceUnavailableException('email is not configured on this server');
 		const id = identifier.trim().toLowerCase();
-		await this.hit(`pwreset:ip:${ip ?? 'unknown'}`, RESET_LIMIT_PER_IP);
-		await this.hit(`pwreset:id:${sha256(id)}`, RESET_LIMIT_PER_ACCOUNT);
+		const msg = 'too many reset requests — try again later';
+		await this.limits.hit(`pwreset:ip:${ip ?? 'unknown'}`, RESET_LIMIT_PER_IP, RATE_WINDOW_S, msg);
+		await this.limits.hit(`pwreset:id:${sha256(id)}`, RESET_LIMIT_PER_ACCOUNT, RATE_WINDOW_S, msg);
 		const user = await this.users.findByIdentifier(id);
 		if (!user?.email) return;
 		void this.sendLink(user).catch((e: unknown) => this.logger.error(`reset email to user ${user.id} failed: ${e instanceof Error ? e.message : String(e)}`));
@@ -63,7 +64,8 @@ export class PasswordService {
 	/** Signed-in password change. Returns the user (caller issues tokens). */
 	async change(userId: string, currentPassword: string, newPassword: string): Promise<UserEntity> {
 		const user = await this.users.findById(userId);
-		if (!(await this.users.verifyPassword(user, currentPassword))) throw new UnauthorizedException('the current password is wrong');
+		// Provider-only accounts (no password yet) set one without a current password.
+		if (user.passwordHash && !(await this.users.verifyPassword(user, currentPassword))) throw new UnauthorizedException('the current password is wrong');
 		await this.clearUnused(user.id);
 		return this.users.setPassword(user, newPassword);
 	}
@@ -90,11 +92,5 @@ export class PasswordService {
 		const rows = await this.resets.find({ where: { userId } });
 		const unused = rows.filter((r) => r.usedAt === null);
 		if (unused.length) await this.resets.remove(unused);
-	}
-
-	private async hit(key: string, limit: number): Promise<void> {
-		const n = ((await this.cache.get<number>(key)) ?? 0) + 1;
-		if (n > limit) throw new HttpException('too many reset requests — try again later', HttpStatus.TOO_MANY_REQUESTS);
-		await this.cache.set(key, n, RATE_WINDOW_S);
 	}
 }

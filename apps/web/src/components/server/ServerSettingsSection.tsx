@@ -1,5 +1,6 @@
 // ServerSettingsSection — the "Server" settings section: server URL + status,
-// sign-in / account (email, change password, forgot password), sync toggle + status,
+// sign-in / account (email, change or set password, forgot password, Google, sign-in methods,
+// invite a friend, remove from this device), create account link, sync toggle + status,
 // guest name for online rooms.
 // Mounted lazily by the Settings page: `import('@/components/server')`.
 import type { JSX } from 'preact';
@@ -11,6 +12,9 @@ import { lastSyncAt, lastSyncError, syncNow, syncStatus, type SyncStatus } from 
 import { authActions, authBusy, authError, authUser, guestName, isLoggedIn } from '@/state/auth';
 import { settings, updateSettings } from '@/state/settings';
 import { AccountEmailForm, ChangePasswordForm, ForgotPasswordForm } from './AccountForms';
+import { InviteFriend, LinkedSignIns, ProviderButtons, RemoveFromDevice } from '@/components/account';
+import { accountActions, activeAccount } from '@/state/account';
+import { useLocation } from 'preact-iso';
 import './ServerSettingsSection.scss';
 
 const TICK_MS = 30_000;
@@ -122,6 +126,10 @@ function AccountCard(): JSX.Element {
 	const [forgot, setForgot] = useState(false);
 	const [changing, setChanging] = useState(false);
 	const signedIn = !!user && isLoggedIn.value;
+	const { route } = useLocation();
+	const signupMode = online ? (serverConnector.health.value?.features?.signup ?? 'off') : 'off';
+	const offlineAccount = activeAccount.value;
+	const noPassword = user?.hasPassword === false;
 
 	// Signed in + online: read the account (email) from the server once.
 	useEffect(() => {
@@ -153,18 +161,23 @@ function AccountCard(): JSX.Element {
 					<>
 						<AccountEmailForm />
 						{changing ? (
-							<ChangePasswordForm onDone={() => setChanging(false)} />
+							<ChangePasswordForm setOnly={noPassword} onDone={() => setChanging(false)} />
 						) : (
 							<div class="server-settings__actions">
 								<Button variant="secondary" size="sm" icon="edit" onClick={() => setChanging(true)}>
-									Change password
+									{noPassword ? 'Set password' : 'Change password'}
 								</Button>
 							</div>
 						)}
+						<LinkedSignIns />
+						<InviteFriend />
 					</>
 				) : (
 					<p class="server-settings__subtle">Connect to the server to change your email or password.</p>
 				)}
+				<div class="server-settings__actions">
+					<RemoveFromDevice />
+				</div>
 			</section>
 		);
 	}
@@ -189,6 +202,15 @@ function AccountCard(): JSX.Element {
 					Account
 				</h3>
 			</header>
+			{offlineAccount && (
+				<p class="server-settings__notice" role="status">
+					Signed out of {offlineAccount.displayName}. Its games stay on this device: sign in again to sync, or{' '}
+					<button type="button" class="server-settings__link" onClick={() => void accountActions.switchTo(null)}>
+						switch to anonymous
+					</button>
+					.
+				</p>
+			)}
 			<p class="server-settings__text">
 				{!online
 					? 'Connect to a server to sign in. Sign-in enables sync, server engines and online rooms.'
@@ -196,6 +218,7 @@ function AccountCard(): JSX.Element {
 						? 'This server does not offer accounts.'
 						: 'Sign in to sync your games and sessions between devices.'}
 			</p>
+			{online && authFeature && <ProviderButtons mode="signin" returnTo="/settings/server" />}
 			<form
 				class="server-settings__login"
 				onSubmit={(e) => {
@@ -247,6 +270,11 @@ function AccountCard(): JSX.Element {
 							}}
 						>
 							Forgot password?
+						</Button>
+					)}
+					{signupMode !== 'off' && (
+						<Button variant="ghost" size="sm" disabled={disabled} onClick={() => route('/signup')}>
+							Create account
 						</Button>
 					)}
 				</div>

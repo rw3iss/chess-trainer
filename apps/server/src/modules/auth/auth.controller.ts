@@ -5,7 +5,8 @@ import type { AuthUser } from '../../common/auth/auth-user';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AllowGuest, Public } from '../../common/decorators/public.decorator';
 import { AuthService } from './auth.service';
-import { ChangePasswordDto, ForgotPasswordDto, GuestDto, GuestTokenResponse, LoginDto, RefreshDto, ResetPasswordDto } from './dto/auth.dto';
+import { ChangePasswordDto, ForgotPasswordDto, GuestDto, GuestTokenResponse, LoginDto, RefreshDto, RegisterDto, ResetPasswordDto } from './dto/auth.dto';
+import { RegistrationService } from './registration.service';
 import { PasswordService } from './password.service';
 
 @ApiTags('auth')
@@ -14,7 +15,18 @@ export class AuthController {
 	constructor(
 		private readonly auth: AuthService,
 		private readonly passwords: PasswordService,
+		private readonly registration: RegistrationService,
 	) {}
+
+	/** Create an account (SIGNUP_MODE open / invite) → signed in. 403 closed or no invite; 409 taken; 429. */
+	@Public()
+	@Post('register')
+	@HttpCode(201)
+	async register(@Body() body: RegisterDto, @Ip() ip: string): Promise<AuthTokens> {
+		const invite = await this.registration.admit(body.invite, ip);
+		const user = await this.registration.create({ username: body.username, password: body.password, displayName: body.displayName, email: body.email }, invite);
+		return this.auth.tokensFor(user);
+	}
 
 	/** Email a reset link for a username or email. Always 202 (no account enumeration); 429 rate limited; 503 no email. */
 	@Public()
@@ -45,8 +57,8 @@ export class AuthController {
 	@Public()
 	@Post('login')
 	@HttpCode(200)
-	login(@Body() body: LoginDto): Promise<AuthTokens> {
-		return this.auth.login(body.username, body.password);
+	login(@Body() body: LoginDto, @Ip() ip: string): Promise<AuthTokens> {
+		return this.auth.login(body.username, body.password, ip);
 	}
 
 	/** Refresh token → new access + refresh pair. */

@@ -10,6 +10,14 @@ import type {
 	ForgotPasswordRequest,
 	GuestTokenRequest,
 	HealthDto,
+	IdentityDto,
+	InviteDto,
+	InvitePreview,
+	InviteRequest,
+	OAuthExchangeResponse,
+	OAuthProviderId,
+	OAuthStartRequest,
+	RegisterRequest,
 	LoginRequest,
 	RemoteEngineDto,
 	ResetPasswordRequest,
@@ -45,6 +53,22 @@ export interface AccountApi {
 	/** GET /users/me (includes email). */
 	account(): Promise<UserDto>;
 	updateAccount(req: UpdateAccountRequest): Promise<UserDto>;
+	/** POST /auth/register → signed in. */
+	register(req: RegisterRequest): Promise<AuthTokens>;
+	/** POST /auth/oauth/:provider/start → provider URL to navigate to ('link' mode sends the bearer). */
+	oauthStart(provider: OAuthProviderId, req: OAuthStartRequest): Promise<{ url: string }>;
+	/** POST /auth/oauth/exchange — single-use code from /auth/callback. */
+	oauthExchange(code: string): Promise<OAuthExchangeResponse>;
+	/** GET /users/me/identities */
+	identities(): Promise<IdentityDto[]>;
+	/** DELETE /users/me/identities/:provider (409 when it is the only way to sign in). */
+	unlinkIdentity(provider: OAuthProviderId): Promise<void>;
+	/** POST /invites — emails the friend a sign-up link. */
+	createInvite(req: InviteRequest): Promise<InviteDto>;
+	/** GET /invites — invites I sent. */
+	invites(): Promise<InviteDto[]>;
+	/** GET /invites/:code (public). */
+	invitePreview(code: string): Promise<InvitePreview>;
 }
 
 export interface ApiClient extends AccountApi {

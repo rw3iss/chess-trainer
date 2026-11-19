@@ -1,6 +1,7 @@
 # Accounts plan — sign-up, profiles, password recovery, linked sign-in
 
-Status: **phase D1 (email password reset) done 2026-11-19.** Everything else is planned.
+Status (2026-11-19): **done** — A (local DB per account), B sign-up + invites + login limits, D1 (email reset), F (Google), most of C on the account card; box hardening (docs/ops/SECURITY.md).
+**Open** — B refresh-token table / devices / delete account, C `/account` page + avatar, D2–D4, E (Lichess), G (Chess.com).
 
 ## 1. Today
 
@@ -8,10 +9,10 @@ Status: **phase D1 (email password reset) done 2026-11-19.** Everything else is 
 |---|---|
 | Device data | One IndexedDB database per browser (`chess-openings`, Dexie): sessions, saved games, favorites, themes, notes, settings, kv. The app works fully offline with no account. |
 | Server data | One Postgres database for all users. `users`; `saved_games` + `sessions` rows keyed `(user_id, id)`; `password_resets`. |
-| Accounts | Only the **owner** account, seeded from `OWNER_USERNAME` / `OWNER_PASSWORD` at boot. Role `user` exists in code, but there is no sign-up. Guests: rooms only, no DB row. |
-| Sign-in | Settings → Server. JWT access (15 min) + refresh (30 days). Sync, server engines and the explorer need it. |
+| Accounts | Owner (env-seeded) + users from sign-up (`SIGNUP_MODE=open`, configurable) or Google. Guests: rooms only, no DB row. |
+| Sign-in | Header account menu / Settings → Server; `/signup`; Continue with Google. JWT access (15 min) + refresh (30 days). Failed logins rate limited. |
 | Password | Change (current password) and reset by email (`/auth/password/*`, Resend). Both end older refresh tokens (`users.tokens_valid_after`). |
-| Gaps | Logout keeps local data, so a second account on the same browser would sync the first one's games. Refresh tokens cannot be revoked one by one. No sign-up, account page, avatar, login rate limit. |
+| Gaps | Refresh tokens cannot be revoked one by one (password change ends all). No `/account` page, avatar, email verification. |
 
 ## 2. Rules
 
@@ -22,7 +23,10 @@ Status: **phase D1 (email password reset) done 2026-11-19.** Everything else is 
 
 ## 3. Phases
 
-### A. One local database per account (client) — do first
+### A. One local database per account (client) — **DONE (client) 2026-11-19**
+Built: `services/db/accounts.ts` (`openActiveDatabase` at boot, `accountKey`, `accountDbName`, `copyRepositories`, `deleteAccountDatabase`) + `state/account.ts` (known accounts, `switchTo`, `signOut`, `removeFromDevice`, copy prompt). Device state (active key, known accounts, tokens of the active and stashed accounts, guest) lives in the anonymous/device database's kv. Switching reloads the app on the target database (simplest way to re-init every store, timer and sync). A new account database starts from the device settings with the account's server URL and sync on. Copy keeps ids (the server scopes them per user, so a second copy does not duplicate). Sync only runs when the signed-in account owns the active database. Header `AccountMenu`, `CopyDataDialog`, "Remove from this device" on the account card. Not built: avatar blob in the known-accounts list (needs C), "unsynced changes" warning on remove.
+
+Original plan:
 - `services/db`: `openDatabase(accountKey)`: anonymous → `chess-openings`; account → `chess-openings@<serverHost>|<userId>`. Repositories are already behind `getRepositories()`; switching = close, reopen, re-init stores.
 - `state/account.ts`: `accounts` (known on this device: id, username, display name, avatar blob, server), `activeAccount` (null = anonymous), `switchTo(account | null)`.
 - First sign-in on a device: dialog "Copy this device's games and sessions into <account>?" (Copy · Not now). Copy = read the anonymous DB, write into the account DB with new ids, mark for sync.
@@ -30,7 +34,10 @@ Status: **phase D1 (email password reset) done 2026-11-19.** Everything else is 
 - Header account menu: avatar/initials, list (Anonymous + recent accounts), Sign in, Create account, Account page, Sign out.
 - Sync state already keys on `${serverUrl}|${userId}`; it moves into the account DB.
 
-### B. Server accounts
+### B. Server accounts — **sign-up, invites, login limits DONE 2026-11-19**
+Built: `POST /auth/register` + `RegistrationService` (`SIGNUP_MODE=open|invite|off`, default open; 5 sign-ups/IP/h). Invites: `POST/GET /invites`, `GET /invites/:code` (friend gets an email with `/signup?invite=…`; who invited whom is recorded; required in `invite` mode; 10/day; accounts younger than 24 h cannot invite — spam guard). Login: username or email; failed attempts limited per username (10) and IP (30) per 15 min → 429. `RateLimiter` shared. Still open: refresh-token table + devices, `DELETE /users/me`.
+
+Original plan:
 - `POST /auth/register` `{ username, displayName, password, email?, inviteCode? }`. `ALLOW_SIGNUP=off|invite|open` (recommend `invite`). Owner page: create/revoke invite codes (`invites` table: code hash, uses left, expires).
 - `refresh_tokens` table (id, user_id, device label, created, last used, revoked). Rotation on every refresh; reuse of an old token revokes the family. `POST /auth/logout` revokes the current one. `GET/DELETE /users/me/sessions` → "Sign out other devices".
 - Login rate limit (per username + per IP, CacheService), same as reset.
@@ -38,6 +45,8 @@ Status: **phase D1 (email password reset) done 2026-11-19.** Everything else is 
 - Username rules: 3–24, `[a-z0-9_-]`, unique, case-insensitive.
 
 ### C. Account page (client) `/account`
+Client parts built so far (on Settings → Server's account card, not a separate page yet): sign-up page `/signup` (invite preview), Continue with Google + `/auth/callback`, linked sign-ins (link / unlink), "Set password" for provider-only accounts, invite a friend (email + link + sent list). Still open: `/account` page, avatar, devices, export / delete account.
+
 - Profile: display name, username, email (+ verified badge once D2 exists), avatar (upload/crop/remove).
 - Security: change password (done in Settings → Server), recovery codes (D3), devices (B), linked sign-ins (E/F).
 - Data: export everything (JSON/PGN), import, delete account.
@@ -55,7 +64,10 @@ Status: **phase D1 (email password reset) done 2026-11-19.** Everything else is 
 - Game import (no OAuth needed for public games): `GET https://lichess.org/api/games/user/<name>` (NDJSON with PGN; filters: since/until, rated, perfType, max). Client streams it through the existing PGN worker into saved games with tags `lichess`, `<username>`; dedupe by Lichess game id. Options: last N, date range, all. With the user's Lichess token, imports are faster and include their private data the scopes allow.
 - "Reference" (not copy): a Lichess panel that lists recent games live and opens one in a session; "Save" copies it.
 
-### F. Sign in with Google
+### F. Sign in with Google — **DONE 2026-11-19**
+Built: `IdentityProvider` port + `GoogleProvider` (code + PKCE, profile from the userinfo endpoint server-to-server), `OAuthService` (state + single-use exchange code in the cache; tokens never in URLs), `user_identities`; sign in, create (sign-up policy applies), link, unlink. Never links by email alone: a Google email that matches an existing account → "sign in with your password, then link Google". Lichess (E) plugs into the same port.
+
+Original plan:
 - OpenID Connect (Authorization Code + PKCE, scopes `openid email profile`). Server verifies the ID token (`jose` against Google's JWKS) and links via `user_identities` (provider `google`, subject `sub`). A verified Google email can fill `users.email`.
 
 ### G. Chess.com

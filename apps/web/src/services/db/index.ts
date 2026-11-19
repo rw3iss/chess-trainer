@@ -11,7 +11,9 @@ export { ChessDb } from './schema';
 export { createDexieRepositories } from './repositories/dexie';
 
 let current: Repositories | null = null;
+let device: Repositories | null = null;
 
+/** The ACTIVE database: the signed-in account's, or the anonymous one (see ./accounts.ts). */
 export function getRepositories(): Repositories {
 	current ??= createDexieRepositories(new ChessDb());
 	return current;
@@ -20,4 +22,17 @@ export function getRepositories(): Repositories {
 /** Swap the backing repositories (tests, or a future sync-wrapping RemoteRepository). */
 export function setRepositories(repos: Repositories): void {
 	current = repos;
+}
+
+/**
+ * The DEVICE database ('chess-openings'): tokens, known accounts, active account, guest name.
+ * Same as getRepositories() while anonymous (and in tests that only call setRepositories).
+ */
+export function getDeviceRepositories(): Repositories {
+	return device ?? getRepositories();
+}
+
+/** null = the device database is the active one. */
+export function setDeviceRepositories(repos: Repositories | null): void {
+	device = repos;
 }

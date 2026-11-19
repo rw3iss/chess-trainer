@@ -34,7 +34,7 @@ public/            static: data/ (openings datasets), pieces/ (sprites), engines
 e2e/               Playwright specs
 src/
   app/             App, AppShell boot, routes.ts (route table + panel tabs), slots.tsx (extension slots), boot.ts
-  pages/<Name>/    route views (lazy): Home, Openings, OpeningDetail, Games, Sessions, Settings, Play, QuickPlay, OpeningLink, ResetPassword, NotFound
+  pages/<Name>/    route views (lazy): Home, Openings, OpeningDetail, Games, Sessions, Settings, Play, QuickPlay, OpeningLink, ResetPassword, Signup, AuthCallback, NotFound
   components/
     common/<Name>/ primitives (Button, Icon, Menu, Modal, Sheet, Tabs, Toast, …) — barrel common/index.ts
     board/         Board2D, MiniBoard, EvalBar (BoardRenderer contract in board/types.ts)
@@ -155,6 +155,7 @@ Default `save`/`saveAs`/`fork`/`newGame`/`openBot` handlers live in `components/
 ## Data cache vs. repositories vs. UI state
 
 - **Repositories** (`services/db`): user data — sessions, saved games, favorites, themes, notes, settings, kv.
+- **One local database per account** (`services/db/accounts.ts`, `state/account.ts`): anonymous → IndexedDB `chess-openings` (the DEVICE database); account → `chess-openings@<serverHost>|<userId>`. Boot runs `openActiveDatabase()` before `initStores()`. Device-level state lives in the device database's kv (`getDeviceRepositories()`): `account:active`, `accounts:known`, `auth:session` (active account tokens), `auth:sessions` (stashed tokens of other accounts), guest token/name. A sign-in, sign-out or switch writes `account:active`, flushes the stores and **reloads** (or navigates to the target page), so every store, timer and the sync service start clean on the right database. A new account database starts from the device settings with the account's server URL and sync on. Sync only runs when the signed-in account owns the active database (`state/sync.ts`). First sign-in with anonymous data → `CopyDataDialog`.
 - **DataCache** (`services/cache`, IndexedDB `chess-cache`): fetched/derived data with TTL — read via `useCachedResource(key, loader, ttl)` (stale-while-revalidate).
 - **UI settings** (`lib/uiSettings.ts` + `useUISetting(key)`): every persisted app-view preference (open panels, toggles like "Keep position", last-used choices) is registered there with its type and default, and read with `useUISetting`. Stored in localStorage (`uiStorage`, prefix `ui:`); unchanged keys read the default; Settings → Data → Reset clears them (`resetUISettings`). Use `useUIState` directly only for dynamic keys. Domain settings that sync (themes, engine, clock…) stay in `state/settings`.
 

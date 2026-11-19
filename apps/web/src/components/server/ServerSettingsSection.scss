@@ -203,4 +203,14 @@
 		color: var(--color-danger);
 		font-size: var(--text-sm);
 	}
+
+	&__link {
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--color-accent-text);
+		text-decoration: underline;
+		cursor: pointer;
+		font: inherit;
+	}
 }

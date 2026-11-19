@@ -39,6 +39,8 @@ const Play = lazy(() => import('@/pages/Play/Play'));
 const QuickPlay = lazy(() => import('@/pages/QuickPlay/QuickPlay'));
 const OpeningLink = lazy(() => import('@/pages/OpeningLink/OpeningLink'));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword/ResetPassword'));
+const Signup = lazy(() => import('@/pages/Signup/Signup'));
+const AuthCallback = lazy(() => import('@/pages/AuthCallback/AuthCallback'));
 const NotFound = lazy(() => import('@/pages/NotFound/NotFound'));
 
 export const ROUTES: AppRoute[] = [
@@ -53,6 +55,8 @@ export const ROUTES: AppRoute[] = [
 	{ path: '/play', component: QuickPlay, layout: 'panel', title: 'Play' },
 	{ path: '/play/:roomId', component: Play, layout: 'panel', title: 'Online game' },
 	{ path: '/reset-password', component: ResetPassword, layout: 'sheet', title: 'Reset password' },
+	{ path: '/signup', component: Signup, layout: 'sheet', title: 'Create account' },
+	{ path: '/auth/callback', component: AuthCallback, layout: 'sheet', title: 'Signing in' },
 ];
 
 export const NOT_FOUND_ROUTE: AppRoute = { path: '*', component: NotFound, layout: 'panel', title: 'Not found' };

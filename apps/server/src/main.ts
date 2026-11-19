@@ -17,8 +17,9 @@ async function bootstrap(): Promise<void> {
 	const config = app.get(ConfigService);
 	const apiPrefix = config.get<string>('app.apiPrefix');
 	const port = config.get<number>('app.port') ?? 3000;
-	await app.listen(port);
-	new Logger('Bootstrap').log(`server listening on http://localhost:${port}${apiPrefix ? '/' + apiPrefix : ''}`);
+	const host = config.get<string>('app.host') ?? '0.0.0.0';
+	await app.listen(port, host);
+	new Logger('Bootstrap').log(`server listening on http://${host}:${port}${apiPrefix ? '/' + apiPrefix : ''}`);
 	if (config.get<boolean>('auth.jwtSecretIsEphemeral')) {
 		new Logger('Bootstrap').warn('JWT_SECRET not set — using a random secret; tokens will not survive a restart');
 	}

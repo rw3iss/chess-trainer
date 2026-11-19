@@ -8,6 +8,7 @@ import { ErrorBoundary, Route, Router, useLocation } from 'preact-iso';
 import { BoardStage } from '@/components/stage/BoardStage';
 import { GameControls } from '@/components/controls/GameControls';
 import { SaveModalHost } from '@/components/controls/SaveModal';
+import { CopyDataDialog } from '@/components/account/CopyDataDialog';
 import { TopNav } from './TopNav';
 import { NowPlayingChip } from './NowPlayingChip';
 import { panelSlots } from './panelSlots';
@@ -103,6 +104,7 @@ export function AppShell(): JSX.Element {
 			</div>
 			{asSheet && <NowPlayingChip />}
 			<SaveModalHost />
+			<CopyDataDialog />
 			<ToastHost />
 		</div>
 	);

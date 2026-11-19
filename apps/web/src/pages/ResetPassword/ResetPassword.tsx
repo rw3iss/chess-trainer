@@ -8,6 +8,7 @@ import { PASSWORD_MIN_LENGTH } from '@chess/core/protocol';
 import { Button, Input } from '@/components/common';
 import { toast } from '@/services/toast';
 import { authActions } from '@/state/auth';
+import { accountSwitching } from '@/state/account';
 import './ResetPassword.scss';
 
 const SERVER_SETTINGS = '/settings/server';
@@ -56,6 +57,8 @@ export default function ResetPassword(): JSX.Element {
 						.resetPassword(token, password)
 						.then(
 							() => {
+								// Signing in moved to the account's own database: the app is reloading there (toast follows).
+								if (accountSwitching.value) return;
 								toast.success('Password changed — you are signed in');
 								route(SERVER_SETTINGS, true);
 							},

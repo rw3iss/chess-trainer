@@ -9,6 +9,9 @@ import { EnginesService } from '../modules/engines/engines.service';
 import { ExplorerService } from '../modules/openings/explorer.service';
 import { UsersService } from '../modules/users/users.service';
 import { Mailer } from '../modules/mail';
+import { OAuthService } from '../modules/auth/oauth/oauth.service';
+import { ConfigService } from '@nestjs/config';
+import type { SignupMode } from '@chess/core';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pkg: { name: string; version: string } = require('../../package.json');
@@ -24,6 +27,8 @@ export class HealthController {
 		private readonly explorer: ExplorerService,
 		private readonly users: UsersService,
 		private readonly mailer: Mailer,
+		private readonly oauth: OAuthService,
+		private readonly config: ConfigService,
 	) {}
 
 	/**
@@ -44,6 +49,8 @@ export class HealthController {
 				rooms: true,
 				sync: true,
 				passwordReset: this.mailer.enabled,
+				signup: this.config.get<SignupMode>('auth.signupMode') ?? 'open',
+				oauth: this.oauth.enabledProviders(),
 			},
 			uptime: process.uptime(),
 		};

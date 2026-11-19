@@ -3,6 +3,8 @@ import { registerAs } from '@nestjs/config';
 export default registerAs('app', () => ({
 	env: process.env.NODE_ENV ?? 'development',
 	port: parseInt(process.env.PORT ?? '3000', 10),
+	/** Bind address. 127.0.0.1 behind a local reverse proxy (production); 0.0.0.0 in containers. */
+	host: process.env.HOST || '0.0.0.0',
 	apiPrefix: process.env.API_PREFIX ?? '',
 	corsOrigins: process.env.CORS_ORIGINS ?? '*',
 	logLevel: process.env.LOG_LEVEL ?? 'log',

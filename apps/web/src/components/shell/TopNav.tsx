@@ -5,6 +5,7 @@ import { Icon } from '@/components/common/Icon';
 import { IconButton } from '@/components/common/IconButton';
 import { Tooltip } from '@/components/common/Tooltip';
 import { SessionSwitcher } from '@/components/sessions/SessionSwitcher';
+import { AccountMenu } from '@/components/account/AccountMenu';
 import { serverConnector } from '@/services/server';
 import { useTheme } from '@/hooks/useTheme';
 import { cx } from '@/lib/classNames';
@@ -72,6 +73,7 @@ export function TopNav({ compact = false }: { compact?: boolean }): JSX.Element 
 					</span>
 				)}
 				<ServerStatus />
+				<AccountMenu compact={compact} />
 				<IconButton icon={theme.resolved === 'dark' ? 'sun' : 'moon'} label={theme.resolved === 'dark' ? 'Light theme' : 'Dark theme'} size="sm" onClick={theme.toggle} />
 				{compact && <IconButton icon="play" label="Play" size="sm" onClick={() => route('/play')} />}
 				{compact && <IconButton icon="settings" label="Settings" size="sm" onClick={() => route('/settings/app')} />}

@@ -8,6 +8,14 @@ import type {
 	ForgotPasswordRequest,
 	GuestTokenRequest,
 	HealthDto,
+	IdentityDto,
+	InviteDto,
+	InvitePreview,
+	InviteRequest,
+	OAuthExchangeResponse,
+	OAuthProviderId,
+	OAuthStartRequest,
+	RegisterRequest,
 	LoginRequest,
 	RemoteEngineDto,
 	ResetPasswordRequest,
@@ -118,6 +126,30 @@ export class HttpApiAdapter implements ApiClient {
 	}
 	updateAccount(req: UpdateAccountRequest): Promise<UserDto> {
 		return this.request('PATCH', '/users/me', req);
+	}
+	register(req: RegisterRequest): Promise<AuthTokens> {
+		return this.request('POST', '/auth/register', req);
+	}
+	oauthStart(provider: OAuthProviderId, req: OAuthStartRequest): Promise<{ url: string }> {
+		return this.request('POST', `/auth/oauth/${encodeURIComponent(provider)}/start`, req);
+	}
+	oauthExchange(code: string): Promise<OAuthExchangeResponse> {
+		return this.request('POST', '/auth/oauth/exchange', { code });
+	}
+	identities(): Promise<IdentityDto[]> {
+		return this.request('GET', '/users/me/identities');
+	}
+	async unlinkIdentity(provider: OAuthProviderId): Promise<void> {
+		await this.request('DELETE', `/users/me/identities/${encodeURIComponent(provider)}`);
+	}
+	createInvite(req: InviteRequest): Promise<InviteDto> {
+		return this.request('POST', '/invites', req);
+	}
+	invites(): Promise<InviteDto[]> {
+		return this.request('GET', '/invites');
+	}
+	invitePreview(code: string): Promise<InvitePreview> {
+		return this.request('GET', `/invites/${encodeURIComponent(code)}`);
 	}
 	explorer(fen: string, source: ExplorerSource = 'lichess'): Promise<ExplorerResult> {
 		const q = new URLSearchParams({ fen, source });

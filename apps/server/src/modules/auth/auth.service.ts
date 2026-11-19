@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'crypto';
 import type { AuthTokens } from '@chess/core';
 import { AuthUser, claimsToUser, TokenClaims } from '../../common/auth/auth-user';
+import { RateLimiter } from '../../cache/rate-limiter';
 import { UsersService } from '../users/users.service';
 import type { UserEntity } from '../users/entities/user.entity';
 import type { GuestTokenResponse } from './dto/auth.dto';
@@ -19,14 +20,28 @@ export class AuthService {
 		private readonly jwt: JwtService,
 		private readonly users: UsersService,
 		private readonly config: ConfigService,
+		private readonly limits: RateLimiter,
 	) {}
 
-	/** Username + password → access/refresh pair. Same error for unknown user and bad password. */
-	async login(username: string, password: string): Promise<AuthTokens> {
-		const user = await this.users.findByUsername(username);
+	/**
+	 * Username (or email) + password → access/refresh pair. Same error for unknown user and bad password.
+	 * Failed attempts are counted per username and per IP (LOGIN_MAX_PER_USER / _PER_IP in LOGIN_WINDOW) → 429.
+	 */
+	async login(username: string, password: string, ip?: string): Promise<AuthTokens> {
+		const name = username.trim().toLowerCase();
+		const window = this.config.get<number>('auth.loginWindow') ?? 900;
+		const perUser = this.config.get<number>('auth.loginMaxPerUser') ?? 10;
+		const perIp = this.config.get<number>('auth.loginMaxPerIp') ?? 30;
+		const msg = 'too many sign-in attempts — try again in a few minutes';
+		await this.limits.check(`login:u:${name}`, perUser, msg);
+		await this.limits.check(`login:ip:${ip ?? 'unknown'}`, perIp, msg);
+		const user = await this.users.findByIdentifier(name);
 		if (!user || !(await this.users.verifyPassword(user, password))) {
+			await this.limits.hit(`login:u:${name}`, perUser, window, msg);
+			await this.limits.hit(`login:ip:${ip ?? 'unknown'}`, perIp, window, msg);
 			throw new UnauthorizedException('invalid username or password');
 		}
+		await this.limits.reset(`login:u:${name}`);
 		return this.issueTokens(user);
 	}
 

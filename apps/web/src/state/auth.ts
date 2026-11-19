@@ -12,8 +12,8 @@
 // setUnauthorizedHandler in services/api). Auth calls go straight to the HTTP
 // adapter for the configured server — never to the mock adapter.
 import { computed, signal } from '@preact/signals';
-import { PASSWORD_MIN_LENGTH, type AuthTokens, type UserDto } from '@chess/core/protocol';
-import { getRepositories } from '@/services/db';
+import { PASSWORD_MIN_LENGTH, USERNAME_RE, type AuthTokens, type IdentityDto, type InviteDto, type InvitePreview, type OAuthProviderId, type RegisterRequest, type UserDto } from '@chess/core/protocol';
+import { getDeviceRepositories } from '@/services/db';
 import { ApiRequestError, HttpApiAdapter, setAuthTokenProvider, setUnauthorizedHandler, type AccountApi } from '@/services/api';
 import { serverConnector } from '@/services/server';
 import { defineStore } from './registry';
@@ -49,6 +49,8 @@ export interface AuthDeps {
 	/** Current server URL, or null when none is configured. */
 	serverUrl: () => string | null;
 	now: () => number;
+	/** Full-page navigation (provider sign-in). */
+	navigate: (url: string) => void;
 }
 
 const defaultDeps: AuthDeps = {
@@ -56,6 +58,7 @@ const defaultDeps: AuthDeps = {
 	account: (url, token) => new HttpApiAdapter({ baseUrl: url, getToken: () => token }),
 	serverUrl: () => serverConnector.url.value,
 	now: () => Date.now(),
+	navigate: (url) => window.location.assign(url),
 };
 let deps: AuthDeps = defaultDeps;
 
@@ -105,13 +108,14 @@ function requireUrl(): string {
 function errorMessage(e: unknown): string {
 	if (e instanceof ApiRequestError) {
 		if (e.status === 401) return 'Wrong username or password.';
+		if (e.status === 429) return 'Too many sign-in attempts. Try again later.';
 		if (e.status === 0) return 'Server unreachable.';
 		return e.message;
 	}
 	return e instanceof Error ? e.message : String(e);
 }
 
-type AccountAction = 'forgot' | 'reset' | 'change' | 'email' | 'load';
+type AccountAction = 'forgot' | 'reset' | 'change' | 'email' | 'load' | 'register' | 'oauth' | 'identity' | 'invite';
 
 /** User-facing message for a failed password / account call. */
 export function accountErrorMessage(action: AccountAction, e: unknown): string {
@@ -125,6 +129,11 @@ export function accountErrorMessage(action: AccountAction, e: unknown): string {
 		if (e.status === 409 && action === 'email') return 'Another account already uses that email.';
 		if (e.status === 400 && action === 'email') return 'Enter a valid email address.';
 		if (e.status === 400 && action === 'change') return `The new password must have at least ${PASSWORD_MIN_LENGTH} characters.`;
+		if (e.status === 403 && action === 'register') return e.message || 'Sign-up is closed on this server.';
+		if (e.status === 409 && action === 'register') return e.message || 'That username or email is taken.';
+		if (e.status === 409 && action === 'identity') return 'Set a password or link another sign-in first: this is your only way to sign in.';
+		if (e.status === 404 && action === 'invite') return 'This invite link is invalid or was already used.';
+		if (e.status === 400 && (action === 'oauth' || action === 'register')) return e.message || 'Check the form and try again.';
 		return e.message;
 	}
 	return e instanceof Error ? e.message : String(e);
@@ -158,12 +167,39 @@ function scheduleRefresh(): void {
 async function setSession(next: StoredAuth | null): Promise<void> {
 	_session.value = next;
 	scheduleRefresh();
-	const kv = getRepositories().kv;
+	const kv = getDeviceRepositories().kv;
 	if (next) await kv.set(AUTH_SESSION_KEY, next);
 	else await kv.remove(AUTH_SESSION_KEY);
 }
 
 let refreshing: Promise<string | null> | null = null;
+
+/** Account switching hooks (state/account.ts registers them; absent in plain tests). */
+export interface SessionListener {
+	/** A sign-in made `next` the session. Resolves true when the app is switching database (reload follows). */
+	signedIn: (next: StoredAuth, previous: StoredAuth | null, opts: { to?: string; toast?: string }) => Promise<boolean>;
+	/** Explicit sign-out (not a session expiry). */
+	signedOut: () => Promise<void>;
+}
+let sessionListener: SessionListener | null = null;
+export function setSessionListener(l: SessionListener | null): void {
+	sessionListener = l;
+}
+
+/** Store a fresh sign-in and let the account layer switch database. Returns true when a switch (reload) follows. */
+async function signedIn(tokens: AuthTokens, url: string, opts: { to?: string; toast?: string } = {}): Promise<boolean> {
+	const previous = _session.value;
+	const stored = toStored(tokens, url);
+	_error.value = null;
+	await setSession(stored);
+	return (await sessionListener?.signedIn(stored, previous, opts)) ?? false;
+}
+
+/** Absolute base URL of the configured server (relative '/api' resolves against the page). */
+export function absoluteServerUrl(url: string): string {
+	const base = typeof location !== 'undefined' ? location.origin : 'http://localhost';
+	return new URL(url, `${base}/`).href.replace(/\/+$/, '');
+}
 
 // ── Actions ───────────────────────────────────────────────────────────────
 export const authActions = {
@@ -173,7 +209,7 @@ export const authActions = {
 		try {
 			const url = requireUrl();
 			const tokens = await deps.client(url).login({ username: username.trim(), password });
-			await setSession(toStored(tokens, url));
+			await signedIn(tokens, url, { toast: `Signed in as ${tokens.user.displayName}` });
 			return tokens.user;
 		} catch (e) {
 			_error.value = errorMessage(e);
@@ -186,6 +222,7 @@ export const authActions = {
 	async logout(): Promise<void> {
 		_error.value = null;
 		await setSession(null);
+		await sessionListener?.signedOut();
 	},
 
 	/** Exchange the refresh token. Concurrent callers share one request. Returns the new access token (null = signed out). */
@@ -239,13 +276,13 @@ export const authActions = {
 		const tokens = await deps.client(url).guest({ displayName: name });
 		const stored = toStored(tokens, url);
 		_guest.value = stored;
-		await getRepositories().kv.set(AUTH_GUEST_KEY, stored);
+		await getDeviceRepositories().kv.set(AUTH_GUEST_KEY, stored);
 		return { token: stored.accessToken, user: stored.user };
 	},
 
 	async setGuestName(name: string): Promise<void> {
 		_guestName.value = name.trim().slice(0, 40);
-		await getRepositories().kv.set(GUEST_NAME_KEY, _guestName.value);
+		await getDeviceRepositories().kv.set(GUEST_NAME_KEY, _guestName.value);
 	},
 
 	clearError(): void {
@@ -267,14 +304,14 @@ export const authActions = {
 		return accountCall('reset', async () => {
 			const url = requireUrl();
 			const tokens = await deps.account(url, null).resetPassword({ token, password });
-			_error.value = null;
-			await setSession(toStored(tokens, url));
+			await signedIn(tokens, url, { to: '/settings/server', toast: 'Password changed — you are signed in' });
 			return tokens.user;
 		});
 	},
 
 	/** Signed in: change the password. The server signs out other sessions; this one gets new tokens. */
 	async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+		// Accounts created by a sign-in provider have no password yet: no current one is needed.
 		if (newPassword.length < PASSWORD_MIN_LENGTH) throw new Error(`Use at least ${PASSWORD_MIN_LENGTH} characters.`);
 		await accountCall('change', async () => {
 			const s = requireSession();
@@ -296,6 +333,101 @@ export const authActions = {
 		});
 	},
 
+	/** Create an account (sign-up) → signed in, on the new account's own local database. */
+	async register(req: RegisterRequest): Promise<UserDto> {
+		const username = req.username.trim().toLowerCase();
+		if (!USERNAME_RE.test(username)) throw new Error('Username: 3–24 characters, letters, digits, _ or -.');
+		if (req.password.length < PASSWORD_MIN_LENGTH) throw new Error(`Use at least ${PASSWORD_MIN_LENGTH} characters.`);
+		_busy.value = true;
+		try {
+			return await accountCall('register', async () => {
+				const url = requireUrl();
+				const body: RegisterRequest = { username, password: req.password };
+				if (req.displayName?.trim()) body.displayName = req.displayName.trim();
+				if (req.email?.trim()) body.email = req.email.trim();
+				if (req.invite?.trim()) body.invite = req.invite.trim();
+				const tokens = await deps.account(url, null).register(body);
+				await signedIn(tokens, url, { to: '/', toast: `Welcome, ${tokens.user.displayName}` });
+				return tokens.user;
+			});
+		} finally {
+			_busy.value = false;
+		}
+	},
+
+	/**
+	 * Start a provider sign-in ('signin') or link it to this account ('link'): asks the server for the
+	 * provider URL and navigates there. The provider returns to /auth/callback.
+	 */
+	async startOAuth(provider: OAuthProviderId, mode: 'signin' | 'link', opts: { returnTo?: string; invite?: string } = {}): Promise<string> {
+		return accountCall('oauth', async () => {
+			const url = requireUrl();
+			let token: string | null = null;
+			if (mode === 'link') {
+				requireSession();
+				token = await authActions.ensureAccessToken();
+			}
+			const appOrigin = typeof location !== 'undefined' ? location.origin : 'http://localhost';
+			const res = await deps.account(url, token).oauthStart(provider, {
+				mode,
+				appOrigin,
+				apiBase: absoluteServerUrl(url),
+				returnTo: opts.returnTo ?? '/',
+				...(opts.invite ? { invite: opts.invite } : {}),
+			});
+			deps.navigate(res.url);
+			return res.url;
+		});
+	},
+
+	/** /auth/callback: exchange the single-use code → signed in (or linked). */
+	async completeOAuth(code: string, providerName = 'Google'): Promise<{ returnTo: string; created: boolean; linked: boolean }> {
+		return accountCall('oauth', async () => {
+			const url = requireUrl();
+			const res = await deps.account(url, null).oauthExchange(code);
+			const msg = res.linked ? `${providerName} linked` : res.created ? 'Account created' : `Signed in with ${providerName}`;
+			await signedIn(res, url, { to: res.returnTo || '/', toast: msg });
+			return { returnTo: res.returnTo || '/', created: res.created, linked: res.linked };
+		});
+	},
+
+	async identities(): Promise<IdentityDto[]> {
+		return accountCall('identity', async () => {
+			const s = requireSession();
+			return deps.account(s.serverUrl, (await authActions.ensureAccessToken()) ?? s.accessToken).identities();
+		});
+	},
+
+	async unlinkIdentity(provider: OAuthProviderId): Promise<void> {
+		await accountCall('identity', async () => {
+			const s = requireSession();
+			await deps.account(s.serverUrl, (await authActions.ensureAccessToken()) ?? s.accessToken).unlinkIdentity(provider);
+		});
+	},
+
+	/** Email a friend a sign-up link (also returned, to share by hand). */
+	async createInvite(email: string, message?: string): Promise<InviteDto> {
+		const to = email.trim();
+		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) throw new Error('Enter a valid email address.');
+		return accountCall('invite', async () => {
+			const s = requireSession();
+			const body = message?.trim() ? { email: to, message: message.trim() } : { email: to };
+			return deps.account(s.serverUrl, (await authActions.ensureAccessToken()) ?? s.accessToken).createInvite(body);
+		});
+	},
+
+	async invites(): Promise<InviteDto[]> {
+		return accountCall('invite', async () => {
+			const s = requireSession();
+			return deps.account(s.serverUrl, (await authActions.ensureAccessToken()) ?? s.accessToken).invites();
+		});
+	},
+
+	/** Public: who sent an invite code (sign-up page). */
+	async invitePreview(code: string): Promise<InvitePreview> {
+		return accountCall('invite', async () => deps.account(requireUrl(), null).invitePreview(code));
+	},
+
 	/** Signed in: re-read the account (email) from the server into the stored user. */
 	async loadAccount(): Promise<UserDto | null> {
 		const s = _session.value;
@@ -313,13 +445,15 @@ export const authActions = {
 async function patchUser(s: StoredAuth, user: UserDto): Promise<void> {
 	const cur = _session.value;
 	if (!cur || cur.user.id !== s.user.id) return;
-	const { id, username, displayName, role, email } = user;
-	await setSession({ ...cur, user: { ...cur.user, id, username, displayName, role, email: email ?? null } });
+	const { id, username, displayName: name, role, email, hasPassword } = user;
+	const next: UserDto = { ...cur.user, id, username, displayName: name, role, email: email ?? null };
+	if (hasPassword !== undefined) next.hasPassword = hasPassword;
+	await setSession({ ...cur, user: next });
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────
 export async function loadAuth(): Promise<void> {
-	const kv = getRepositories().kv;
+	const kv = getDeviceRepositories().kv;
 	const [session, guest, name] = await Promise.all([
 		kv.get<StoredAuth>(AUTH_SESSION_KEY),
 		kv.get<StoredAuth>(AUTH_GUEST_KEY),

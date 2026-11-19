@@ -1,0 +1,20 @@
+# Box-wide jails (not chess-specific): SSH brute force and repeat offenders. Installed to
+# /etc/fail2ban/jail.d/box.local by scripts/deploy/setup-server.sh. Firewall bans (firewalld rich rules).
+[DEFAULT]
+ignoreip = 127.0.0.1/8 ::1 162.35.181.92 2604:a00:50:23e:7577:cc61:f39f:6825
+
+[sshd]
+enabled  = true
+backend  = systemd
+maxretry = 5
+findtime = 10m
+bantime  = 1h
+
+# Banned 5 times in a day by any jail → 1 week at the firewall (direct-to-origin traffic and SSH).
+[recidive]
+enabled  = true
+logpath  = /var/log/fail2ban.log
+backend  = auto
+maxretry = 5
+findtime = 1d
+bantime  = 1w

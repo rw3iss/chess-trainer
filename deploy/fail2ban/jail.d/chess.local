@@ -1,0 +1,38 @@
+# fail2ban jails for chess.ryanweiss.net. Installed to /etc/fail2ban/jail.d/chess.local by
+# scripts/deploy/setup-server.sh. Unban: sudo fail2ban-client set <jail> unbanip <ip>. See docs/ops/SECURITY.md.
+
+# Brute force on sign-in / sign-up / password reset: 10 refused calls in 10 min → 1 h.
+[chess-auth]
+enabled  = true
+filter   = chess-auth
+logpath  = /var/log/nginx/chess.access.log
+backend  = auto
+action   = chess-nginx-deny
+ignoreip = 127.0.0.1/8 ::1 162.35.181.92 2604:a00:50:23e:7577:cc61:f39f:6825
+maxretry = 10
+findtime = 10m
+bantime  = 1h
+
+# Clients that keep hitting the nginx rate limits: 20 rejections in 1 min → 10 min.
+[chess-limit-req]
+enabled  = true
+filter   = nginx-limit-req[ngx_limit_req_zones="chess_\w+"]
+logpath  = /var/log/nginx/chess.error.log
+backend  = auto
+action   = chess-nginx-deny
+ignoreip = 127.0.0.1/8 ::1 162.35.181.92 2604:a00:50:23e:7577:cc61:f39f:6825
+maxretry = 20
+findtime = 1m
+bantime  = 10m
+
+# Vulnerability scanners: 3 probes in 10 min → 1 day.
+[chess-scan]
+enabled  = true
+filter   = chess-scan
+logpath  = /var/log/nginx/chess.access.log
+backend  = auto
+action   = chess-nginx-deny
+ignoreip = 127.0.0.1/8 ::1 162.35.181.92 2604:a00:50:23e:7577:cc61:f39f:6825
+maxretry = 3
+findtime = 10m
+bantime  = 1d

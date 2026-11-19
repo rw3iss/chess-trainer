@@ -1,10 +1,12 @@
 // Boot sequence (non-blocking: the shell renders immediately, stores fill in).
+//   0. open the active account's local database (services/db/accounts.ts)
 //   1. restore every registered store (settings, sessions, favorites, games, themes…)
 //   2. connect to the optional server using the configured URL
 //   3. register fallback command handlers (features override later)
 //   4. flush pending writes when the page is hidden
 import { effect } from '@preact/signals';
 import { flushStores, initStores } from '@/state';
+import { openActiveDatabase } from '@/services/db/accounts';
 import { settings } from '@/state/settings';
 import { serverConnector } from '@/services/server';
 import { registerDefaultSessionCommands } from '@/components/controls/sessionCommands';
@@ -25,6 +27,8 @@ export async function boot(): Promise<void> {
 	void import('@/components/engine').then((m) => m.registerEngineFeature());
 	// New game modal + local PvP ('newGame', 'resign', 'offerDraw').
 	installNewGameFeature();
+	// Bind the active account's local database (or the anonymous one) before any store reads it.
+	await openActiveDatabase().catch((e: unknown) => console.error('[boot] account database', e));
 	await initStores();
 	markRestored();
 	// Clocks (stage slots + controller) and move sounds — after sessions are restored.
