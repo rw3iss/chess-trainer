@@ -5,7 +5,7 @@
 // fetched on first use and cached by the service worker ('chess-engines-v1', CacheFirst).
 import { analyzeBoard, PIECE_CLASSES, type CellColor, type SquareRead } from './analyze';
 import { detectGrid } from './grid';
-import { MODEL_META_URL, MODEL_URL, type ModelMeta, type VisionResult } from './types';
+import { MODEL_META_URL, modelUrl, type ModelMeta, type VisionResult } from './types';
 
 type Ort = typeof import('onnxruntime-web/wasm');
 
@@ -23,17 +23,17 @@ let model: Promise<{ ort: Ort; session: import('onnxruntime-web/wasm').Inference
 
 function loadModel() {
 	model ??= (async () => {
-		const [ort, bytes, meta] = await Promise.all([
-			import('onnxruntime-web/wasm'),
-			fetch(MODEL_URL).then((r) => {
-				if (!r.ok) throw new Error(`board model: HTTP ${r.status}`);
-				return r.arrayBuffer();
-			}),
-			fetch(MODEL_META_URL).then((r) => {
-				if (!r.ok) throw new Error(`board model info: HTTP ${r.status}`);
-				return r.json() as Promise<ModelMeta>;
-			}),
-		]);
+		const ortP = import('onnxruntime-web/wasm');
+		const meta = await fetch(MODEL_META_URL).then((r) => {
+			if (!r.ok) throw new Error(`board model info: HTTP ${r.status}`);
+			return r.json() as Promise<ModelMeta>;
+		});
+		// The model file keeps its name across exports; the version query gives each export its own cache entry.
+		const bytes = await fetch(modelUrl(meta)).then((r) => {
+			if (!r.ok) throw new Error(`board model: HTTP ${r.status}`);
+			return r.arrayBuffer();
+		});
+		const ort = await ortP;
 		if (meta.classes.join(',') !== PIECE_CLASSES.join(',')) throw new Error('board model: unexpected classes');
 		const hc = navigator.hardwareConcurrency || 1;
 		ort.env.wasm.numThreads = scope.crossOriginIsolated ? Math.min(4, hc) : 1;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isApiRequest, isEngineAsset, NAVIGATION_DENYLIST } from './routes';
+import { isApiRequest, isEngineAsset, isModelInfo, NAVIGATION_DENYLIST } from './routes';
 
 const SELF = 'https://chess.example';
 const u = (href: string): URL => new URL(href, SELF);
@@ -27,6 +27,13 @@ describe('sw routes', () => {
 		expect(isEngineAsset(u('/assets/ort-wasm-simd-threaded-abc.wasm'), SELF)).toBe(true);
 		expect(isEngineAsset(u('https://raw.githubusercontent.com/CSSLab/maia-platform-frontend/e23a50e/public/maia2/maia_rapid.onnx'), SELF)).toBe(true);
 		expect(isEngineAsset(u('/assets/index-abc.js'), SELF)).toBe(false);
+		expect(isEngineAsset(u('/models/board-vision/pieces-v1.onnx?v=2026-11-18'), SELF)).toBe(true);
+	});
+
+	it('model info json is not an immutable asset (network first)', () => {
+		expect(isModelInfo(u('/models/board-vision/pieces-v1.json'), SELF)).toBe(true);
+		expect(isEngineAsset(u('/models/board-vision/pieces-v1.json'), SELF)).toBe(false);
+		expect(isModelInfo(u('/models/board-vision/pieces-v1.onnx'), SELF)).toBe(false);
 		expect(isEngineAsset(u('https://raw.githubusercontent.com/other/repo/file.onnx'), SELF)).toBe(false);
 	});
 

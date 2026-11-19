@@ -10,6 +10,7 @@
 //   /pieces/*                       CacheFirst            'pieces'      (non-default piece sets)
 //   /engines/*, Maia model, *.onnx,
 //   ort-wasm*.wasm                  CacheFirst            'chess-engines-v1' (shared with engine/assetStore)
+//   /models/**.json (model info)    NetworkFirst 3 s      'model-info'
 //   server API GETs                 NetworkFirst (3 s)    'api'         (never POST, /sync, socket.io)
 //   Google Fonts                    CSS SWR, files CacheFirst
 //   navigations                     precached index.html (denylist: /api, /socket.io, files)
@@ -19,7 +20,7 @@ import { NavigationRoute, registerRoute } from 'workbox-routing';
 import { CacheFirst, NetworkFirst, StaleWhileRevalidate } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import type { WorkboxPlugin } from 'workbox-core/types.js';
-import { isApiRequest, isEngineAsset, NAVIGATION_DENYLIST } from './routes';
+import { isApiRequest, isEngineAsset, isModelInfo, NAVIGATION_DENYLIST } from './routes';
 
 declare const self: ServiceWorkerGlobalScope & { __WB_MANIFEST: Array<{ url: string; revision: string | null }> };
 
@@ -66,7 +67,13 @@ registerRoute(
 	}),
 );
 
-// Engines + models: large, immutable, versioned by file name. Same cache the engine
+// Model info (/models/**.json): small; network first so a new model export is picked up at once.
+registerRoute(
+	({ url, request }) => request.method === 'GET' && isModelInfo(url, self.location.origin),
+	new NetworkFirst({ cacheName: 'model-info', networkTimeoutSeconds: 3, plugins: [only200] }),
+);
+
+// Engines + models: large, immutable, versioned by file name (board model: `?v=<trainedAt>`). Same cache the engine
 // registry downloads into, so Settings → "download" and the SW share one copy.
 registerRoute(
 	({ url, request }) => request.method === 'GET' && isEngineAsset(url, self.location.origin),

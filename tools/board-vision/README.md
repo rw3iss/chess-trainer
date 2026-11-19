@@ -71,7 +71,8 @@ cd tools/board-vision
 cd ../../apps/web && npx playwright test -c config/playwright.config.ts e2e/import-position.spec.ts --project=desktop
 ```
 
-Ship only if `heldOutStyles` beats the shipped model (0.9676) and the image e2e still passes; otherwise
+The app fetches the model as `pieces-v1.onnx?v=<trainedAt>` (from `pieces-v1.json`), so returning users get a
+new export without clearing the service-worker cache. Ship only if `heldOutStyles` beats the shipped model (0.9676) and the image e2e still passes; otherwise
 restore the model with `git checkout apps/web/public/models/board-vision/`.
 
 ## Synthetic data

@@ -39,10 +39,19 @@ export function isApiRequest(url: URL, method: string, swOrigin: string): boolea
 	return hasApiPrefix(path);
 }
 
+/**
+ * Small model info files (`/models/**.json`): NetworkFirst, so a new model export is seen at once.
+ * Model binaries are fetched with `?v=<trainedAt>` from this file, so their CacheFirst entry changes too.
+ */
+export function isModelInfo(url: URL, swOrigin: string): boolean {
+	return url.origin === swOrigin && url.pathname.startsWith('/models/') && url.pathname.endsWith('.json');
+}
+
 /** Large, immutable engine/model assets cached on first use (never precached). */
 export function isEngineAsset(url: URL, swOrigin: string): boolean {
 	if (url.origin === swOrigin) {
 		if (url.pathname.startsWith('/engines/')) return true;
+		if (isModelInfo(url, swOrigin)) return false;
 		if (url.pathname.startsWith('/models/')) return true;
 		return url.pathname.endsWith('.onnx') || /\/ort-wasm[^/]*\.wasm$/.test(url.pathname);
 	}

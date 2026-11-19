@@ -1,7 +1,7 @@
 import type { BoardRead } from './analyze';
 import type { BoardBox } from './grid';
 
-/** Piece classifier (tools/board-vision). Cached by the service worker on first use. */
+/** Piece classifier (tools/board-vision). Cached by the service worker on first use (see modelUrl). */
 export const MODEL_URL = '/models/board-vision/pieces-v1.onnx';
 export const MODEL_META_URL = '/models/board-vision/pieces-v1.json';
 
@@ -10,6 +10,13 @@ export interface ModelMeta {
 	/** Tile side in pixels (model input is [N, 3, inputSize, inputSize], RGB 0..1). */
 	inputSize: number;
 	classes: string[];
+	/** Export time (ISO); versions the model URL. */
+	trainedAt?: string;
+}
+
+/** Model URL for this export: `?v=<trainedAt>` busts the service worker's CacheFirst entry on a new model. */
+export function modelUrl(meta: Pick<ModelMeta, 'version' | 'trainedAt'>): string {
+	return `${MODEL_URL}?v=${encodeURIComponent(meta.trainedAt ?? String(meta.version))}`;
 }
 
 /** Result of reading a board image. */

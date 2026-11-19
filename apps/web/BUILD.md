@@ -184,7 +184,8 @@ Default `save`/`saveAs`/`fork`/`newGame`/`openBot` handlers live in `components/
 | `/data/notes*` | StaleWhileRevalidate | `data-notes` |
 | other `/data/*` | StaleWhileRevalidate | `data` |
 | other `/pieces/*` (non-default sets) | CacheFirst | `pieces` |
-| `/engines/*` (sf-full, maia vocab), `/models/*` (incl. the board-image model `models/board-vision/`), `*.onnx`, `ort-wasm*.wasm`, the pinned Maia-2 model URL | CacheFirst | `chess-engines-v1` (shared with `engine/assetStore`) |
+| `/engines/*` (sf-full, maia vocab), `/models/*` binaries (board-image model fetched as `pieces-v1.onnx?v=<trainedAt>`, so a new export gets a new entry), `*.onnx`, `ort-wasm*.wasm`, the pinned Maia-2 model URL | CacheFirst | `chess-engines-v1` (shared with `engine/assetStore`) |
+| `/models/**.json` (model info, e.g. `pieces-v1.json`) | NetworkFirst (3 s) | `model-info` |
 | server API GETs: `/health /openings /explorer /engines /auth/me /users/me /games /sessions` (any cross-origin host, or same-origin `/api/*`) | NetworkFirst, 3 s timeout, 200 only | `api` |
 | POST/PUT/DELETE, `/sync`, `/socket.io` | network only (never cached) | — |
 | Google Fonts CSS / files | SWR / CacheFirst | `google-fonts-css` / `google-fonts` |
