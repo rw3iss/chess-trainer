@@ -38,6 +38,7 @@ const Settings = lazy(() => import('@/pages/Settings/Settings'));
 const Play = lazy(() => import('@/pages/Play/Play'));
 const QuickPlay = lazy(() => import('@/pages/QuickPlay/QuickPlay'));
 const OpeningLink = lazy(() => import('@/pages/OpeningLink/OpeningLink'));
+const ResetPassword = lazy(() => import('@/pages/ResetPassword/ResetPassword'));
 const NotFound = lazy(() => import('@/pages/NotFound/NotFound'));
 
 export const ROUTES: AppRoute[] = [
@@ -51,6 +52,7 @@ export const ROUTES: AppRoute[] = [
 	{ path: '/settings/:section', component: Settings, layout: 'wide', title: 'Settings' },
 	{ path: '/play', component: QuickPlay, layout: 'panel', title: 'Play' },
 	{ path: '/play/:roomId', component: Play, layout: 'panel', title: 'Online game' },
+	{ path: '/reset-password', component: ResetPassword, layout: 'sheet', title: 'Reset password' },
 ];
 
 export const NOT_FOUND_ROUTE: AppRoute = { path: '*', component: NotFound, layout: 'panel', title: 'Not found' };

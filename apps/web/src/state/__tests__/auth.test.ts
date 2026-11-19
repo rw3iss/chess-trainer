@@ -15,6 +15,7 @@ import {
 	type AuthApi,
 	type StoredAuth,
 } from '@/state/auth';
+import type { AccountApi } from '@/services/api';
 import { freshRepositories } from './testDb';
 
 const URL_ = 'http://srv';
@@ -142,6 +143,70 @@ describe('auth store', () => {
 		expect(client.refresh).not.toHaveBeenCalled();
 		await vi.advanceTimersByTimeAsync(2);
 		expect(client.refresh).toHaveBeenCalledTimes(1);
+	});
+
+	describe('password + account', () => {
+		let account: { [K in keyof AccountApi]: ReturnType<typeof vi.fn<AccountApi[K]>> };
+		let tokensSeen: (string | null)[];
+
+		beforeEach(() => {
+			tokensSeen = [];
+			account = {
+				forgotPassword: vi.fn(async () => ({ sent: true })),
+				resetPassword: vi.fn(async () => tokens(++issued)),
+				changePassword: vi.fn(async () => tokens(++issued)),
+				account: vi.fn(async () => ({ ...owner, email: 'me@x.org' })),
+				updateAccount: vi.fn(async (req: { email?: string }) => ({ ...owner, email: req.email || null })),
+			};
+			configureAuth({ client: () => client, account: (_u, t) => (tokensSeen.push(t), account), serverUrl: () => URL_, now: () => now });
+		});
+
+		it('forgotPassword trims the identifier; maps 429 / 503 to readable errors', async () => {
+			await authActions.forgotPassword('  me@x.org ');
+			expect(account.forgotPassword).toHaveBeenCalledWith({ identifier: 'me@x.org' });
+			await expect(authActions.forgotPassword('  ')).rejects.toThrow('Enter your username or email.');
+			account.forgotPassword.mockRejectedValueOnce(new ApiRequestError('Too Many Requests', 429));
+			await expect(authActions.forgotPassword('me')).rejects.toThrow('Too many requests. Try again later.');
+			account.forgotPassword.mockRejectedValueOnce(new ApiRequestError('email is not configured', 503));
+			await expect(authActions.forgotPassword('me')).rejects.toThrow('Password reset by email is not set up on this server.');
+		});
+
+		it('resetPassword signs in with the returned tokens; a bad link reads clearly', async () => {
+			await expect(authActions.resetPassword('t', 'short')).rejects.toThrow(/at least 8/);
+			await authActions.resetPassword('t', 'long-enough');
+			expect(account.resetPassword).toHaveBeenCalledWith({ token: 't', password: 'long-enough' });
+			expect(isLoggedIn.value).toBe(true);
+			expect((kv.data.get(AUTH_SESSION_KEY) as StoredAuth).accessToken).toBe('access-1');
+			account.resetPassword.mockRejectedValueOnce(new ApiRequestError('invalid', 400));
+			await expect(authActions.resetPassword('t', 'long-enough')).rejects.toThrow(/invalid, used or expired/);
+		});
+
+		it('changePassword sends the bearer token and stores the new tokens; wrong current password reads clearly', async () => {
+			await expect(authActions.changePassword('a', 'long-enough')).rejects.toThrow('Sign in first.');
+			await authActions.login('owner', 'pw');
+			await authActions.changePassword('pw', 'long-enough');
+			expect(account.changePassword).toHaveBeenCalledWith({ currentPassword: 'pw', newPassword: 'long-enough' });
+			expect(tokensSeen.at(-1)).toBe('access-1');
+			expect(authUser.value).not.toBeNull();
+			expect((kv.data.get(AUTH_SESSION_KEY) as StoredAuth).accessToken).toBe('access-2');
+			account.changePassword.mockRejectedValueOnce(new ApiRequestError('Unauthorized', 401));
+			await expect(authActions.changePassword('bad', 'long-enough')).rejects.toThrow('The current password is wrong.');
+			expect(isLoggedIn.value).toBe(true);
+		});
+
+		it('updateEmail / loadAccount patch the stored user; 409 reads clearly', async () => {
+			await authActions.login('owner', 'pw');
+			await authActions.updateEmail(' new@x.org ');
+			expect(account.updateAccount).toHaveBeenCalledWith({ email: 'new@x.org' });
+			expect(authUser.value?.email).toBe('new@x.org');
+			expect((kv.data.get(AUTH_SESSION_KEY) as StoredAuth).user.email).toBe('new@x.org');
+			await authActions.updateEmail('');
+			expect(authUser.value?.email).toBeNull();
+			await authActions.loadAccount();
+			expect(authUser.value?.email).toBe('me@x.org');
+			account.updateAccount.mockRejectedValueOnce(new ApiRequestError('Conflict', 409));
+			await expect(authActions.updateEmail('taken@x.org')).rejects.toThrow('Another account already uses that email.');
+		});
 	});
 
 	it('roomToken uses the user token when signed in, else a cached guest token', async () => {

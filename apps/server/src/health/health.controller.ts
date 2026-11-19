@@ -8,6 +8,7 @@ import { Public } from '../common/decorators/public.decorator';
 import { EnginesService } from '../modules/engines/engines.service';
 import { ExplorerService } from '../modules/openings/explorer.service';
 import { UsersService } from '../modules/users/users.service';
+import { Mailer } from '../modules/mail';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pkg: { name: string; version: string } = require('../../package.json');
@@ -22,6 +23,7 @@ export class HealthController {
 		private readonly engines: EnginesService,
 		private readonly explorer: ExplorerService,
 		private readonly users: UsersService,
+		private readonly mailer: Mailer,
 	) {}
 
 	/**
@@ -41,6 +43,7 @@ export class HealthController {
 				engines: this.engines.anyAvailable,
 				rooms: true,
 				sync: true,
+				passwordReset: this.mailer.enabled,
 			},
 			uptime: process.uptime(),
 		};

@@ -7,7 +7,7 @@ import type { ApiClient } from './ApiClient';
 import { HttpApiAdapter } from './HttpApiAdapter';
 import { MockApiAdapter } from './MockApiAdapter';
 
-export type { ApiClient, RoomSummary } from './ApiClient';
+export type { AccountApi, ApiClient, RoomSummary, UpdateAccountRequest } from './ApiClient';
 export { ApiRequestError } from './ApiClient';
 export { HttpApiAdapter, type HttpApiOptions } from './HttpApiAdapter';
 
@@ -52,6 +52,11 @@ export const api: ApiClient = {
 	refresh: (t) => currentApi().refresh(t),
 	guest: (req) => currentApi().guest(req),
 	me: () => currentApi().me(),
+	forgotPassword: (req) => currentApi().forgotPassword(req),
+	resetPassword: (req) => currentApi().resetPassword(req),
+	changePassword: (req) => currentApi().changePassword(req),
+	account: () => currentApi().account(),
+	updateAccount: (req) => currentApi().updateAccount(req),
 	explorer: (fen, source) => currentApi().explorer(fen, source),
 	engines: () => currentApi().engines(),
 	sync: (req) => currentApi().sync(req),

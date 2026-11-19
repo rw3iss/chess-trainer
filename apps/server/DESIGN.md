@@ -6,7 +6,7 @@ The server is optional. Every feature must degrade cleanly: the client reads `GE
 
 - **Resources are nouns**: `/games`, `/sessions`, `/users/me`, `/engines`, `/openings/manifest`, `/explorer`. Actions that are not CRUD get their own noun (`/sync`, `/auth/login`).
 - **Envelope**: success `{ data, timestamp }`; error `{ error: { code, message, details?, timestamp, path } }` with `code` from `ErrorCode` (`UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `BAD_REQUEST`, `RATE_LIMITED`, …). Validation errors list fields in `details.fields`. Types: `ApiSuccess` / `ApiError` in `@chess/core`.
-- **Auth**: `Authorization: Bearer <accessToken>`. Access 15 min, refresh 30 days (`POST /auth/refresh`), guest 24 h (rooms only). Default for a new route: authenticated non-guest.
+- **Auth**: `Authorization: Bearer <accessToken>`. Access 15 min, refresh 30 days (`POST /auth/refresh`), guest 24 h (rooms only). Password reset/change ends older refresh tokens (`users.tokens_valid_after`). Default for a new route: authenticated non-guest.
 - **Pagination**: cursor-based. `?limit=` (1–200, default 50) + `?cursor=`; response `{ items, nextCursor }` (`null` at the end). Order: most recently changed first (`server_updated_at DESC, id DESC`); the cursor is opaque.
 - **Client documents** (`SavedGame`, `Session`): the client owns ids and the document shape (`@chess/core/game`). The server stores the whole object and only reads `id`, `revision`, `updatedAt`, `tree`.
   - `PUT /games/:id` is an upsert under **last-writer-wins**: higher `revision` wins; equal revision → later `updatedAt`; exact tie keeps the server copy. Response `{ accepted, current }` so the client can adopt the winner.

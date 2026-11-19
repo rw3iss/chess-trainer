@@ -13,7 +13,7 @@ Works fully offline. The server is optional and adds sync, live opening statisti
 - **Play** — the Play page starts a bot or 2-player game in two clicks (engine, Elo, colour, think time, clock, start position) and shows the live opening name and moves while you play.
 - **Local play + clocks** — 2 players on one device, time controls with increment/delay, clock placement and size options, tabletop mode.
 - **Themes** — 9 board themes (procedural wood/marble/slate/felt textures), 14 recolourable piece sets (incl. two originals, Lux and Sleek), theme editor to clone and recolour anything, light/dark app theme with accent colour, optional board shadow (a soft dark halo around the board, optional extra top/bottom over the player rows; color, opacity, size and extra top/bottom are adjustable).
-- **Server (optional)** — auth, sync across devices, Lichess explorer proxy, native engines, online rooms with chat.
+- **Server (optional)** — auth (password change, reset link by email through a swappable mail provider — Resend by default), sync across devices, Lichess explorer proxy, native engines, online rooms with chat. Accounts roadmap: [docs/plan/ACCOUNTS.md](docs/plan/ACCOUNTS.md).
 
 ## Quick start
 

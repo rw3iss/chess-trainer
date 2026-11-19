@@ -2,17 +2,20 @@
 // and map `{ error }` bodies to ApiRequestError.
 import type {
 	AuthTokens,
+	ChangePasswordRequest,
 	ExplorerResult,
 	ExplorerSource,
+	ForgotPasswordRequest,
 	GuestTokenRequest,
 	HealthDto,
 	LoginRequest,
 	RemoteEngineDto,
+	ResetPasswordRequest,
 	SyncRequest,
 	SyncResponse,
 	UserDto,
 } from '@chess/core/protocol';
-import { ApiRequestError, type ApiClient, type RoomSummary } from './ApiClient';
+import { ApiRequestError, type ApiClient, type RoomSummary, type UpdateAccountRequest } from './ApiClient';
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 
@@ -100,6 +103,21 @@ export class HttpApiAdapter implements ApiClient {
 	}
 	me(): Promise<UserDto> {
 		return this.request('GET', '/auth/me');
+	}
+	forgotPassword(req: ForgotPasswordRequest): Promise<{ sent: boolean }> {
+		return this.request('POST', '/auth/password/forgot', req);
+	}
+	resetPassword(req: ResetPasswordRequest): Promise<AuthTokens> {
+		return this.request('POST', '/auth/password/reset', req);
+	}
+	changePassword(req: ChangePasswordRequest): Promise<AuthTokens> {
+		return this.request('POST', '/auth/password/change', req);
+	}
+	account(): Promise<UserDto> {
+		return this.request('GET', '/users/me');
+	}
+	updateAccount(req: UpdateAccountRequest): Promise<UserDto> {
+		return this.request('PATCH', '/users/me', req);
 	}
 	explorer(fen: string, source: ExplorerSource = 'lichess'): Promise<ExplorerResult> {
 		const q = new URLSearchParams({ fen, source });

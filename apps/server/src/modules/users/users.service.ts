@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'crypto';
@@ -24,7 +24,11 @@ export class UsersService implements OnApplicationBootstrap {
 			this.logger.warn('OWNER_USERNAME / OWNER_PASSWORD not set — no owner account (only guest tokens work)');
 			return;
 		}
-		await this.upsertOwner(username, password);
+		const owner = await this.upsertOwner(username, password);
+		const email = this.config.get<string>('auth.ownerEmail');
+		if (email && owner.email !== email) {
+			await this.update(owner.id, { email }).catch((e: unknown) => this.logger.warn(`OWNER_EMAIL not applied: ${e instanceof Error ? e.message : String(e)}`));
+		}
 	}
 
 	async upsertOwner(rawUsername: string, password: string): Promise<UserEntity> {
@@ -44,6 +48,8 @@ export class UsersService implements OnApplicationBootstrap {
 			displayName: username,
 			passwordHash: await argon2.hash(password),
 			role: 'owner',
+			email: null,
+			tokensValidAfter: 0,
 			preferences: null,
 			createdAt: now,
 			updatedAt: now,
@@ -55,6 +61,28 @@ export class UsersService implements OnApplicationBootstrap {
 	/** Looks up a user by username (case-insensitive: usernames are stored lower-case). */
 	findByUsername(username: string): Promise<UserEntity | null> {
 		return this.repo.findOne({ where: { username: username.trim().toLowerCase() } });
+	}
+
+	/** Looks up a user by email (stored lower-case). */
+	findByEmail(email: string): Promise<UserEntity | null> {
+		return this.repo.findOne({ where: { email: email.trim().toLowerCase() } });
+	}
+
+	/** Username or email (anything with '@' is treated as an email). */
+	findByIdentifier(identifier: string): Promise<UserEntity | null> {
+		return identifier.includes('@') ? this.findByEmail(identifier) : this.findByUsername(identifier);
+	}
+
+	/**
+	 * Sets a new password and signs out every session: refresh tokens issued before now are refused.
+	 * (Access tokens live at most JWT_ACCESS_TTL.) Returns the saved user.
+	 */
+	async setPassword(user: UserEntity, password: string): Promise<UserEntity> {
+		user.passwordHash = await argon2.hash(password);
+		// Tokens issued in this same second stay valid (iat has 1 s resolution); the caller issues fresh ones next.
+		user.tokensValidAfter = Math.floor(Date.now() / 1000);
+		user.updatedAt = Date.now();
+		return this.repo.save(user);
 	}
 
 	async findById(id: string): Promise<UserEntity> {
@@ -77,15 +105,24 @@ export class UsersService implements OnApplicationBootstrap {
 		return this.repo.count();
 	}
 
-	async update(id: string, patch: { displayName?: string; preferences?: Record<string, unknown> }): Promise<UserEntity> {
+	/** `email`: '' or null clears it; 409 when another account uses it. */
+	async update(id: string, patch: { displayName?: string; preferences?: Record<string, unknown>; email?: string | null }): Promise<UserEntity> {
 		const user = await this.findById(id);
 		if (patch.displayName !== undefined) user.displayName = patch.displayName;
+		if (patch.email !== undefined) {
+			const email = patch.email ? patch.email.trim().toLowerCase() : null;
+			if (email && email !== user.email) {
+				const other = await this.findByEmail(email);
+				if (other && other.id !== user.id) throw new ConflictException('that email is used by another account');
+			}
+			user.email = email;
+		}
 		if (patch.preferences !== undefined) user.preferences = patch.preferences;
 		user.updatedAt = Date.now();
 		return this.repo.save(user);
 	}
 
 	toDto(user: UserEntity): UserDto {
-		return { id: user.id, username: user.username, displayName: user.displayName, role: user.role };
+		return { id: user.id, username: user.username, displayName: user.displayName, role: user.role, email: user.email ?? null };
 	}
 }

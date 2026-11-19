@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
 import { bigintNumber } from '../../../database/transformers';
 
 @Entity('users')
@@ -17,6 +17,15 @@ export class UserEntity {
 
 	@Column({ type: 'varchar', length: 16 })
 	role!: 'owner' | 'user';
+
+	/** Lower-cased; for password reset links. Unique when set. */
+	@Index('uq_users_email', { unique: true })
+	@Column({ type: 'varchar', length: 254, nullable: true })
+	email!: string | null;
+
+	/** Epoch seconds. Refresh tokens issued before this are refused (set on password change / reset). */
+	@Column({ name: 'tokens_valid_after', type: 'bigint', default: 0, transformer: bigintNumber })
+	tokensValidAfter!: number;
 
 	/** Free-form client preferences (synced settings). */
 	@Column({ type: 'simple-json', nullable: true })

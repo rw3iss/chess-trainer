@@ -120,6 +120,38 @@
 		}
 	}
 
+	// Stacked form inside a card (forgot / change password).
+	&__subform {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-3);
+	}
+
+	// Input + button on one row (email).
+	&__inline-form {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: start;
+		gap: var(--space-2);
+	}
+
+	&__actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-2);
+	}
+
+	&__notice {
+		margin: 0;
+		padding: var(--space-2) var(--space-3);
+		border-radius: var(--radius-md);
+		background: var(--color-accent-soft);
+		color: var(--color-text);
+		font-size: var(--text-sm);
+		line-height: 1.5;
+	}
+
 	&__user {
 		display: flex;
 		align-items: center;

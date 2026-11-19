@@ -1,7 +1,7 @@
 # CLAUDE.md — chess
 
 Chess openings learning PWA (phone + desktop) with an optional NestJS server.
-Master plan: `docs/plan/PLAN.md`. Architecture: `docs/architecture.md`. Core API contract: `packages/core/API.md`.
+Master plan: `docs/plan/PLAN.md`. Accounts plan (sign-up, recovery, linked sign-in): `docs/plan/ACCOUNTS.md`. Architecture: `docs/architecture.md`. Core API contract: `packages/core/API.md`.
 
 ## Layout
 - `apps/web` — Preact + TS + SCSS PWA. Rules: `apps/web/BUILD.md`, `apps/web/DESIGN.md`, reuse manifest `apps/web/COMPONENT_INDEX.md`.

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { PASSWORD_MIN_LENGTH } from '@chess/core';
 import { IsString, Length } from 'class-validator';
 
 export class LoginDto {
@@ -31,4 +32,35 @@ export interface GuestTokenResponse {
 	accessToken: string;
 	expiresIn: number;
 	user: { id: string; username: string; displayName: string; role: 'guest' };
+}
+
+export class ForgotPasswordDto {
+	@ApiProperty({ example: 'owner', description: 'Username or email.' })
+	@IsString()
+	@Length(1, 254)
+	identifier!: string;
+}
+
+export class ResetPasswordDto {
+	@ApiProperty({ description: 'Token from the reset email link.' })
+	@IsString()
+	@Length(16, 256)
+	token!: string;
+
+	@ApiProperty({ minLength: PASSWORD_MIN_LENGTH })
+	@IsString()
+	@Length(PASSWORD_MIN_LENGTH, 256)
+	password!: string;
+}
+
+export class ChangePasswordDto {
+	@ApiProperty()
+	@IsString()
+	@Length(1, 256)
+	currentPassword!: string;
+
+	@ApiProperty({ minLength: PASSWORD_MIN_LENGTH })
+	@IsString()
+	@Length(PASSWORD_MIN_LENGTH, 256)
+	newPassword!: string;
 }

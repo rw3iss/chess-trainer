@@ -11,6 +11,7 @@ import { OpeningsModule } from './modules/openings/openings.module';
 import { GamesModule } from './modules/games/games.module';
 import { EnginesModule } from './modules/engines/engines.module';
 import { RoomsModule } from './modules/rooms/rooms.module';
+import { MailModule } from './modules/mail/mail.module';
 
 // Root module. Feature modules go under src/modules/ and are imported here
 // (keep this import list flat — no transitive module graphs).
@@ -19,6 +20,7 @@ import { RoomsModule } from './modules/rooms/rooms.module';
 		ConfigModule,
 		DatabaseModule,
 		CacheModule,
+		MailModule,
 		HealthModule,
 		AuthModule,
 		UsersModule,

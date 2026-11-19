@@ -3,12 +3,15 @@
 // renders realistic data without a backend (build-skill mock-layer rule).
 import type {
 	AuthTokens,
+	ChangePasswordRequest,
 	ExplorerResult,
 	ExplorerSource,
+	ForgotPasswordRequest,
 	GuestTokenRequest,
 	HealthDto,
 	LoginRequest,
 	RemoteEngineDto,
+	ResetPasswordRequest,
 	SyncRequest,
 	SyncResponse,
 	UserDto,
@@ -18,7 +21,7 @@ import userFixture from '@/mock/data/user.json';
 import explorerFixture from '@/mock/data/explorer.json';
 import enginesFixture from '@/mock/data/engines.json';
 import roomsFixture from '@/mock/data/rooms.json';
-import type { ApiClient, RoomSummary } from './ApiClient';
+import type { ApiClient, RoomSummary, UpdateAccountRequest } from './ApiClient';
 
 const LATENCY_MS = 120;
 
@@ -49,6 +52,22 @@ export class MockApiAdapter implements ApiClient {
 	}
 	me(): Promise<UserDto> {
 		return delay(userFixture as UserDto, this.latencyMs);
+	}
+	forgotPassword(_req: ForgotPasswordRequest): Promise<{ sent: boolean }> {
+		return delay({ sent: true }, this.latencyMs);
+	}
+	resetPassword(_req: ResetPasswordRequest): Promise<AuthTokens> {
+		return delay(tokens(userFixture as UserDto), this.latencyMs);
+	}
+	changePassword(_req: ChangePasswordRequest): Promise<AuthTokens> {
+		return delay(tokens(userFixture as UserDto), this.latencyMs);
+	}
+	account(): Promise<UserDto> {
+		return delay({ email: null, ...(userFixture as UserDto) }, this.latencyMs);
+	}
+	updateAccount(req: UpdateAccountRequest): Promise<UserDto> {
+		const { email, ...rest } = req;
+		return delay({ ...(userFixture as UserDto), ...rest, email: email === undefined ? null : email || null }, this.latencyMs);
 	}
 	explorer(fen: string, source: ExplorerSource = 'lichess'): Promise<ExplorerResult> {
 		return delay({ ...(explorerFixture as ExplorerResult), fen, source }, this.latencyMs);

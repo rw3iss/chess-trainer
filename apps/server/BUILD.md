@@ -45,7 +45,10 @@ Inject `CacheService` (`get` / `set(key, value, ttlSeconds)` / `del` / `ping`, `
 
 - Global `JwtAuthGuard` (APP_GUARD): every HTTP route needs a Bearer access token unless `@Public()` / `@PublicIf('config.key')`. Guest tokens are refused unless the route has `@AllowGuest()`.
 - Token types via the `typ` claim: `access`, `refresh` (only `/auth/refresh`), `guest`. Gateways call `AuthService.authenticate(handshakeToken(socket))` in `handleConnection` and disconnect on failure.
-- Owner account is seeded from `OWNER_USERNAME` / `OWNER_PASSWORD` at boot (argon2); env is the source of truth.
+- Owner account is seeded from `OWNER_USERNAME` / `OWNER_PASSWORD` at boot (argon2); env is the source of truth. `OWNER_EMAIL` sets its email.
+- Email goes through the `Mailer` port (`src/modules/mail`): `ResendMailer`, `MemoryMailer` (dev/tests outbox), `DisabledMailer`, picked by `MAIL_PROVIDER` in `createMailer`. Add a provider = implement `Mailer` + one `case`; callers never change. Templates are pure functions in `mail/templates/`.
+- Password reset: hashed single-use tokens (`password_resets`), 202 for every request (no enumeration), rate limits in `CacheService`. A reset or change sets `users.tokens_valid_after`; `/auth/refresh` refuses older refresh tokens (access tokens expire within `JWT_ACCESS_TTL`).
+- `trust proxy` = loopback (nginx on the host), so `@Ip()` is the real client IP.
 
 ## Engine processes
 

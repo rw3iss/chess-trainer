@@ -62,6 +62,14 @@ All variables are validated by Joi at boot (`src/config/env.validation.ts`). The
 | `JWT_SECRET` | random per process | **required in production** (≥16 chars) |
 | `JWT_ACCESS_TTL` / `JWT_REFRESH_TTL` / `GUEST_TTL` | `900` / `2592000` / `86400` | seconds |
 | `OWNER_USERNAME`, `OWNER_PASSWORD` | `owner` / — | owner account, created or re-hashed at boot (no account when the password is unset) |
+| `OWNER_EMAIL` | — | owner's email for reset links (applied at boot; also editable in the app) |
+| `PASSWORD_RESET_TTL` | `3600` | seconds a reset link works |
+| `MAIL_PROVIDER` | `resend` with a key, else `memory` (dev) / `none` (production) | `resend` · `memory` (outbox + log, sends nothing) · `none` (reset by email off → 503) |
+| `MAIL_FROM` | `Chess Trainer <noreply@ryanweiss.net>` | must be on a domain the provider verified |
+| `MAIL_REPLY_TO` | — | optional reply-to address |
+| `RESEND_API_KEY` | — | Resend key (a "sending access" key is enough). Secret: server env only |
+| `APP_PUBLIC_URL` | `http://localhost:5173` | web app URL used in email links (`/reset-password?token=…`) |
+| `APP_NAME` | `Chess Trainer` | name in email text |
 | `DATA_DIR` | `../web/public/data` | openings dataset (from `tools/openings-data`) |
 | `LICHESS_TOKEN` | — | enables `/explorer` (Lichess now requires a token) |
 | `EXPLORER_BASE_URL` | `https://explorer.lichess.org` | |
@@ -92,7 +100,10 @@ Success: `{ data, timestamp }`. Error: `{ error: { code, message, details?, time
 | POST | `/auth/refresh` | public | `{ refreshToken }` → new `AuthTokens` |
 | POST | `/auth/guest` | public | `{ displayName }` → guest access token (rooms) |
 | GET | `/auth/me` | user or guest | current principal (`UserDto`) |
-| GET / PATCH | `/users/me` | user | profile + synced `preferences` blob |
+| POST | `/auth/password/forgot` | public | `{ identifier }` (username or email) → 202 `{ sent: true }` always; emails a single-use link; 429 rate limited (3/h per account, 10/h per IP); 503 no mail provider |
+| POST | `/auth/password/reset` | public | `{ token, password }` → `AuthTokens`; 400 invalid/used/expired; ends other sessions |
+| POST | `/auth/password/change` | user | `{ currentPassword, newPassword }` → `AuthTokens`; 401 wrong current; ends other sessions |
+| GET / PATCH | `/users/me` | user | profile (`displayName`, `email` — `''` clears; 409 if taken) + synced `preferences` blob |
 | GET | `/openings/manifest` | public | `DATA_DIR/manifest.json` |
 | GET | `/openings/data/:file` | public | dataset files with ETag; hashed files cached immutable |
 | GET | `/explorer?fen=&source=lichess\|masters` | user (or public with `EXPLORER_PUBLIC`) | Lichess explorer → `ExplorerResult` |

@@ -8,6 +8,7 @@ import authConfig from './loaders/auth.config';
 import openingsConfig from './loaders/openings.config';
 import enginesConfig from './loaders/engines.config';
 import roomsConfig from './loaders/rooms.config';
+import mailConfig from './loaders/mail.config';
 
 /**
  * Global config module.
@@ -27,7 +28,7 @@ import roomsConfig from './loaders/rooms.config';
 			isGlobal: true,
 			cache: true,
 			envFilePath: process.env.NODE_ENV === 'test' ? [] : ['.env', '../../.env'],
-			load: [appConfig, databaseConfig, redisConfig, authConfig, openingsConfig, enginesConfig, roomsConfig],
+			load: [appConfig, databaseConfig, redisConfig, authConfig, openingsConfig, enginesConfig, roomsConfig, mailConfig],
 			validationSchema: envValidationSchema,
 			validationOptions: {
 				allowUnknown: true,

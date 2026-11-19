@@ -20,6 +20,7 @@ Add a row for every new page, shared component, hook, utility, store, service or
 | LazySection | `src/pages/Settings/LazySection.tsx` | mounts another feature's section via `import.meta.glob` with a fallback (Engines, Server) | optional cross-feature UI |
 | dataTransfer | `src/pages/Settings/sections/dataTransfer.ts` | `buildBackup` / `parseBackup` / `restoreBackup` (all repos as one JSON), `clearRuntimeCaches`, `storageEstimate`, `formatBytes`, `fetchDatasetManifest` | backups |
 | Play | `src/pages/Play/` | `/play/new` lobby · `/play/:roomId` room (join gate, unavailable state) | built |
+| ResetPassword | `src/pages/ResetPassword/` | `/reset-password?token=…` — the reset-email link: new password + confirm → `authActions.resetPassword` (signs in) → `/settings/server`; no token → message + sign-in link | built, layout `sheet` |
 | NotFound | `src/pages/NotFound/` | default route | built |
 | PagePlaceholder | `src/pages/PagePlaceholder.tsx` | heading + "coming soon" EmptyState for unbuilt pages | delete usages as pages land |
 
@@ -113,7 +114,7 @@ Routes + layouts + panel tabs: `src/app/routes.ts`.
 | OpeningVariations | feature | `src/components/openings/OpeningVariations.tsx` | Moves-panel section, live with manual moves: "Built on" chain (+ "custom +N" crumb) + openings that continue from the line's end (`OpeningIndex.nextOpenings`; "Variations" / "Next openings", expandable, popularity from the selected stats provider; out-of-book note); click loads; "Keep position" switch (UI setting `openings.keepPosition`, default on) steps the loaded line to the current position, plus its next move when at the line's end (`keptPly`); "Flip board" switch (UI setting `openings.flipBoard`, default on; off keeps the board orientation on load) (registered into `movesSlots.afterList`) | — |
 | lineStatus / sessionLineStatus / openingTitle | util | `src/components/openings/lineStatus.ts` | where a line stands vs the book (base opening, own moves past it, in book); opening-session title ("<name>" / "<name> (custom)"), kept in sync by `registerOpeningsFeature` while the title is automatic | OpeningVariations, title sync |
 | movesSlots | util | `src/components/moves/movesSlots.ts` | `afterList` slot under the Moves panel move list | add Moves panel sections |
-| ServerSettingsSection | feature | `src/components/server/` | Settings → Server: URL + status badge + Check, sign-in / account + sign out, sync toggle + status + Sync now, guest name. Lazy: `import('@/components/server')` (named + default export) | server/account UI |
+| ServerSettingsSection | feature | `src/components/server/` | Settings → Server: URL + status badge + Check, sign-in / account + sign out, email + change password (`AccountForms.tsx`), "Forgot password?" (only when `health.features.passwordReset`), sync toggle + status + Sync now, guest name. Lazy: `import('@/components/server')` (named + default export) | server/account UI |
 | OpeningRow / FamilyRow | feature | `src/components/openings/OpeningRow.tsx` | fixed-height (`OPENING_ROW_HEIGHT` 64) opening row: ★, name, ECO chip, SAN preview, popularity + W/D/L mini bars (selected stats provider; tooltip names it), side dot; collapsible family header | opening lists |
 | OpeningPreview / LineMoves | feature | `src/components/openings/OpeningPreview.tsx` | preview of a line (never touches sessions): mini board, clickable moves, scrubber, Load / Fork here / ★ / Details; `layout` card or inline | any opening preview |
 | PlyScrubber | feature | `src/components/openings/PlyScrubber.tsx` | step + range scrubber over a SAN line (`full` / `compact`) | line steppers |
@@ -160,14 +161,14 @@ Routes + layouts + panel tabs: `src/app/routes.ts`.
 | openingIdentity | `state/openingIdentity.ts` | `openingIdentifier` | `setOpeningIdentifier` |
 | openings | `state/openings.ts` | `openingIndex` (`OpeningIndex \| null`), `openingsReady`, `openingsStatus`, `openingsError`, `openingsManifest`, `openingFamilies`, `recentOpeningIds`, `openingSearch()`, `openingById` | `loadOpenings` (idempotent; boot starts it ~300 ms after paint, then sets the opening identifier), `retryLoadOpenings`, `loadDatasetNote(fen)`, `markOpeningViewed`, `clearRecentOpenings` |
 | engines | `state/engines.ts` | `engineEntries`, `availableEngines`, `engineEntry`, `downloads`, `analysisPrefs`, `analysisEngineId`, `analysis`, `analysisStatus`, `analysisError`, `isBotThinking`, `botError`, `botTip`, `isAtBotTip`, `getEngineRegistry` | `enginesActions.refresh/download/cancelDownload/remove/importMaia/setDefault`, `analysisActions.setEnabled/toggle/setMultiPv/setEngine`, `botActions.attach/detach/takeback/takebackPlies/updateConfig`, `setEngineRegistry` (tests) |
-| auth | `state/auth.ts` | `authUser`, `isLoggedIn`, `authBusy`, `authError`, `guestName`, `displayName`, `accessToken()` | `authActions.login/logout/refresh/ensureAccessToken/roomToken/setGuestName/clearError`, `configureAuth` (tests) |
+| auth | `state/auth.ts` | `authUser`, `isLoggedIn`, `authBusy`, `authError`, `guestName`, `displayName`, `accessToken()` | `authActions.login/logout/refresh/ensureAccessToken/roomToken/setGuestName/clearError/forgotPassword/resetPassword/changePassword/updateEmail/loadAccount` (account calls reject with user-facing messages, `accountErrorMessage`), `configureAuth` (tests: `client`, `account`) |
 
 ## Services
 
 | Name | Path | Purpose | Reuse for |
 |---|---|---|---|
 | repositories | `src/services/db` | `getRepositories()` / `setRepositories()`; Sessions/SavedGames/Favorites/Themes/Notes/Settings/Kv interfaces + Dexie impl (`ChessDb`) | all persisted local data |
-| api | `src/services/api` | `api` (delegates Http ↔ Mock by server status), `ApiClient`, `HttpApiAdapter`, `MockApiAdapter`, `ApiRequestError`, `setAuthTokenProvider`, `apiKind` | server-only data |
+| api | `src/services/api` | `api` (delegates Http ↔ Mock by server status), `ApiClient` (+ `AccountApi`: forgot/reset/change password, `account`, `updateAccount`), `HttpApiAdapter`, `MockApiAdapter`, `ApiRequestError`, `setAuthTokenProvider`, `apiKind` | server-only data |
 | mock fixtures | `src/mock/data/*.json` | health, user, explorer, engines, rooms | MockApiAdapter |
 | serverConnector | `src/services/server` | probe `/health`; `status`, `url`, `health`, `networkOnline`, `isOnline`; `start/configure/probe/stop` | feature gating |
 | sync | `src/services/sync` | `SyncService` (DI'd /sync push + LWW merge + tombstones), app `syncService`, `startSync/stopSync/syncNow`, `syncStatus`, `lastSyncAt`, `lastSyncError`; pure `lwwWinner`, `mergeSync`, `mergeKind` | server sync of saved games + sessions |

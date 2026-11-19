@@ -14,4 +14,6 @@ export default registerAs('auth', () => ({
 	// Username defaults to 'owner' when only a password is given (e.g. container env).
 	ownerUsername: process.env.OWNER_USERNAME || (process.env.OWNER_PASSWORD ? 'owner' : undefined),
 	ownerPassword: process.env.OWNER_PASSWORD || undefined,
+	ownerEmail: process.env.OWNER_EMAIL?.trim().toLowerCase() || undefined,
+	passwordResetTtl: parseInt(process.env.PASSWORD_RESET_TTL ?? '3600', 10),
 }));

@@ -4,12 +4,15 @@
 // depend on this interface only; the concrete adapter is chosen in ./index.ts.
 import type {
 	AuthTokens,
+	ChangePasswordRequest,
 	ExplorerResult,
 	ExplorerSource,
+	ForgotPasswordRequest,
 	GuestTokenRequest,
 	HealthDto,
 	LoginRequest,
 	RemoteEngineDto,
+	ResetPasswordRequest,
 	RoomState,
 	SyncRequest,
 	SyncResponse,
@@ -25,7 +28,26 @@ export interface RoomSummary {
 	inProgress: boolean;
 }
 
-export interface ApiClient {
+/** PATCH /users/me body ('' email clears it). */
+export interface UpdateAccountRequest {
+	displayName?: string;
+	email?: string;
+}
+
+/** Password + account endpoints (signed-in calls send the bearer token). */
+export interface AccountApi {
+	/** Always resolves `{ sent: true }` for unknown accounts too (no enumeration). */
+	forgotPassword(req: ForgotPasswordRequest): Promise<{ sent: boolean }>;
+	/** Single-use reset link token → signed in. */
+	resetPassword(req: ResetPasswordRequest): Promise<AuthTokens>;
+	/** Signed in: new tokens (other sessions are signed out). */
+	changePassword(req: ChangePasswordRequest): Promise<AuthTokens>;
+	/** GET /users/me (includes email). */
+	account(): Promise<UserDto>;
+	updateAccount(req: UpdateAccountRequest): Promise<UserDto>;
+}
+
+export interface ApiClient extends AccountApi {
 	/** Which adapter is active — 'mock' when the server is offline/unconfigured. */
 	readonly kind: 'http' | 'mock';
 	health(): Promise<HealthDto>;

@@ -14,6 +14,27 @@ describe('HttpApiAdapter', () => {
 		expect((init.headers as Record<string, string>).Authorization).toBe('Bearer tok');
 	});
 
+	it('password + account endpoints: paths, methods and bodies', async () => {
+		const calls: { url: string; method: string; body?: unknown }[] = [];
+		const fetchImpl = vi.fn(async (url: string, init: RequestInit) => {
+			calls.push({ url, method: init.method!, body: init.body ? JSON.parse(init.body as string) : undefined });
+			return new Response(JSON.stringify({ data: { ok: 1 } }), { status: 200 });
+		}) as unknown as typeof fetch;
+		const api = new HttpApiAdapter({ baseUrl: 'http://srv', getToken: () => 'tok', fetchImpl });
+		await api.forgotPassword({ identifier: 'me@x.org' });
+		await api.resetPassword({ token: 't1', password: 'new-pass-1' });
+		await api.changePassword({ currentPassword: 'a', newPassword: 'b' });
+		await api.account();
+		await api.updateAccount({ email: '' });
+		expect(calls).toEqual([
+			{ url: 'http://srv/auth/password/forgot', method: 'POST', body: { identifier: 'me@x.org' } },
+			{ url: 'http://srv/auth/password/reset', method: 'POST', body: { token: 't1', password: 'new-pass-1' } },
+			{ url: 'http://srv/auth/password/change', method: 'POST', body: { currentPassword: 'a', newPassword: 'b' } },
+			{ url: 'http://srv/users/me', method: 'GET', body: undefined },
+			{ url: 'http://srv/users/me', method: 'PATCH', body: { email: '' } },
+		]);
+	});
+
 	it('maps { error } bodies to ApiRequestError', async () => {
 		const fetchImpl = vi.fn(
 			async () => new Response(JSON.stringify({ error: { code: 'unauthorized', message: 'Nope', timestamp: 't', path: '/auth/me' } }), { status: 401 }),
@@ -32,5 +53,8 @@ describe('MockApiAdapter', () => {
 		const ex = await mock.explorer('fen-x', 'masters');
 		expect(ex).toMatchObject({ fen: 'fen-x', source: 'masters' });
 		expect((await mock.login({ username: 'me', password: 'x' })).user.username).toBe('me');
+		expect(await mock.forgotPassword({ identifier: 'me' })).toEqual({ sent: true });
+		expect((await mock.updateAccount({ email: 'a@b.c' })).email).toBe('a@b.c');
+		expect((await mock.updateAccount({ email: '' })).email).toBeNull();
 	});
 });

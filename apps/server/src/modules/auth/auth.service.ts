@@ -36,6 +36,9 @@ export class AuthService {
 		const user = await this.users.findById(claims.sub).catch(() => {
 			throw new UnauthorizedException('user no longer exists');
 		});
+		// Password changed / reset since this token was issued → signed out.
+		const iat = (claims as TokenClaims & { iat?: number }).iat ?? 0;
+		if (iat < (user.tokensValidAfter ?? 0)) throw new UnauthorizedException('session ended — sign in again');
 		return this.issueTokens(user);
 	}
 
@@ -68,6 +71,11 @@ export class AuthService {
 	async authenticate(token: string | undefined): Promise<AuthUser> {
 		if (!token) throw new UnauthorizedException('missing token');
 		return claimsToUser(await this.verify(token));
+	}
+
+	/** Fresh access + refresh pair for a user (after a password reset / change). */
+	tokensFor(user: UserEntity): Promise<AuthTokens> {
+		return this.issueTokens(user);
 	}
 
 	private async issueTokens(user: UserEntity): Promise<AuthTokens> {

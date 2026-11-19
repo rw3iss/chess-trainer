@@ -23,7 +23,8 @@ export interface HealthDto {
 	name: string;
 	version: string;
 	protocol: typeof PROTOCOL_VERSION;
-	features: { auth: boolean; explorer: boolean; engines: boolean; rooms: boolean; sync: boolean };
+	/** `passwordReset`: the server can email reset links (a mail provider is configured). Optional for older servers. */
+	features: { auth: boolean; explorer: boolean; engines: boolean; rooms: boolean; sync: boolean; passwordReset?: boolean };
 }
 
 export interface LoginRequest {
@@ -44,6 +45,32 @@ export interface UserDto {
 	username: string;
 	displayName: string;
 	role: 'owner' | 'user' | 'guest';
+	/** Account email (password reset links). Only on account endpoints (/users/me, login, refresh); never for guests. */
+	email?: string | null;
+}
+
+/** Minimum password length (server-enforced; the client checks it first). */
+export const PASSWORD_MIN_LENGTH = 8;
+
+/**
+ * POST /auth/password/forgot (public). `identifier` = username or email. Always 202 `{ sent: true }`
+ * (no account enumeration); 429 when rate limited; 503 when the server has no mail provider.
+ * The email links to `<APP_PUBLIC_URL>/reset-password?token=…` (valid 1 h, single use).
+ */
+export interface ForgotPasswordRequest {
+	identifier: string;
+}
+
+/** POST /auth/password/reset (public) → AuthTokens (signed in). 400 for an invalid, used or expired token. Signs out every other session. */
+export interface ResetPasswordRequest {
+	token: string;
+	password: string;
+}
+
+/** POST /auth/password/change (signed in) → AuthTokens. 401 when currentPassword is wrong. Signs out every other session. */
+export interface ChangePasswordRequest {
+	currentPassword: string;
+	newPassword: string;
 }
 
 export interface GuestTokenRequest {

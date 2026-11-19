@@ -2,6 +2,8 @@
 //
 // Read:   authUser, isLoggedIn, authBusy, authError, guestName, accessToken()
 // Write:  authActions.login / logout / refresh / setGuestName
+//         authActions.forgotPassword / resetPassword / changePassword / updateEmail / loadAccount
+//           (reject with an Error whose message is user-facing; see accountErrorMessage)
 //         authActions.ensureAccessToken()  → fresh user token (refreshes when < 60 s left)
 //         authActions.roomToken()          → user token, else a guest token (rooms only)
 //
@@ -10,9 +12,9 @@
 // setUnauthorizedHandler in services/api). Auth calls go straight to the HTTP
 // adapter for the configured server — never to the mock adapter.
 import { computed, signal } from '@preact/signals';
-import type { AuthTokens, UserDto } from '@chess/core/protocol';
+import { PASSWORD_MIN_LENGTH, type AuthTokens, type UserDto } from '@chess/core/protocol';
 import { getRepositories } from '@/services/db';
-import { ApiRequestError, HttpApiAdapter, setAuthTokenProvider, setUnauthorizedHandler } from '@/services/api';
+import { ApiRequestError, HttpApiAdapter, setAuthTokenProvider, setUnauthorizedHandler, type AccountApi } from '@/services/api';
 import { serverConnector } from '@/services/server';
 import { defineStore } from './registry';
 
@@ -42,6 +44,8 @@ export interface AuthApi {
 export interface AuthDeps {
 	/** Client for the given server URL (default: HttpApiAdapter without auth header). */
 	client: (url: string) => AuthApi;
+	/** Password + account client; `token` = bearer for signed-in calls (no 401 auto-refresh: a 401 there means a wrong password). */
+	account: (url: string, token: string | null) => AccountApi;
 	/** Current server URL, or null when none is configured. */
 	serverUrl: () => string | null;
 	now: () => number;
@@ -49,6 +53,7 @@ export interface AuthDeps {
 
 const defaultDeps: AuthDeps = {
 	client: (url) => new HttpApiAdapter({ baseUrl: url }),
+	account: (url, token) => new HttpApiAdapter({ baseUrl: url, getToken: () => token }),
 	serverUrl: () => serverConnector.url.value,
 	now: () => Date.now(),
 };
@@ -104,6 +109,40 @@ function errorMessage(e: unknown): string {
 		return e.message;
 	}
 	return e instanceof Error ? e.message : String(e);
+}
+
+type AccountAction = 'forgot' | 'reset' | 'change' | 'email' | 'load';
+
+/** User-facing message for a failed password / account call. */
+export function accountErrorMessage(action: AccountAction, e: unknown): string {
+	if (e instanceof ApiRequestError) {
+		if (e.status === 0) return e.code === 'unconfigured' ? 'Connect to a server first.' : 'Server unreachable.';
+		if (e.status === 429) return 'Too many requests. Try again later.';
+		if (e.status === 503 && action === 'forgot') return 'Password reset by email is not set up on this server.';
+		if (e.status === 400 && action === 'reset') return 'This reset link is invalid, used or expired. Request a new one.';
+		if (e.status === 401 && action === 'change') return 'The current password is wrong.';
+		if (e.status === 401) return 'Session expired — sign in again.';
+		if (e.status === 409 && action === 'email') return 'Another account already uses that email.';
+		if (e.status === 400 && action === 'email') return 'Enter a valid email address.';
+		if (e.status === 400 && action === 'change') return `The new password must have at least ${PASSWORD_MIN_LENGTH} characters.`;
+		return e.message;
+	}
+	return e instanceof Error ? e.message : String(e);
+}
+
+async function accountCall<T>(action: AccountAction, fn: () => Promise<T>): Promise<T> {
+	try {
+		return await fn();
+	} catch (e) {
+		throw new Error(accountErrorMessage(action, e), { cause: e });
+	}
+}
+
+/** Signed-in session or a user-facing error. */
+function requireSession(): StoredAuth {
+	const s = _session.value;
+	if (!s) throw new Error('Sign in first.');
+	return s;
 }
 
 let refreshTimer: ReturnType<typeof setTimeout> | null = null;
@@ -212,7 +251,71 @@ export const authActions = {
 	clearError(): void {
 		_error.value = null;
 	},
+
+	/** Ask the server to email a reset link (username or email). Resolves the same way for unknown accounts. */
+	async forgotPassword(identifier: string): Promise<void> {
+		const id = identifier.trim();
+		if (!id) throw new Error('Enter your username or email.');
+		await accountCall('forgot', async () => {
+			await deps.account(requireUrl(), null).forgotPassword({ identifier: id });
+		});
+	},
+
+	/** Reset-link token + new password → signed in. */
+	async resetPassword(token: string, password: string): Promise<UserDto> {
+		if (password.length < PASSWORD_MIN_LENGTH) throw new Error(`Use at least ${PASSWORD_MIN_LENGTH} characters.`);
+		return accountCall('reset', async () => {
+			const url = requireUrl();
+			const tokens = await deps.account(url, null).resetPassword({ token, password });
+			_error.value = null;
+			await setSession(toStored(tokens, url));
+			return tokens.user;
+		});
+	},
+
+	/** Signed in: change the password. The server signs out other sessions; this one gets new tokens. */
+	async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+		if (newPassword.length < PASSWORD_MIN_LENGTH) throw new Error(`Use at least ${PASSWORD_MIN_LENGTH} characters.`);
+		await accountCall('change', async () => {
+			const s = requireSession();
+			const token = (await authActions.ensureAccessToken()) ?? s.accessToken;
+			const tokens = await deps.account(s.serverUrl, token).changePassword({ currentPassword, newPassword });
+			if (_session.value !== s && _session.value?.user.id !== s.user.id) return;
+			await setSession(toStored(tokens, s.serverUrl));
+		});
+	},
+
+	/** Signed in: set ('' clears) the account email used for reset links. */
+	async updateEmail(email: string): Promise<UserDto> {
+		return accountCall('email', async () => {
+			const s = requireSession();
+			const token = (await authActions.ensureAccessToken()) ?? s.accessToken;
+			const user = await deps.account(s.serverUrl, token).updateAccount({ email: email.trim() });
+			await patchUser(s, user);
+			return _session.value?.user ?? user;
+		});
+	},
+
+	/** Signed in: re-read the account (email) from the server into the stored user. */
+	async loadAccount(): Promise<UserDto | null> {
+		const s = _session.value;
+		if (!s) return null;
+		return accountCall('load', async () => {
+			const token = (await authActions.ensureAccessToken()) ?? s.accessToken;
+			const user = await deps.account(s.serverUrl, token).account();
+			await patchUser(s, user);
+			return _session.value?.user ?? user;
+		});
+	},
 };
+
+/** Merge account fields into the stored session user (if it is still the same account). */
+async function patchUser(s: StoredAuth, user: UserDto): Promise<void> {
+	const cur = _session.value;
+	if (!cur || cur.user.id !== s.user.id) return;
+	const { id, username, displayName, role, email } = user;
+	await setSession({ ...cur, user: { ...cur.user, id, username, displayName, role, email: email ?? null } });
+}
 
 // ── Boot ──────────────────────────────────────────────────────────────────
 export async function loadAuth(): Promise<void> {

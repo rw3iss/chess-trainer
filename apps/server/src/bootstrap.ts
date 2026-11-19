@@ -13,6 +13,12 @@ export function configureApp(app: INestApplication, opts: { quiet?: boolean } = 
 	const config = app.get(ConfigService);
 	const logger = new Logger('Bootstrap');
 
+	// ── Proxy ────────────────────────────────────────────────────────
+	// Trust X-Forwarded-For only from a local reverse proxy (nginx on the same host), so
+	// request IPs (rate limits) are the real client's, and a remote client cannot spoof them.
+	const http = app.getHttpAdapter().getInstance() as { set?: (k: string, v: unknown) => void };
+	http.set?.('trust proxy', 'loopback');
+
 	// ── API prefix (e.g. /api/v1) ────────────────────────────────────
 	const apiPrefix = config.get<string>('app.apiPrefix');
 	if (apiPrefix) app.setGlobalPrefix(apiPrefix);

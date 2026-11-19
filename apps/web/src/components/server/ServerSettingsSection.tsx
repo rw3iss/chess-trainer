@@ -1,5 +1,6 @@
 // ServerSettingsSection — the "Server" settings section: server URL + status,
-// sign-in / account, sync toggle + status, guest name for online rooms.
+// sign-in / account (email, change password, forgot password), sync toggle + status,
+// guest name for online rooms.
 // Mounted lazily by the Settings page: `import('@/components/server')`.
 import type { JSX } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
@@ -9,6 +10,7 @@ import { serverConnector, type ServerStatus } from '@/services/server';
 import { lastSyncAt, lastSyncError, syncNow, syncStatus, type SyncStatus } from '@/state/sync';
 import { authActions, authBusy, authError, authUser, guestName, isLoggedIn } from '@/state/auth';
 import { settings, updateSettings } from '@/state/settings';
+import { AccountEmailForm, ChangePasswordForm, ForgotPasswordForm } from './AccountForms';
 import './ServerSettingsSection.scss';
 
 const TICK_MS = 30_000;
@@ -110,13 +112,23 @@ function ConnectionCard(): JSX.Element {
 function AccountCard(): JSX.Element {
 	const online = serverConnector.status.value === 'online';
 	const authFeature = serverConnector.health.value?.features.auth ?? true;
+	// Email reset links only when the server has a mail provider (older servers: no flag → hidden).
+	const canReset = serverConnector.health.value?.features?.passwordReset === true;
 	const user = authUser.value;
 	const busy = authBusy.value;
 	const error = authError.value;
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
+	const [forgot, setForgot] = useState(false);
+	const [changing, setChanging] = useState(false);
+	const signedIn = !!user && isLoggedIn.value;
 
-	if (user && isLoggedIn.value) {
+	// Signed in + online: read the account (email) from the server once.
+	useEffect(() => {
+		if (signedIn && online) void authActions.loadAccount().catch(() => undefined);
+	}, [signedIn, online, user?.id]);
+
+	if (user && signedIn) {
 		return (
 			<section class="server-settings__card" aria-labelledby="server-settings-account">
 				<header class="server-settings__card-head">
@@ -137,11 +149,39 @@ function AccountCard(): JSX.Element {
 						Sign out
 					</Button>
 				</div>
+				{online ? (
+					<>
+						<AccountEmailForm />
+						{changing ? (
+							<ChangePasswordForm onDone={() => setChanging(false)} />
+						) : (
+							<div class="server-settings__actions">
+								<Button variant="secondary" size="sm" icon="edit" onClick={() => setChanging(true)}>
+									Change password
+								</Button>
+							</div>
+						)}
+					</>
+				) : (
+					<p class="server-settings__subtle">Connect to the server to change your email or password.</p>
+				)}
 			</section>
 		);
 	}
 
 	const disabled = !online || !authFeature;
+	if (forgot && canReset) {
+		return (
+			<section class="server-settings__card" aria-labelledby="server-settings-account">
+				<header class="server-settings__card-head">
+					<h3 class="server-settings__card-title" id="server-settings-account">
+						Forgot password
+					</h3>
+				</header>
+				<ForgotPasswordForm disabled={disabled} initial={username} onClose={() => setForgot(false)} />
+			</section>
+		);
+	}
 	return (
 		<section class="server-settings__card" aria-labelledby="server-settings-account">
 			<header class="server-settings__card-head">
@@ -192,9 +232,24 @@ function AccountCard(): JSX.Element {
 						if (error) authActions.clearError();
 					}}
 				/>
-				<Button type="submit" variant="primary" loading={busy} disabled={disabled || !username.trim() || !password} class="server-settings__submit">
-					Sign in
-				</Button>
+				<div class="server-settings__submit server-settings__actions">
+					<Button type="submit" variant="primary" loading={busy} disabled={disabled || !username.trim() || !password}>
+						Sign in
+					</Button>
+					{canReset && (
+						<Button
+							variant="ghost"
+							size="sm"
+							disabled={disabled}
+							onClick={() => {
+								authActions.clearError();
+								setForgot(true);
+							}}
+						>
+							Forgot password?
+						</Button>
+					)}
+				</div>
 			</form>
 		</section>
 	);

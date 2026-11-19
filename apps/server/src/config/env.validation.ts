@@ -44,6 +44,19 @@ export const envValidationSchema = Joi.object({
 	GUEST_TTL: Joi.number().integer().min(60).default(24 * 3600),
 	OWNER_USERNAME: Joi.string().allow('').optional(),
 	OWNER_PASSWORD: Joi.string().allow('').optional(),
+	/** Owner's email for password reset links (set at boot when given; editable in the app). */
+	OWNER_EMAIL: Joi.string().email().allow('').optional(),
+	/** Password reset link lifetime (seconds). */
+	PASSWORD_RESET_TTL: Joi.number().integer().min(300).max(24 * 3600).default(3600),
+
+	// Mail (src/modules/mail) — provider is swappable; see config/loaders/mail.config.ts
+	MAIL_PROVIDER: Joi.string().valid('resend', 'memory', 'none').allow('').optional(),
+	MAIL_FROM: Joi.string().allow('').optional(),
+	MAIL_REPLY_TO: Joi.string().email().allow('').optional(),
+	RESEND_API_KEY: Joi.string().allow('').optional(),
+	RESEND_BASE_URL: Joi.string().uri().allow('').optional(),
+	APP_PUBLIC_URL: Joi.string().uri().allow('').optional(),
+	APP_NAME: Joi.string().allow('').optional(),
 
 	// Openings / explorer
 	DATA_DIR: Joi.string().allow('').optional(),
